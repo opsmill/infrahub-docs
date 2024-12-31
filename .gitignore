@@ -1,0 +1,10 @@
+.env
+.envrc
+.python-version
+.vscode/launch.json
+.vscode/settings.json
+*.tar.xz
+**/__pycache__
+**/.benchmarks
+**/.pytest_cache
+**/.ruff_cache

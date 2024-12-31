@@ -1,0 +1,13 @@
+mutation AddRepository{
+  CoreReadOnlyRepositoryCreate(
+    data: {
+      name: { value: "infrahub-demo-dc-fabric" }
+      location: { value: "https://github.com/opsmill/infrahub-demo-dc-fabric.git" }
+    }
+  ) {
+    ok
+    object {
+      id
+    }
+  }
+}
