@@ -61,7 +61,7 @@ const config: Config = {
       {
         id: 'demo',
         path: 'demo-dc-fabric',
-        routeBasePath: 'demo-dc-fabric',
+        routeBasePath: 'demo',
         sidebarCollapsed: true,
         sidebarPath: './sidebars-demo.ts',
       },
@@ -87,10 +87,22 @@ const config: Config = {
       },
       items: [
         {
-          type: "docSidebar",
-          sidebarId: "docsSidebar",
-          position: "left",
-          label: "Documentation",
+          type: 'dropdown',
+          position: 'left',
+          label: 'Projects',
+          items: [
+            {
+              type: "docSidebar",
+              sidebarId: "docsSidebar",
+              label: "Infrahub Documentation",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "demoSidebar",
+              label: "demo-dc-fabric",
+              docsPluginId: "demo",
+            },
+          ],
         },
         {
           type: "search",
