@@ -42,9 +42,8 @@ const config: Config = {
       "classic",
       {
         docs: {
-          editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
-          path: "docs",
-          routeBasePath: "/",
+          path: "docs-projects",
+          routeBasePath: "projects",
           sidebarCollapsed: true,
           sidebarPath: "./sidebars.ts",
         },
@@ -59,11 +58,23 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
-        id: 'demo',
-        path: 'demo-dc-fabric',
-        routeBasePath: 'demo',
+        id: 'docs-infrahub',
+        path: 'docs-infrahub',
+        routeBasePath: '/',
         sidebarCollapsed: true,
+        sidebarPath: './sidebars-infrahub.ts',
+        editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-demo',
+        path: 'docs-demo',
+        routeBasePath: 'demo',
+        sidebarCollapsed: false,
         sidebarPath: './sidebars-demo.ts',
+        editUrl: "https://github.com/opsmill/infrahub-demo-dc-fabric/tree/main/docs",
       },
     ],
   ],
@@ -93,14 +104,20 @@ const config: Config = {
           items: [
             {
               type: "docSidebar",
+              sidebarId: "landingSidebar",
+              label: "Infrahub Projects",
+            },
+            {
+              type: "docSidebar",
               sidebarId: "docsSidebar",
               label: "Infrahub Documentation",
+              docsPluginId: "docs-infrahub",
             },
             {
               type: "docSidebar",
               sidebarId: "demoSidebar",
               label: "demo-dc-fabric",
-              docsPluginId: "demo",
+              docsPluginId: "docs-demo",
             },
           ],
         },
