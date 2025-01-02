@@ -42,7 +42,6 @@ const config: Config = {
       "classic",
       {
         docs: {
-          editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
           path: "docs",
           routeBasePath: "/",
           sidebarCollapsed: true,
@@ -59,11 +58,23 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
-        id: 'demo',
-        path: 'demo-dc-fabric',
-        routeBasePath: 'demo',
+        id: 'docs-infrahub',
+        path: 'docs-infrahub',
+        routeBasePath: 'infrahub',
         sidebarCollapsed: true,
+        sidebarPath: './sidebars-infrahub.ts',
+        editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-demo',
+        path: 'docs-demo',
+        routeBasePath: 'demo',
+        sidebarCollapsed: false,
         sidebarPath: './sidebars-demo.ts',
+        editUrl: "https://github.com/opsmill/infrahub-demo-dc-fabric/tree/main/docs",
       },
     ],
   ],
@@ -87,20 +98,44 @@ const config: Config = {
       },
       items: [
         {
+          type: "docSidebar",
+          sidebarId: "docsSidebar",
+          label: "Infrahub Docs",
+          docsPluginId: "docs-infrahub",
+        },
+        {
+          label: 'Python SDK Docs',
+          href: 'https://docs.infrahub.app/python-sdk/',
+        },
+        {
           type: 'dropdown',
           position: 'left',
-          label: 'Projects',
+          label: 'Integrations',
           items: [
             {
-              type: "docSidebar",
-              sidebarId: "docsSidebar",
-              label: "Infrahub Documentation",
+              label: 'Ansible',
+              href: 'https://docs.infrahub.app/integrations/infrahub-ansible/',
             },
+            {
+              label: 'infrahub-sync',
+              href: 'https://docs.infrahub.app/integrations/sync/',
+            },
+            {
+              label: 'Nornir',
+              href: 'https://docs.infrahub.app/integrations/nornir-infrahub/',
+            },
+          ],
+        },
+        {
+          type: 'dropdown',
+          position: 'left',
+          label: 'Demos',
+          items: [
             {
               type: "docSidebar",
               sidebarId: "demoSidebar",
               label: "demo-dc-fabric",
-              docsPluginId: "demo",
+              docsPluginId: "docs-demo",
             },
           ],
         },
@@ -117,7 +152,7 @@ const config: Config = {
       ],
     },
     footer: {
-      copyright: `Copyright © ${new Date().getFullYear()} - <b>Infrahub</b> by OpsMill.`,
+      copyright: `Copyright © ${new Date().getFullYear()} - Infrahub by OpsMill.`,
     },
     prism: {
       theme: prismThemes.oneDark,
