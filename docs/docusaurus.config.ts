@@ -100,19 +100,37 @@ const config: Config = {
         {
           type: "docSidebar",
           sidebarId: "docsSidebar",
-          label: "Infrahub Documentation",
+          label: "Infrahub Docs",
           docsPluginId: "docs-infrahub",
+        },
+        {
+          label: 'Python SDK Docs',
+          href: 'https://docs.infrahub.app/python-sdk/',
         },
         {
           type: 'dropdown',
           position: 'left',
-          label: 'Infrahub Projects',
+          label: 'Integrations',
           items: [
             {
-              type: "docSidebar",
-              sidebarId: "landingSidebar",
-              label: "Projects Overview",
+              label: 'Ansible',
+              href: 'https://docs.infrahub.app/integrations/infrahub-ansible/',
             },
+            {
+              label: 'infrahub-sync',
+              href: 'https://docs.infrahub.app/integrations/sync/',
+            },
+            {
+              label: 'Nornir',
+              href: 'https://docs.infrahub.app/integrations/nornir-infrahub/',
+            },
+          ],
+        },
+        {
+          type: 'dropdown',
+          position: 'left',
+          label: 'Demos',
+          items: [
             {
               type: "docSidebar",
               sidebarId: "demoSidebar",
@@ -134,7 +152,7 @@ const config: Config = {
       ],
     },
     footer: {
-      copyright: `Copyright © ${new Date().getFullYear()} - <b>Infrahub</b> by OpsMill.`,
+      copyright: `Copyright © ${new Date().getFullYear()} - Infrahub by OpsMill.`,
     },
     prism: {
       theme: prismThemes.oneDark,
