@@ -42,8 +42,8 @@ const config: Config = {
       "classic",
       {
         docs: {
-          path: "docs-projects",
-          routeBasePath: "projects",
+          path: "docs",
+          routeBasePath: "/",
           sidebarCollapsed: true,
           sidebarPath: "./sidebars.ts",
         },
@@ -60,7 +60,7 @@ const config: Config = {
       {
         id: 'docs-infrahub',
         path: 'docs-infrahub',
-        routeBasePath: '/',
+        routeBasePath: 'infrahub',
         sidebarCollapsed: true,
         sidebarPath: './sidebars-infrahub.ts',
         editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
@@ -98,20 +98,20 @@ const config: Config = {
       },
       items: [
         {
+          type: "docSidebar",
+          sidebarId: "docsSidebar",
+          label: "Infrahub Documentation",
+          docsPluginId: "docs-infrahub",
+        },
+        {
           type: 'dropdown',
           position: 'left',
-          label: 'Projects',
+          label: 'Infrahub Projects',
           items: [
             {
               type: "docSidebar",
               sidebarId: "landingSidebar",
-              label: "Infrahub Projects",
-            },
-            {
-              type: "docSidebar",
-              sidebarId: "docsSidebar",
-              label: "Infrahub Documentation",
-              docsPluginId: "docs-infrahub",
+              label: "Projects Overview",
             },
             {
               type: "docSidebar",
