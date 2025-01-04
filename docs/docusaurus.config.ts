@@ -43,7 +43,7 @@ const config: Config = {
       {
         docs: {
           path: "docs",
-          routeBasePath: "/",
+          routeBasePath: "docs",
           sidebarCollapsed: true,
           sidebarPath: "./sidebars.ts",
         },
@@ -104,8 +104,17 @@ const config: Config = {
           docsPluginId: "docs-infrahub",
         },
         {
-          label: 'Python SDK Docs',
-          href: 'https://docs.infrahub.app/python-sdk/',
+          type: 'dropdown',
+          position: 'left',
+          label: 'Development',
+          items: [
+            {
+              type: "doc",
+              label: 'Python SDK Docs',
+              docId: 'python-sdk/readme',
+              docsPluginId: "docs-infrahub",
+            },
+          ],
         },
         {
           type: 'dropdown',
@@ -113,16 +122,22 @@ const config: Config = {
           label: 'Integrations',
           items: [
             {
+              type: "doc",
               label: 'Ansible',
-              href: 'https://docs.infrahub.app/integrations/infrahub-ansible/',
+              docId: 'integrations/infrahub-ansible/readme',
+              docsPluginId: "docs-infrahub",
             },
             {
+              type: "doc",
               label: 'infrahub-sync',
-              href: 'https://docs.infrahub.app/integrations/sync/',
+              docId: 'integrations/sync/readme',
+              docsPluginId: "docs-infrahub",
             },
             {
+              type: "doc",
               label: 'Nornir',
-              href: 'https://docs.infrahub.app/integrations/nornir-infrahub/',
+              docId: 'integrations/nornir-infrahub/readme',
+              docsPluginId: "docs-infrahub",
             },
           ],
         },
@@ -148,6 +163,12 @@ const config: Config = {
           position: "right",
           className: "header-github-link",
           "aria-label": "GitHub repository",
+        },
+        {
+          href: "https://discord.gg/opsmill",
+          position: "right",
+          className: "header-discord-link",
+          "aria-label": "Discord Server",
         },
       ],
     },
