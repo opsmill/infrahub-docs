@@ -66,7 +66,7 @@ const SectionList: SectionItem[] = [
       id: 'home.sectionList.development.title',
       message: 'Development',
     }),
-    Svg: '/img/infrahub.svg',
+    Svg: '/img/sdk.svg',
     description: (
       <Translate id="home.sectionList.development.description">
         {
@@ -80,7 +80,7 @@ const SectionList: SectionItem[] = [
       id: 'home.sectionList.integrations.title',
       message: 'Integrations',
     }),
-    Svg: '/img/infrahub.svg',
+    Svg: '/img/integrations.svg',
     description: (
       <Translate id="home.sectionList.integrations.description">
         {'OpsMill maintains multiple integrations with other infrastructure systems. In addition, other companies maintain integrations with Infrahub.'}
@@ -93,7 +93,7 @@ const SectionList: SectionItem[] = [
       id: 'home.sectionList.demos.title',
       message: 'Demos',
     }),
-    Svg: '/img/infrahub.svg',
+    Svg: '/img/demos.svg',
     description: (
       <Translate id="home.sectionList.demos.description">
         {'These repositories demo key Infrahub features using example infrastructure. They demonstrate the capabilities to use Infrahub in various scenarios.'}
@@ -106,7 +106,7 @@ function Section({ title, Svg, description }: SectionItem) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center">
-        <img className={styles.sectionSvg} src={Svg} alt="" />
+        <img className={styles.sectionSvg} style={{ width: '100px', height: '150px' }} src={Svg} alt="" />
       </div>
       <div className="text--center padding-horiz--md">
         <Heading as='h3'>{title}</Heading>

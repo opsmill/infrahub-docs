@@ -22,3 +22,77 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Base button styles */
+.button {
+  display: inline-block;
+  padding: 12px 24px;
+  font-size: 36px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(90deg, #0077cc, #00aaff);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Hover effect */
+.button:hover {
+  background: white;
+  color: #0077cc;
+  border-color: #0077cc;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Ripple effect */
+.button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s ease, height 0.4s ease;
+}
+
+.button:hover::before {
+  width: 300%;
+  height: 300%;
+}
+
+/* Focus outline */
+.button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(0, 119, 204, 0.4);
+}
+
+/* Variants */
+.button.silver {
+  background: linear-gradient(90deg, #c0c0c0, #e0e0e0);
+  color: #333;
+}
+
+.button.silver:hover {
+  background: white;
+  color: #666;
+  border-color: #666;
+}
+
+.button.outline {
+  background: transparent;
+  border: 2px solid #0077cc;
+  color: #0077cc;
+}
+
+.button.outline:hover {
+  background: #0077cc;
+  color: white;
+}
