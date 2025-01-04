@@ -22,7 +22,7 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/infrahub/"
+            to="/docs/"
           >
             {translate({
               id: 'home.header.docs',
@@ -75,7 +75,7 @@ const SectionList: SectionItem[] = [
         }
       </Translate>
     ),
-    link: '/infrahub/python-sdk/',
+    link: '/docs/python-sdk/',
   },
   {
     title: translate({
@@ -88,7 +88,7 @@ const SectionList: SectionItem[] = [
         {'OpsMill maintains multiple integrations with other infrastructure systems. In addition, other companies maintain integrations with Infrahub.'}
       </Translate>
     ),
-    link: '/infrahub/integrations/',
+    link: '/docs/integrations/',
   },
 
   {
