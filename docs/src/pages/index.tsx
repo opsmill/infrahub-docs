@@ -57,6 +57,7 @@ type SectionItem = {
   title: string;
   Svg: string;
   description: React.JSX.Element;
+  link: string;
 };
 
 // FIXME The SVG here (or all static files) cannot be loaded in i18n dev mode
@@ -74,6 +75,7 @@ const SectionList: SectionItem[] = [
         }
       </Translate>
     ),
+    link: '/infrahub/python-sdk/',
   },
   {
     title: translate({
@@ -86,6 +88,7 @@ const SectionList: SectionItem[] = [
         {'OpsMill maintains multiple integrations with other infrastructure systems. In addition, other companies maintain integrations with Infrahub.'}
       </Translate>
     ),
+    link: '/infrahub/integrations/',
   },
 
   {
@@ -99,20 +102,22 @@ const SectionList: SectionItem[] = [
         {'These repositories demo key Infrahub features using example infrastructure. They demonstrate the capabilities to use Infrahub in various scenarios.'}
       </Translate>
     ),
+    link: '/demo/',
   },
 ];
 
-function Section({ title, Svg, description }: SectionItem) {
+function Section({ title, Svg, description, link }: SectionItem) {
   return (
     <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <img className={styles.sectionSvg} style={{ width: '100px', height: '150px' }} src={Svg} alt="" />
-      </div>
-      <div className="text--center padding-horiz--md">
-        <Heading as='h3'>{title}</Heading>
-        {/* <h3>{title}</h3> */}
-        <p>{description}</p>
-      </div>
+      <Link to={link}>
+        <div className="text--center">
+          <img className={styles.sectionSvg} style={{ width: '80px', height: '120px' }} src={Svg} alt="" />
+        </div>
+        <div className="text--center padding-horiz--md">
+          <Heading as='h4'>{title}</Heading>
+          <p>{description}</p>
+        </div>
+      </Link>
     </div>
   );
 }
