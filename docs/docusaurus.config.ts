@@ -96,7 +96,7 @@ const config: Config = {
         {
           type: 'dropdown',
           position: 'left',
-          label: 'Development',
+          label: 'Python SDK',
           items: [
             {
               type: "doc",

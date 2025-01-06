@@ -64,12 +64,12 @@ type SectionItem = {
 const SectionList: SectionItem[] = [
   {
     title: translate({
-      id: 'home.sectionList.development.title',
-      message: 'Development',
+      id: 'home.sectionList.sdk.title',
+      message: 'Python SDK',
     }),
     Svg: '/img/sdk.svg',
     description: (
-      <Translate id="home.sectionList.development.description">
+      <Translate id="home.sectionList.sdk.description">
         {
           "These development packages such as the Infrahub Python SDK greatly simplify how you can interact with Infrahub programmatically."
         }
