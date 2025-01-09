@@ -31,6 +31,7 @@ const config: Config = {
   onBrokenAnchors: "throw",
   onBrokenMarkdownLinks: "throw",
   onDuplicateRoutes: "throw",
+  noIndex: false,
 
   i18n: {
     defaultLocale: "en",
@@ -46,6 +47,7 @@ const config: Config = {
           routeBasePath: "docs",
           sidebarCollapsed: true,
           sidebarPath: "./sidebars.ts",
+          editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
         },
         blog: false,
         theme: {
@@ -55,17 +57,6 @@ const config: Config = {
     ],
   ],
   plugins: [
-    [
-      '@docusaurus/plugin-content-docs',
-      {
-        id: 'docs-infrahub',
-        path: 'docs-infrahub',
-        routeBasePath: 'infrahub',
-        sidebarCollapsed: true,
-        sidebarPath: './sidebars-infrahub.ts',
-        editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
-      },
-    ],
     [
       '@docusaurus/plugin-content-docs',
       {
@@ -101,18 +92,16 @@ const config: Config = {
           type: "docSidebar",
           sidebarId: "docsSidebar",
           label: "Infrahub Docs",
-          docsPluginId: "docs-infrahub",
         },
         {
           type: 'dropdown',
           position: 'left',
-          label: 'Development',
+          label: 'Python SDK',
           items: [
             {
               type: "doc",
               label: 'Python SDK Docs',
               docId: 'python-sdk/readme',
-              docsPluginId: "docs-infrahub",
             },
           ],
         },
@@ -125,19 +114,16 @@ const config: Config = {
               type: "doc",
               label: 'Ansible',
               docId: 'integrations/infrahub-ansible/readme',
-              docsPluginId: "docs-infrahub",
             },
             {
               type: "doc",
               label: 'infrahub-sync',
               docId: 'integrations/sync/readme',
-              docsPluginId: "docs-infrahub",
             },
             {
               type: "doc",
               label: 'Nornir',
               docId: 'integrations/nornir-infrahub/readme',
-              docsPluginId: "docs-infrahub",
             },
           ],
         },

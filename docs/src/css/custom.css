@@ -5,14 +5,18 @@
  */
 
 /* You can override the default Infima variables here. */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
 :root {
-  --ifm-color-primary: #107593;
-  --ifm-color-primary-dark: #076781;
-  --ifm-color-primary-darker: #07627a;
-  --ifm-color-primary-darkest: #065064;
-  --ifm-color-primary-light: #097e9d;
-  --ifm-color-primary-lighter: #0984a4;
-  --ifm-color-primary-lightest: #0a95ba;
+  --ifm-color-primary: #0C4A62;
+  --ifm-color-primary-dark: #0C2D41;
+  --ifm-color-primary-darker: #0D2C3F;
+  --ifm-color-primary-darkest: #0B1828;
+  --ifm-color-primary-light: #0C6884;
+  --ifm-color-primary-lighter: #0887A8;
+  --ifm-color-primary-lightest: #0A97BB;
+
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgb(24 65 100 / 0.85);
   --ifm-hover-overlay: rgb(242, 252, 255);
@@ -23,20 +27,24 @@
   --navbar-bg-opacity: 1;
   --ifm-navbar-background-color: rgb(255 255 255 / var(--navbar-bg-opacity));
   --ifm-code-padding-horizontal: 0.3rem;
+
+  --ifm-font-family-base: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --ifm-font-family-monospace: 'Roboto Mono', monospace;
+
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #0a95ba;
-  --ifm-color-primary-dark: #0986a7;
-  --ifm-color-primary-darker: #087f9e;
-  --ifm-color-primary-darkest: #076882;
-  --ifm-color-primary-light: #0ba4cd;
-  --ifm-color-primary-lighter: #0babd6;
-  --ifm-color-primary-lightest: #0dc2f2;
+  --ifm-color-primary: #0C6884;
+  --ifm-color-primary-dark: #0C4A62;
+  --ifm-color-primary-darker: #0C2D41;
+  --ifm-color-primary-darkest: #0D2C3F;
+  --ifm-color-primary-light: #0887A8;
+  --ifm-color-primary-lighter: #0A97BB;
+  --ifm-color-primary-lightest: #0A97BB;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
-  --main-bg-color: #1e2327;
-  --layout-bg-color: #151a1c;
+  --main-bg-color: #0B1828;
+  --layout-bg-color: #0B1828;
   --border-color: rgb(71 71 71 / 0.5);
 
   --ifm-navbar-background-color: rgb(18 20 24 / var(--navbar-bg-opacity));

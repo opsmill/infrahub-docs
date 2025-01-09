@@ -22,7 +22,7 @@ function HomepageHeader() {
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
-            to="/infrahub/"
+            to="/docs/"
           >
             {translate({
               id: 'home.header.docs',
@@ -57,35 +57,38 @@ type SectionItem = {
   title: string;
   Svg: string;
   description: React.JSX.Element;
+  link: string;
 };
 
 // FIXME The SVG here (or all static files) cannot be loaded in i18n dev mode
 const SectionList: SectionItem[] = [
   {
     title: translate({
-      id: 'home.sectionList.development.title',
-      message: 'Development',
+      id: 'home.sectionList.sdk.title',
+      message: 'Python SDK',
     }),
-    Svg: '/img/infrahub.svg',
+    Svg: '/img/sdk.svg',
     description: (
-      <Translate id="home.sectionList.development.description">
+      <Translate id="home.sectionList.sdk.description">
         {
           "These development packages such as the Infrahub Python SDK greatly simplify how you can interact with Infrahub programmatically."
         }
       </Translate>
     ),
+    link: '/docs/python-sdk/',
   },
   {
     title: translate({
       id: 'home.sectionList.integrations.title',
       message: 'Integrations',
     }),
-    Svg: '/img/infrahub.svg',
+    Svg: '/img/integrations.svg',
     description: (
       <Translate id="home.sectionList.integrations.description">
         {'OpsMill maintains multiple integrations with other infrastructure systems. In addition, other companies maintain integrations with Infrahub.'}
       </Translate>
     ),
+    link: '/docs/integrations/',
   },
 
   {
@@ -93,26 +96,28 @@ const SectionList: SectionItem[] = [
       id: 'home.sectionList.demos.title',
       message: 'Demos',
     }),
-    Svg: '/img/infrahub.svg',
+    Svg: '/img/demos.svg',
     description: (
       <Translate id="home.sectionList.demos.description">
         {'These repositories demo key Infrahub features using example infrastructure. They demonstrate the capabilities to use Infrahub in various scenarios.'}
       </Translate>
     ),
+    link: '/demo/',
   },
 ];
 
-function Section({ title, Svg, description }: SectionItem) {
+function Section({ title, Svg, description, link }: SectionItem) {
   return (
     <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <img className={styles.sectionSvg} src={Svg} alt="" />
-      </div>
-      <div className="text--center padding-horiz--md">
-        <Heading as='h3'>{title}</Heading>
-        {/* <h3>{title}</h3> */}
-        <p>{description}</p>
-      </div>
+      <Link to={link}>
+        <div className="text--center">
+          <img className={styles.sectionSvg} style={{ width: '80px', height: '120px' }} src={Svg} alt="" />
+        </div>
+        <div className="text--center padding-horiz--md">
+          <Heading as='h4'>{title}</Heading>
+          <p>{description}</p>
+        </div>
+      </Link>
     </div>
   );
 }
