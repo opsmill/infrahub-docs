@@ -41,7 +41,7 @@ function HomepageHeader() {
                         >
                             {translate({
                                 id: 'home.header.sandbox',
-                                message: 'Try it',
+                                message: 'Explore Live Demo',
                             })}
                             <ArrowRightIcon/>
                         </Link>
