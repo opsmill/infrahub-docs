@@ -8,6 +8,11 @@
   align-items: center;
   overflow: hidden;
   padding: 0;
+  max-height: 540px;
+}
+
+.infrahubVideo {
+  align-self: start;
 }
 
 @media screen and (max-width: 996px) {
