@@ -81,7 +81,7 @@ type SectionItem = {
 
 function IntegrationCard({title, svgPath, description, link}: SectionItem) {
     return (
-        <div className='col col--4 margin-bottom--md'>
+        <div className='flex col col--4 margin-bottom--md'>
             <Link to={link} className={clsx(styles.heroCard, "card text--no-decoration")}>
                 <div className={clsx("card__header", styles.cardTitle)}>
                     <img src={svgPath} width="24px" alt="python logo"/>
