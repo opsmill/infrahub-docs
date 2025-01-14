@@ -4,21 +4,48 @@
  */
 
 .heroBanner {
-  padding: 4rem 0;
-  text-align: center;
-  position: relative;
+  display: flex;
+  align-items: center;
   overflow: hidden;
+  padding: 0;
 }
 
 @media screen and (max-width: 996px) {
   .heroBanner {
-    padding: 2rem;
+    padding: 4rem 2rem;
+  }
+
+  .infrahubVideo {
+    display: none;
   }
 }
 
-.buttons {
-  gap: 16px;
-  display: flex;
+.cardTitle {
+  display: inline-flex;
+  gap: 0.5rem;
   align-items: center;
-  justify-content: center;
+}
+
+.heroCard {
+  transition: box-shadow 0.2s ease-in-out;
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+}
+
+.heroCard:hover {
+  box-shadow: 1px 0px 16px 0px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.heroButton {
+  border-radius: 9999px;
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.containerFlexWrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 1rem;
 }
