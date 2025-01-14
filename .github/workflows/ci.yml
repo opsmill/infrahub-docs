@@ -1,8 +1,12 @@
 ---
 name: Build and Deploy Docusaurus
+# yamllint disable rule:truthy rule:truthy rule:line-length
+
 on:
-  pull_request:
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
