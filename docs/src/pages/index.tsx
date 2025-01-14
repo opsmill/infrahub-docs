@@ -41,7 +41,7 @@ function HomepageHeader() {
                         >
                             {translate({
                                 id: 'home.header.sandbox',
-                                message: 'Try it',
+                                message: 'Explore Live Demo',
                             })}
                             <ArrowRightIcon/>
                         </Link>
@@ -62,7 +62,7 @@ function HomepageHeader() {
                 <video
                     style={{
                         pointerEvents: "none",
-                        padding: "1px",
+                        maxHeight: "540px"
                     }}
                     className="rounded-2xl" height="100%" loop autoPlay muted>
                     <source src="/medias/demo.mp4" type="video/mp4"/>
