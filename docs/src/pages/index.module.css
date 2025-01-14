@@ -12,7 +12,11 @@
 
 @media screen and (max-width: 996px) {
   .heroBanner {
-    padding: 2rem;
+    padding: 4rem 2rem;
+  }
+
+  .infrahubVideo {
+    display: none;
   }
 }
 
@@ -39,9 +43,9 @@
   align-items: center;
 }
 
-.stack {
+.containerFlexWrap {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   align-items: start;
   gap: 1rem;
 }

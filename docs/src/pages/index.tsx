@@ -23,10 +23,9 @@ function HomepageHeader() {
                     })}
                 </p>
 
-                <div className={styles.stack}>
-                    <div>
+                <div className={styles.containerFlexWrap}>
                         <Link
-                            className={clsx(styles.heroButton, "button button--primary button--lg margin-right--md")}
+                            className={clsx(styles.heroButton, "button button--primary button--lg")}
                             to="/docs/"
                         >
                             {translate({
@@ -46,7 +45,6 @@ function HomepageHeader() {
                             })}
                             <ArrowRightIcon/>
                         </Link>
-                    </div>
                     <Link
                         className={clsx(styles.heroButton, "button button--secondary button--lg")}
                         to="https://opsmill.instruqt.com/pages/labs"
@@ -60,7 +58,7 @@ function HomepageHeader() {
                 </div>
             </div>
 
-            <div className="col col--6">
+            <div className={clsx(styles.infrahubVideo, "col col--6")}>
                 <video
                     style={{
                         pointerEvents: "none",
@@ -83,7 +81,7 @@ type SectionItem = {
 
 function IntegrationCard({title, svgPath, description, link}: SectionItem) {
     return (
-        <div className='col col--4'>
+        <div className='col col--4 margin-bottom--md'>
             <Link to={link} className={clsx(styles.heroCard, "card text--no-decoration")}>
                 <div className={clsx("card__header", styles.cardTitle)}>
                     <img src={svgPath} width="24px" alt="python logo"/>
