@@ -8,16 +8,18 @@
   align-items: center;
   overflow: hidden;
   padding: 0;
+  flex-grow: 1;
+  max-height: 540px;
 }
 
 .infrahubVideo {
   align-self: start;
-  max-height: 540px;
 }
 
 @media screen and (max-width: 996px) {
   .heroBanner {
     padding: 4rem 2rem;
+    flex-grow: 0;
   }
 
   .infrahubVideo {
