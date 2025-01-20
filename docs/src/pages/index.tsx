@@ -26,7 +26,7 @@ function HomepageHeader() {
                 <div className={styles.containerFlexWrap}>
                         <Link
                             className={clsx(styles.heroButton, "button button--primary button--lg")}
-                            to="/docs/"
+                            to="/introduction"
                         >
                             {translate({
                                 id: 'home.header.docs',
@@ -106,15 +106,15 @@ function IntegrationsSection() {
                 title="Ansible"
                  svgPath="/img/ansible.svg"
                  description="OpsMill maintains the opsmill.infrahub Ansible Collection."
-                 link="/docs/integrations/infrahub-ansible"/>
+                 link="/integrations/infrahub-ansible"/>
                 <IntegrationCard title="Nornir"
                                  svgPath="/img/nornir.png"
                                  description="Infrahub can be used as an inventory source for Nornir."
-                                 link="/docs/integrations/nornir-infrahub"/>
+                                 link="/integrations/nornir-infrahub"/>
                 <IntegrationCard title="Infrahub Sync"
                                  svgPath="/img/sync.svg"
                                  description="A versatile Python package that synchronizes data between a source and a destination system."
-                                 link="/docs/integrations/sync"/>
+                                 link="/integrations/sync"/>
             </div>
         </section>
     );
