@@ -44,7 +44,7 @@ const config: Config = {
       {
         docs: {
           path: "docs",
-          routeBasePath: "docs",
+          routeBasePath: "/",
           sidebarCollapsed: true,
           sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
