@@ -40,6 +40,18 @@
   flex-grow: 1;
 }
 
+html[data-theme='dark'] .heroCard {
+  color: #f5f4f4;
+}
+
+html[data-theme='dark'] .heroCard img {
+  background: #f5f4f4;
+  border-radius: 100%;
+  padding: 1px;
+  margin: 2px;
+  background-size: contain;
+}
+
 .heroCard:hover {
   box-shadow: 1px 0px 16px 0px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
