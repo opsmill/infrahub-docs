@@ -1,3 +1,0 @@
-# Placeholder
-
-To be deleted.
