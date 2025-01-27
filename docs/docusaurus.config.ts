@@ -68,6 +68,17 @@ const config: Config = {
         editUrl: "https://github.com/opsmill/infrahub-demo-dc-fabric/tree/main/docs",
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-emma',
+        path: 'docs-emma',
+        routeBasePath: 'emma',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-emma.ts',
+        editUrl: "https://github.com/opsmill/emma/tree/main/docs",
+      },
+    ],
   ],
   themes: [
     [
@@ -137,6 +148,12 @@ const config: Config = {
               sidebarId: "demoSidebar",
               label: "demo-dc-fabric",
               docsPluginId: "docs-demo",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "emmaSidebar",
+              label: "Emma Experimental Agent",
+              docsPluginId: "docs-emma",
             },
           ],
         },
