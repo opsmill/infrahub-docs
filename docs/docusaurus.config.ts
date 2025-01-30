@@ -79,6 +79,17 @@ const config: Config = {
         editUrl: "https://github.com/opsmill/emma/tree/main/docs",
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-nornir',
+        path: 'docs-nornir',
+        routeBasePath: 'nornir',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-nornir.ts',
+        editUrl: "https://github.com/opsmill/nornir-infrahub/tree/main/docs",
+      },
+    ],
   ],
   themes: [
     [
@@ -132,9 +143,10 @@ const config: Config = {
               docId: 'integrations/sync/readme',
             },
             {
-              type: "doc",
-              label: 'Nornir',
-              docId: 'integrations/nornir-infrahub/readme',
+              type: "docSidebar",
+              sidebarId: "nornirSidebar",
+              label: "Nornir",
+              docsPluginId: "docs-nornir",
             },
           ],
         },
