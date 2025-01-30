@@ -110,11 +110,11 @@ function IntegrationsSection() {
                 <IntegrationCard title="Nornir"
                                  svgPath="/img/nornir.png"
                                  description="Infrahub can be used as an inventory source for Nornir."
-                                 link="/integrations/nornir-infrahub"/>
+                                 link="/nornir/nornir"/>
                 <IntegrationCard title="Infrahub Sync"
                                  svgPath="/img/sync.svg"
                                  description="A versatile Python package that synchronizes data between a source and a destination system."
-                                 link="/integrations/sync"/>
+                                 link="/sync/sync"/>
             </div>
         </section>
     );

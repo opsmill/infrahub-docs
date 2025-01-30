@@ -90,6 +90,17 @@ const config: Config = {
         editUrl: "https://github.com/opsmill/nornir-infrahub/tree/main/docs",
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-sync',
+        path: 'docs-sync',
+        routeBasePath: 'sync',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-sync.ts',
+        editUrl: "https://github.com/opsmill/infrahub-sync/tree/main/docs",
+      },
+    ],
   ],
   themes: [
     [
@@ -138,9 +149,10 @@ const config: Config = {
               docId: 'integrations/infrahub-ansible/readme',
             },
             {
-              type: "doc",
-              label: 'infrahub-sync',
-              docId: 'integrations/sync/readme',
+              type: "docSidebar",
+              sidebarId: "syncSidebar",
+              label: "Infrahub Sync",
+              docsPluginId: "docs-sync",
             },
             {
               type: "docSidebar",
