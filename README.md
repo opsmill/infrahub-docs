@@ -33,3 +33,41 @@ This command generates static content into the `build` directory and can be serv
 ```shell
 npm run serve
 ```
+
+## How to Setup a New Repo
+
+- Create a branch
+- Copy over these files & directories from another repo, like `emma` repo:
+
+```console
+docs/
+.vale
+.vale.ini
+.markdownlint.yml
+.yamllint.yml
+tasks.py
+.github/
+  build-docs.sh
+  file-filters.yml
+  labeler.yml
+  labels.yml
+  workflows/
+    ci.yml (only adding part)
+    sync-docs.yml
+```
+
+- Modify the following:
+
+```console
+docs/
+  docusaurus.config.ts
+  sidebars.ts
+  docs/<projectname>  <— Put docs here
+.github/
+  workflows/
+    ci.yml (only adding part)
+    sync-docs.yml (paths)
+```
+
+- Setup Cloudflare Pages Integration
+- Create PR and test
