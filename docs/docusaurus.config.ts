@@ -101,6 +101,17 @@ const config: Config = {
         editUrl: "https://github.com/opsmill/infrahub-sync/tree/main/docs",
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-ansible',
+        path: 'docs-ansible',
+        routeBasePath: 'sync',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-ansible.ts',
+        editUrl: "https://github.com/opsmill/infrahub-ansible/tree/main/docs",
+      },
+    ],
   ],
   themes: [
     [
@@ -144,9 +155,10 @@ const config: Config = {
           label: 'Integrations',
           items: [
             {
-              type: "doc",
-              label: 'Ansible',
-              docId: 'integrations/infrahub-ansible/readme',
+              type: "docSidebar",
+              sidebarId: "ansibleSidebar",
+              label: "Ansible",
+              docsPluginId: "docs-ansible",
             },
             {
               type: "docSidebar",

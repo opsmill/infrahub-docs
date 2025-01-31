@@ -8,13 +8,14 @@ This website is built using [Docusaurus](https://docusaurus.io/), a modern stati
 
 ### Installation
 
-```shell
+```console
+cd docs
 npm install
 ```
 
 ### Local development
 
-```shell
+```console
 npm start
 ```
 
@@ -22,7 +23,7 @@ This command starts a local development server and opens up a browser window. Mo
 
 ### Build
 
-```shell
+```console
 npm run build
 ```
 
@@ -30,13 +31,13 @@ This command generates static content into the `build` directory and can be serv
 
 ### Serve
 
-```shell
+```console
 npm run serve
 ```
 
 ## How to Setup a New Repo
 
-- Create a branch
+- Create a branch in the <project> to have it's docs built locally
 - Copy over these files & directories from another repo, like `emma` repo:
 
 ```console
@@ -69,5 +70,15 @@ docs/
     sync-docs.yml (paths)
 ```
 
+- `chmod 755 .github/build-docs.sh`
+
+- In `infrahub-docs`:
+
+```console
+docs/sidebars-<projectname>.ts
+docs/docs-<projectname>/<projectname>/readme.mdx <-- Placeholder
+docs/docusaurus.config.ts <-- Add a plugin and navbar entry
+```
+
 - Setup Cloudflare Pages Integration
-- Create PR and test
+- Create PRs and test

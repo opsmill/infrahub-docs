@@ -106,7 +106,7 @@ function IntegrationsSection() {
                 title="Ansible"
                  svgPath="/img/ansible.svg"
                  description="OpsMill maintains the opsmill.infrahub Ansible Collection."
-                 link="/integrations/infrahub-ansible"/>
+                 link="/ansible/ansible"/>
                 <IntegrationCard title="Nornir"
                                  svgPath="/img/nornir.png"
                                  description="Infrahub can be used as an inventory source for Nornir."
