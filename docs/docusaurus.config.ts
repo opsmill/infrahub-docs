@@ -79,6 +79,39 @@ const config: Config = {
         editUrl: "https://github.com/opsmill/emma/tree/main/docs",
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-nornir',
+        path: 'docs-nornir',
+        routeBasePath: 'nornir',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-nornir.ts',
+        editUrl: "https://github.com/opsmill/nornir-infrahub/tree/main/docs",
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-sync',
+        path: 'docs-sync',
+        routeBasePath: 'sync',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-sync.ts',
+        editUrl: "https://github.com/opsmill/infrahub-sync/tree/main/docs",
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-ansible',
+        path: 'docs-ansible',
+        routeBasePath: 'ansible',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-ansible.ts',
+        editUrl: "https://github.com/opsmill/infrahub-ansible/tree/main/docs",
+      },
+    ],
   ],
   themes: [
     [
@@ -122,19 +155,22 @@ const config: Config = {
           label: 'Integrations',
           items: [
             {
-              type: "doc",
-              label: 'Ansible',
-              docId: 'integrations/infrahub-ansible/readme',
+              type: "docSidebar",
+              sidebarId: "ansibleSidebar",
+              label: "Ansible",
+              docsPluginId: "docs-ansible",
             },
             {
-              type: "doc",
-              label: 'infrahub-sync',
-              docId: 'integrations/sync/readme',
+              type: "docSidebar",
+              sidebarId: "syncSidebar",
+              label: "Infrahub Sync",
+              docsPluginId: "docs-sync",
             },
             {
-              type: "doc",
-              label: 'Nornir',
-              docId: 'integrations/nornir-infrahub/readme',
+              type: "docSidebar",
+              sidebarId: "nornirSidebar",
+              label: "Nornir",
+              docsPluginId: "docs-nornir",
             },
           ],
         },
