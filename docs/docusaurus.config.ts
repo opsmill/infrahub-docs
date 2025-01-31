@@ -106,7 +106,7 @@ const config: Config = {
       {
         id: 'docs-ansible',
         path: 'docs-ansible',
-        routeBasePath: 'sync',
+        routeBasePath: 'ansible',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-ansible.ts',
         editUrl: "https://github.com/opsmill/infrahub-ansible/tree/main/docs",
