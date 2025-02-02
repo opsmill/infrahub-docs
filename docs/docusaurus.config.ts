@@ -188,7 +188,7 @@ const config: Config = {
         {
           type: 'dropdown',
           position: 'left',
-          label: 'Demos',
+          label: 'Demos & Examples',
           items: [
             {
               type: "docSidebar",
