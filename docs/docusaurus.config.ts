@@ -65,7 +65,7 @@ const config: Config = {
         routeBasePath: 'demo',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-demo.ts',
-        editUrl: "https://github.com/opsmill/infrahub-demo-dc-fabric/tree/main/docs",
+        // editUrl: "https://github.com/opsmill/infrahub-demo-dc-fabric/tree/main/docs",
       },
     ],
     [
@@ -76,7 +76,7 @@ const config: Config = {
         routeBasePath: 'emma',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-emma.ts',
-        editUrl: "https://github.com/opsmill/emma/tree/main/docs",
+        // editUrl: "https://github.com/opsmill/emma/tree/main/docs",
       },
     ],
     [
@@ -87,7 +87,7 @@ const config: Config = {
         routeBasePath: 'nornir',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-nornir.ts',
-        editUrl: "https://github.com/opsmill/nornir-infrahub/tree/main/docs",
+        // editUrl: "https://github.com/opsmill/nornir-infrahub/tree/main/docs",
       },
     ],
     [
@@ -98,7 +98,7 @@ const config: Config = {
         routeBasePath: 'sync',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-sync.ts',
-        editUrl: "https://github.com/opsmill/infrahub-sync/tree/main/docs",
+        // editUrl: "https://github.com/opsmill/infrahub-sync/tree/main/docs",
       },
     ],
     [
@@ -109,7 +109,18 @@ const config: Config = {
         routeBasePath: 'ansible',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-ansible.ts',
-        editUrl: "https://github.com/opsmill/infrahub-ansible/tree/main/docs",
+        // editUrl: "https://github.com/opsmill/infrahub-ansible/tree/main/docs",
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-schema-library',
+        path: 'docs-schema-library',
+        routeBasePath: 'schema-library',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-schema.ts',
+        // editUrl: "https://github.com/opsmill/schema-library/tree/main/docs",
       },
     ],
   ],
@@ -190,6 +201,12 @@ const config: Config = {
               sidebarId: "emmaSidebar",
               label: "Emma Experimental Agent",
               docsPluginId: "docs-emma",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "schemaSidebar",
+              label: "Schema Library",
+              docsPluginId: "docs-schema-library",
             },
           ],
         },
