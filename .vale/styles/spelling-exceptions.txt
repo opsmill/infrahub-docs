@@ -42,8 +42,6 @@ eslint
 excalidraw
 fanout
 file_path
-generate_artifacts
-get_artifact
 generator_definition
 generator_definitions
 github
@@ -104,7 +102,6 @@ rebased
 Redoc
 repo
 REST
-regenerate_host_artifact
 resources
 schema_mapping
 sdk
