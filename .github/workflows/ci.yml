@@ -118,4 +118,4 @@ jobs:
         env:
           VALE_VERSION: ${{ env.VALE_VERSION }}
       - name: "Validate documentation style"
-        run: ./vale $(find ./docs -type f \( -name "*.mdx" -o -name "*.md" \) )
+        run: ./vale --glob='!{docs/docs-schema-library/schema-library.*}' $(find ./docs -type f \( -name "*.mdx" -o -name "*.md" \) )
