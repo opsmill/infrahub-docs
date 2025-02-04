@@ -11,21 +11,23 @@ Currently, Emma can help you to:
 - Build, Load, and Visualize the Infrahub schema
 
 :::warning
-
 Emma is experimental by design, and may not work as expected. She tests out new ideas before her big brother Otto gets involved and implements them in Infrahub.
-
 :::
 
-![Home page](static/home_page.png)
+![Emma Homepage](static/home_page.png)
 
 ## Getting Started
 
 ### curl quickstart
 
-This command will use the [Infrahub Quickstart](https://docs.infrahub.app/guides/installation#quick-start-via-curl) method to download a Docker Compose file and start Infrahub and Emma. Note the Infrahub version number in the URL should be updated to the [latest version](https://github.com/opsmill/infrahub/tags).
+This command will use the [Infrahub Quickstart](https://docs.infrahub.app/guides/installation#quick-start-via-curl) method to download a Docker Compose file and start Infrahub and Emma.
+
+:::note
+The Infrahub version number in the URL should be updated to the [latest version](https://github.com/opsmill/infrahub/tags).
+:::
 
 ```console
-curl https://infrahub.opsmill.io/1.1.2-emma | docker compose -f - up -d
+curl https://infrahub.opsmill.io/1.1.6-emma | docker compose -f - up -d
 ```
 
 Then connect to the WebUI of [Infrahub](http://localhost:8000) and [Emma](http://localhost:8501)
@@ -34,19 +36,26 @@ Then connect to the WebUI of [Infrahub](http://localhost:8000) and [Emma](http:/
 
 To run Emma locally using Poetry, follow these steps:
 
-1. **Install Dependencies:**
+1. **Clone the Emma repository**
+
+```console
+git clone https://github.com/opsmill/emma.git
+```
+
+2. **Install Dependencies:**
 
  ```console
+ cd emma
  poetry install
  ```
 
-2. **Run the Application:**
+3. **Run the Application:**
 
  ```console
  poetry run streamlit run main.py
  ```
 
-3. **Set Environment Variables:**
+4. **Set Environment Variables:**
 
  Emma uses Infrahub standard environment variables to connect to Infrahub:
 
@@ -59,13 +68,20 @@ To run Emma locally using Poetry, follow these steps:
 
 To run Emma using Docker Compose, follow these steps:
 
-1. **Build and Run the Application:**
+1. **Clone the Emma repository**
+
+```console
+git clone https://github.com/opsmill/emma.git
+```
+
+2. **Build and Run the Application:**
 
  ```console
+ cd emma
  docker compose up --build &
  ```
 
-2. **Connecting to Infrahub Network:**
+3. **Connecting to Infrahub Network:**
 
 If you run Infrahub as another container in the local network, you need to connect Emma to it. After starting both containers, run the following command:
 
