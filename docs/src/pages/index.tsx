@@ -106,7 +106,7 @@ function IntegrationsSection() {
                 title="Ansible"
                  svgPath="/img/ansible.svg"
                  description="OpsMill maintains the opsmill.infrahub Ansible Collection."
-                 link="/ansible/ansible"/>
+                 link="/ansible"/>
                 <IntegrationCard title="Nornir"
                                  svgPath="/img/nornir.png"
                                  description="Infrahub can be used as an inventory source for Nornir."
@@ -114,7 +114,7 @@ function IntegrationsSection() {
                 <IntegrationCard title="Infrahub Sync"
                                  svgPath="/img/sync.svg"
                                  description="A versatile Python package that synchronizes data between a source and a destination system."
-                                 link="/sync/sync"/>
+                                 link="/sync"/>
             </div>
         </section>
     );
