@@ -18,46 +18,18 @@ The goal of this guide is to develop a Python Transform and add it to Infrahub, 
 6. Add the repository to Infrahub as an external repository
 7. Validate that the transform works by using the transform API endpoint
 
-## 1. Loading a schema
+In this guide we are going to work with the builtin `Tag` objects in Infrahub. It won't provide a transform that is very useful, the goal is instead to show how the transforms are created. Once you have mastered the basics you will be ready to go on to create more advanced transforms.
 
-In this guide we are going to work with a very simplistic network device model. I won't provide a transform that is very useful, the goal is instead to show how the transforms are created. Once you have mastered the basics you will be ready to go on to create more advanced transforms.
-
-```yaml
----
-version: "1.0"
-nodes:
-  - name: Device
-    namespace: Network
-    display_labels:
-      - name__value
-    attributes:
-      - name: name
-        kind: Text
-        label: Name
-        optional: false
-        unique: true
-      - name: description
-        kind: Text
-        label: Description
-        optional: true
-```
-
-Store the schema as a YAML file on your local disk, and load the schema into Infrahub using the following command
-
-```bash
-infrahubctl schema load /path/to/schema.yml
-```
-
-## 2. Creating a query to collect the desired data
+## 1. Creating a query to collect the desired data
 
 As the first step we need to have some data in the database to actually query.
 
-Create three devices, called "switch1", "switch2", "switch3", either using the frontend or by submitting three GraphQL mutations as per below (just swapping out the name of the color each time).
+Create three tags, called "red", "green", "blue", either using the frontend or by submitting three GraphQL mutations as per below (just swapping out the name of the color each time).
 
-```graphql
-mutation CreateDevice {
-  NetworkDeviceCreate(
-    data: {name: {value: "switch1"}, description: {value: "This is device switch1"}}
+```graphql #1-2
+mutation CreateTags {
+  BuiltinTagCreate(
+    data: {name: {value: "red"}, description: {value: "The red tag"}}
   ) {
     ok
     object {
@@ -69,9 +41,9 @@ mutation CreateDevice {
 
 The next step is to create a query that returns the data we just created. The rest of this guide assumes that the following query will return a response similar to the response below the query.
 
-```graphql
-query DeviceQuery {
-  NetworkDevice {
+```graphql #1-2
+query TagsQuery {
+  BuiltinTag {
     edges {
       node {
         name {
@@ -91,35 +63,35 @@ Response to the tags query:
 ```json
 {
   "data": {
-    "NetworkDevice": {
+    "BuiltinTag": {
       "edges": [
         {
           "node": {
             "name": {
-              "value": "switch1"
+              "value": "blue"
             },
             "description": {
-              "value": "This is device switch1"
+              "value": "The blue tag"
             }
           }
         },
         {
           "node": {
             "name": {
-              "value": "switch2"
+              "value": "green"
             },
             "description": {
-              "value": "This is device switch2"
+              "value": "The green tag"
             }
           }
         },
         {
           "node": {
             "name": {
-              "value": "switch3"
+              "value": "red"
             },
             "description": {
-              "value": "This is device switch3"
+              "value": "The red tag"
             }
           }
         }
@@ -129,19 +101,19 @@ Response to the tags query:
 }
 ```
 
-While it would be possible to create a transform that targets all of these devices, for example if you want to create a report, the goal for us is to be able to focus on one of these objects. For this reason we need to modify the query from above to take an input parameter so that we can filter the result to what we want.
+While it would be possible to create a transform that targets all of these tags, for example if you want to create a report, the goal for us is to be able to focus on one of these objects. For this reason we need to modify the query from above to take an input parameter so that we can filter the result to what we want.
 
-Create a local directory on your computer.
+Create a local directory on your computer:
 
 ```shell
-mkdir device_config_render
+mkdir tags_transform
 ```
 
-Then save the below query as a text file named `device_config.gql`.
+Then save the below query as a text file named `tags_query.gql`:
 
-```graphql
-query DeviceQuery($name: String!) {
-  NetworkDevice(name__value: $name) {
+```graphql #1-2
+query TagsQuery($tag: String!) {
+  BuiltinTag(name__value: $tag) {
     edges {
       node {
         name {
@@ -156,34 +128,35 @@ query DeviceQuery($name: String!) {
 }
 ```
 
-Here the query will require an input parameter called `$name` what will refer to the name of each device. When we want to query for device switch1, the input variables to the query would look like this:
+Here the query will require an input parameter called `$name` what will refer to the name of each tag. When we want to query for the red tag the input variables to the query would look like this:
 
 ```json
 {
-  "name": "switch1"
+  "tag": "red"
 }
 ```
 
 ## 2. Create the Python transform file
 
-The next step is to create the actual Python transform. The transform is a Python class that inherits from InfrahubTransform from the [Python SDK](../python-sdk). Create a file called `device_config.py`:
+The next step is to create the actual Python transform. The transform is a Python class that inherits from InfrahubTransform from the [Python SDK](../python-sdk). Create a file called `tags_transform.py`:
 
 ```python
 from infrahub_sdk.transforms import InfrahubTransform
 
 
-class DeviceConfigTransform(InfrahubTransform):
+class TagsTransform(InfrahubTransform):
 
-    query = "device_config"
+    query = "tags_query"
+    url = "my-tags"
 
     async def transform(self, data):
-        device = data["NetworkDevice"]["edges"][0]["node"]
-        device_name = device["name"]["value"]
-        device_description = device["description"]["value"]
+        tag = data["BuiltinTag"]["edges"][0]["node"]
+        tag_name = tag["name"]["value"]
+        tag_description = tag["description"]["value"]
 
         return {
-            "device_hostname": device_name,
-            "device_description": f"*{device_description}*"
+            "tag_title": tag_name.title(),
+            "bold_description": f"*{tag_description}*".upper()
         }
 ```
 
@@ -198,7 +171,7 @@ from infrahub_sdk.transforms import InfrahubTransform
 2. We define our own class based on InfrahubTransform.
 
 ```python
-class DeviceConfigTransform(InfrahubTransform):
+class TagsTransform(InfrahubTransform):
 ```
 
 Here we need to note the name of the class as we will need it later, optionally we can just call it `Transform` which is the default name.
@@ -206,28 +179,29 @@ Here we need to note the name of the class as we will need it later, optionally 
 3. We define where data comes from and what API endpoint to use.
 
 ```python
-    query = "device_config"
+    query = "tags_query"
+    url = "my-tags"
 ```
 
-The query part refers to the file device_config.gql that we created earlier.
+The query part refers to the file tags_query.gql that we created earlier. The URL parameter controls what the endpoint will be when you run this transform by targeting the API server.
 
-With this configuration the endpoint of our transform will be [http://localhost:8000/api/transform/python/device_config_transform](http://localhost:8000/api/transform/python/device_config_transform).
+With this configuration the endpoint of our transform will be [http://localhost:8000/api/transform/my-tags](http://localhost:8000/api/transform/my-tags).
 
 4. The transform method
 
 ```python
     async def transform(self, data):
-        device = data["BuiltinTag"]["edges"][0]["node"]
-        device_name = device["name"]["value"]
-        device_description = device["description"]["value"]
+        tag = data["BuiltinTag"]["edges"][0]["node"]
+        tag_name = tag["name"]["value"]
+        tag_description = tag["description"]["value"]
 
         return {
-            "device_hostname": device_name,
-            "device_description": f"*{device_description}*"
+            "tag_title": tag_name.title(),
+            "bold_description": f"*{tag_description}*".upper()
         }
 ```
 
-When running the transform the `data` input variable will consist of the response to the query we created. In this case we return a JSON object consisting of two keys `device_hostname` and `device_description` where we have modified the data in some way. Here you would return data in the format you need.
+When running the transform the `data` input variable will consist of the response to the query we created. In this case we return a JSON object consisting of two keys `tags_title` and `bold_description` where we have modified the data in some way. Here you would return data in the format you need.
 
 :::info
 
@@ -236,9 +210,9 @@ If you are unsure of the format of the data you can set a debug marker when test
 ```python
     async def transform(self, data):
         breakpoint()
-        device = data["BuiltinTag"]["edges"][0]["node"]
-        device_name = device["name"]["value"]
-        device_description = device["description"]["value"]
+        tag = data["BuiltinTag"]["edges"][0]["node"]
+        tag_name = tag["name"]["value"]
+        tag_description = tag["description"]["value"]
 ```
 
 :::
@@ -252,18 +226,18 @@ Create a `.infrahub.yml` file in the root of the directory.
 ```yaml
 ---
 python_transforms:
-  - name: device_config_transform
-    class_name: DeviceConfigTransform
-    file_path: "device_config.py"
+  - name: tags_transform
+    class_name: TagsTransform
+    file_path: "tags_transform.py"
 
 queries:
-  - name: device_config_query
-    file_path: "device_config.gql"
+  - name: tags_query
+    file_path: "tags_query.gql"
 ```
 
 <Tabs>
   <TabItem value="Python transform" default>
-    Two parts here are required, first the `name` of the transform which should be unique across Infrahub and also the `file_path` that should point to the Python file within the repository. In this example we have also defined `class_name`, the reason for this is that we gave our class the name `DeviceConfigTransform` instead of the default `Transform`.
+    Two parts here are required, first the `name` of the transform which should be unique across Infrahub and also the `file_path` that should point to the Python file within the repository. In this example we have also defined `class_name`, the reason for this is that we gave our class the name `TagsTransform` instead of the default `Transform`.
   </TabItem>
   <TabItem value="Queries">
     Here the `name` refers to the query's name and `file_path` should point to the GraphQL file within the repository.
@@ -274,10 +248,10 @@ See [this topic](../topics/infrahub-yml) for a full explanation of everything th
 
 ## 4. Create a Git repository
 
-Within the `device_config_render` folder you should now have 3 files:
+Within the `tags_transform` folder you should now have 3 files:
 
-* `device_config.gql`: Contains the GraphQL query
-* `device_config.py`: Contains the Python code for the transform
+* `tags_query.gql`: Contains the GraphQL query
+* `tags_transform.py`: Contains the Python code for the transform
 * `.infrahub.yml`: Contains the definition for the transform
 
 Before we can test our transform we must add the files to a local Git repository.
@@ -294,26 +268,29 @@ Using infrahubctl you can first verify that the `.infrahub.yml` file is formatte
 
 ```shell title="❯ infrahubctl transform --list"
 Python transforms defined in repository: 1
-device_config_transform (device_config.py::DeviceConfigTransform)
+tags_transform (tags_transform.py::TagsTransform)
 ```
 
 :::info
 Trying to run the transform with just the name will produce an error.
 
-```shell title="❯ infrahubctl transform device_config_transform"
-{'message': "Variable '$name' of required type 'String!' was not provided.", 'locations': [{'line': 1, 'column': 19}]}
+```shell title="❯ infrahubctl transform tags_transform"
+1 error(s) occurred while executing the query
+ - Message: Variable '$tag' of required type 'String!' was not provided.
+   Location: [{'line': 1, 'column': 17}]
+Aborted.
 ```
 
-Here we can see that our query is missing the required input for `$name` which is needed to filter the data.
+Here we can see that our query is missing the required input for `$tag` which is needed to filter the data.
 
 :::
 
 Run the transform and specify the variable name along with the tag we want to target.
 
-```json title="❯ infrahubctl transform device_config_transform name=switch2"
+```json title="❯ infrahubctl transform tags_transform tag=red"
 {
-  "device_description": "*This is device switch2*",
-  "device_hostname": "switch2"
+  "tag_title": "Red",
+  "bold_description": "*THE RED TAG*"
 }
 ```
 
@@ -327,16 +304,17 @@ In order to avoid having the same instructions over and over please refer to the
 
 Once the repository is synced to Infrahub you can access the transform from the API:
 
-```json title="❯ curl http://localhost:8000/api/transform/python/device_config_transform?name=switch2"
+```json title="❯ curl http://localhost:8000/api/transform/my-tags?tag=blue"
 {
-  "device_hostname":"switch2",
-  "device_description":"*This is device switch2*"
+  "tag_title": "Blue",
+  "bold_description": "*THE BLUE TAG*"
 }
 ```
 
-```json title="❯ curl http://localhost:8000/api/transform/python/device_config_transform?name=switch3"
+```json title="❯ curl http://localhost:8000/api/transform/my-tags?tag=red"
 {
-  "device_hostname":"switch3",
-  "device_description":"*This is device switch3*"
+  "tag_title": "Red",
+  "bold_description": "*THE RED TAG*"
 }
+
 ```
