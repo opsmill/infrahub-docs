@@ -58,6 +58,21 @@ const config: Config = {
   ],
   plugins: [
     [
+      '@docusaurus/plugin-client-redirects',
+      {
+        redirects: [
+          {
+            from: '/ansible/ansible/',
+            to: '/ansible/',
+          },
+          {
+            from: '/integrations/infrahub-ansible/',
+            to: '/ansible/',
+          },
+        ],
+      },
+    ],
+    [
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-demo',
