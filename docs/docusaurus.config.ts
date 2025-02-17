@@ -69,6 +69,18 @@ const config: Config = {
             from: '/integrations/infrahub-ansible/',
             to: '/ansible/',
           },
+          {
+            from: '/nornir/nornir/',
+            to: '/nornir/',
+          },
+          {
+            from: '/sync/sync/',
+            to: '/sync/',
+          },
+          {
+            from: '/emma/emma/',
+            to: '/emma/',
+          },
         ],
       },
     ],
