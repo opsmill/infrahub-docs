@@ -174,7 +174,7 @@ from infrahub_sdk.transforms import InfrahubTransform
 
 class DeviceConfigTransform(InfrahubTransform):
 
-    query = "device_config"
+    query = "device_config_query"
 
     async def transform(self, data):
         device = data["NetworkDevice"]["edges"][0]["node"]
@@ -206,10 +206,10 @@ Here we need to note the name of the class as we will need it later, optionally 
 3. We define where data comes from and what API endpoint to use.
 
 ```python
-    query = "device_config"
+    query = "device_config_query"
 ```
 
-The query part refers to the file device_config.gql that we created earlier.
+The query part refers to the the query that we will define in the `.infrahub.yml` repository configuration file later in the guide.
 
 With this configuration the endpoint of our transform will be [http://localhost:8000/api/transform/python/device_config_transform](http://localhost:8000/api/transform/python/device_config_transform).
 
