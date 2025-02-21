@@ -104,17 +104,36 @@ function IntegrationsSection() {
             <div className="row">
                 <IntegrationCard
                 title="Ansible"
-                 svgPath="/img/ansible.svg"
-                 description="OpsMill maintains the opsmill.infrahub Ansible Collection."
-                 link="/ansible"/>
+                    svgPath="/img/ansible.svg"
+                    description="OpsMill maintains the opsmill.infrahub Ansible Collection."
+                    link="/ansible"/>
                 <IntegrationCard title="Nornir"
-                                 svgPath="/img/nornir.png"
-                                 description="Infrahub can be used as an inventory source for Nornir."
-                                 link="/nornir"/>
+                    svgPath="/img/nornir.png"
+                    description="Infrahub can be used as an inventory source for Nornir."
+                    link="/nornir"/>
                 <IntegrationCard title="Infrahub Sync"
-                                 svgPath="/img/sync.svg"
-                                 description="A versatile Python package that synchronizes data between a source and a destination system."
-                                 link="/sync"/>
+                    svgPath="/img/sync.svg"
+                    description="A versatile Python package that synchronizes data between a source and a destination system."
+                    link="/sync"/>
+            </div>
+        </section>
+    );
+}
+
+function OtherSection() {
+    return (
+        <section className="container">
+            <Heading as="h2">{translate({
+                id: 'home.section.other.title',
+                message: 'Other Resources',
+            })}</Heading>
+
+            <div className="row">
+                <IntegrationCard
+                title="Schema Library"
+                    svgPath="/img/yaml.png"
+                    description="A collection of Infrahub schema examples to quickly start from."
+                    link="/schema-library"/>
             </div>
         </section>
     );
@@ -130,6 +149,7 @@ export default function Home(): React.JSX.Element {
             <HomepageHeader/>
             <main>
                 <IntegrationsSection/>
+                <OtherSection/>
             </main>
         </Layout>
     );
