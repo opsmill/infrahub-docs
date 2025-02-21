@@ -193,6 +193,10 @@ const config: Config = {
               docsPluginId: "docs-python-sdk",
             },
             {
+              to: "infrahubctl",
+              label: "infrahubctl CLI Tool",
+            },
+            {
               type: "docSidebar",
               sidebarId: "emmaSidebar",
               label: "Infrahub Assistant | Emma",
