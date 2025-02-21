@@ -5,7 +5,7 @@ import globalVars from './globalVars'
 
 const config: Config = {
   title: "Infrahub Documentation",
-  tagline: "Explore our guides and examples to use Infrahub.",
+  tagline: "Explore our guides and examples for Infrahub",
   favicon: "img/favicon.ico",
   scripts: process.env.ANALYTICS ? [
     {
@@ -17,16 +17,10 @@ const config: Config = {
     }
   ] : [],
 
-  // Set the production url of your site here
   url: process.env.DOCS_IN_APP ? "http://localhost:8000" : "https://docs.infrahub.app",
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: process.env.DOCS_IN_APP ? "/docs/" : "/",
-
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: "opsmill", // Usually your GitHub org/user name.
-  projectName: "infrahub", // Usually your repo name.
+  organizationName: "opsmill",
+  projectName: "infrahub",
 
   onBrokenLinks: "throw",
   onBrokenAnchors: "throw",
@@ -190,13 +184,19 @@ const config: Config = {
         {
           type: 'dropdown',
           position: 'left',
-          label: 'Python SDK',
+          label: 'Tools & SDKs',
           items: [
             {
               type: "docSidebar",
               sidebarId: "PythonSdkSidebar",
               label: "Python SDK Docs",
               docsPluginId: "docs-python-sdk",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "emmaSidebar",
+              label: "Infrahub Assistant | Emma",
+              docsPluginId: "docs-emma",
             },
           ],
         },
@@ -235,12 +235,6 @@ const config: Config = {
               sidebarId: "demoSidebar",
               label: "demo-dc-fabric",
               docsPluginId: "docs-demo",
-            },
-            {
-              type: "docSidebar",
-              sidebarId: "emmaSidebar",
-              label: "Emma Experimental Agent",
-              docsPluginId: "docs-emma",
             },
             {
               type: "docSidebar",
