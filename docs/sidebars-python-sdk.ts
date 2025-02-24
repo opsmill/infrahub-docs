@@ -1,13 +1,13 @@
 import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
-  PythonSdkSidebar: [
+  pythonSdkSidebar: [
     {
       type: 'category',
       label: 'Python SDK',
       link: {
         type: 'doc',
-        id: 'readme'
+        id: 'introduction',
       },
       items: [
         {
@@ -23,26 +23,26 @@ const sidebars: SidebarsConfig = {
             'guides/tracking',
             'guides/batch',
             'guides/object-storage',
-            'guides/resource-manager'
+            'guides/resource-manager',
           ],
         },
         {
           type: 'category',
           label: 'Topics',
           items: [
-            'topics/tracking'
+            'topics/tracking',
           ],
         },
         {
           type: 'category',
           label: 'Reference',
           items: [
-            'reference/config'
+            'reference/config',
           ],
         },
       ],
     },
-  ]
+  ],
 };
 
 export default sidebars;
