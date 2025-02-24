@@ -4,7 +4,7 @@ const sidebars: SidebarsConfig = {
   pythonSdkSidebar: [
     {
       type: 'category',
-      label: 'Python SDK',
+      label: 'Python SDK docs',
       link: {
         type: 'doc',
         id: 'introduction',

@@ -5,7 +5,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'doc',
       id: 'infrahubctl',
-      label: 'Infrahubctl',
+      label: 'Infrahubctl CLI Tool',
     },
     {
       type: 'category',
