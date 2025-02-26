@@ -1,7 +1,17 @@
 import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
-import globalVars from './globalVars'
+import globalVars from './globalVars';
+import path from 'path';
+
+function getDocsRelative(filePath) {
+  const rootDocsDir = path.join(process.cwd(), 'docs');
+  const currentDir = path.dirname(filePath);
+  const nestedDocsDir = path.join(rootDocsDir, 'docs');
+  const relativePath = path.relative(currentDir, nestedDocsDir);
+  const segments = relativePath.split(path.sep);
+  return '../'.repeat(segments.length - 1);
+}
 
 const config: Config = {
   title: "Infrahub Documentation",
@@ -149,11 +159,21 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-python-sdk',
-        path: 'docs-python-sdk',
+        path: 'docs-python-sdk/python-sdk',
         routeBasePath: 'python-sdk',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-python-sdk.ts',
         // editUrl: "https://github.com/opsmill/infrahub-python-sdk/main/docs",
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'infrahubctl',
+        path: 'docs-python-sdk/infrahubctl',
+        routeBasePath: 'infrahubctl',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-infrahubctl.ts',
       },
     ],
   ],
@@ -188,20 +208,22 @@ const config: Config = {
           items: [
             {
               type: "docSidebar",
-              sidebarId: "PythonSdkSidebar",
-              label: "Python SDK Docs",
+              sidebarId: "pythonSdkSidebar",
+              label: "Python SDK",
               docsPluginId: "docs-python-sdk",
             },
             {
-              to: "infrahubctl",
-              label: "infrahubctl CLI Tool",
-            },
+              type: "docSidebar",
+              sidebarId: "infrahubctlSidebar",
+              label: "Infrahubctl",
+              docsPluginId: "infrahubctl",
+	    },
             {
               type: "docSidebar",
               sidebarId: "emmaSidebar",
               label: "Infrahub Assistant | Emma",
               docsPluginId: "docs-emma",
-            },
+            }, 
           ],
         },
         {
@@ -280,9 +302,12 @@ const config: Config = {
     preprocessor: ({ filePath, fileContent }) => {
       console.log(`Processing ${filePath}`);
       const transformedContent = fileContent.replace(/\$\(\s*(\w+)\s*\)/g, (match, variableName) => {
+       //console.log(`Found variable: ${variableName}`);
+        if (variableName === 'base_url' && globalVars.base_url === 'RELATIVE') {
+          return getDocsRelative(filePath);
+        }
         return globalVars[variableName] || match;
       });
-
       return transformedContent;
     },
   },

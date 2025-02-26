@@ -195,9 +195,7 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str):
     async for node, _ in batch.execute():
         prepare_log(node, log)
 
-    account_security = store.get(
-        key="security-builder", kind=CoreAccount, raise_when_missing=True
-    )
+    account_security = store.get(key="security-builder", kind=CoreAccount, raise_when_missing=True)
 
     # ------------------------------------------
     # Create Status, Role & Tags
@@ -303,9 +301,7 @@ async def run(client: InfrahubClient, log: logging.Logger, branch: str):
 
     log.info("Creating IP Address, FQDNs Prefix")
     for ip_address in EXTERNAL_IPS:
-        await create_infra_ip(
-            client, branch, ip_address, ip_address, STATUSES, account_security.id, batch
-        )
+        await create_infra_ip(client, branch, ip_address, ip_address, STATUSES, account_security.id, batch)
 
     for ip_range in INTERNAL_RANGES:
         await create_infra_ip(
