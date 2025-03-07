@@ -265,4 +265,3 @@ const sidebars: SidebarsConfig = {
     'faq/faq',
   ],
 };
-docs / docs / release - notes / infrahub / release - 1_1_7.mdx
