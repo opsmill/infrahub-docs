@@ -265,3 +265,5 @@ const sidebars: SidebarsConfig = {
     'faq/faq',
   ],
 };
+
+export default sidebars;
