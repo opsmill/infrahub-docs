@@ -37,6 +37,7 @@ const config: Config = {
   onBrokenMarkdownLinks: "throw",
   onDuplicateRoutes: "throw",
   noIndex: false,
+  trailingSlash: false,
 
   i18n: {
     defaultLocale: "en",
@@ -97,7 +98,6 @@ const config: Config = {
         routeBasePath: 'demo',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-demo.ts',
-        // editUrl: "https://github.com/opsmill/infrahub-demo-dc-fabric/tree/main/docs",
       },
     ],
     [
@@ -108,7 +108,6 @@ const config: Config = {
         routeBasePath: 'emma',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-emma.ts',
-        // editUrl: "https://github.com/opsmill/emma/tree/main/docs",
       },
     ],
     [
@@ -119,7 +118,6 @@ const config: Config = {
         routeBasePath: 'nornir',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-nornir.ts',
-        // editUrl: "https://github.com/opsmill/nornir-infrahub/tree/main/docs",
       },
     ],
     [
@@ -130,7 +128,6 @@ const config: Config = {
         routeBasePath: 'sync',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-sync.ts',
-        // editUrl: "https://github.com/opsmill/infrahub-sync/tree/main/docs",
       },
     ],
     [
@@ -141,7 +138,6 @@ const config: Config = {
         routeBasePath: 'ansible',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-ansible.ts',
-        // editUrl: "https://github.com/opsmill/infrahub-ansible/tree/main/docs",
       },
     ],
     [
@@ -152,7 +148,6 @@ const config: Config = {
         routeBasePath: 'schema-library',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-schema.ts',
-        // editUrl: "https://github.com/opsmill/schema-library/tree/main/docs",
       },
     ],
     [
@@ -163,7 +158,6 @@ const config: Config = {
         routeBasePath: 'python-sdk',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-python-sdk.ts',
-        // editUrl: "https://github.com/opsmill/infrahub-python-sdk/main/docs",
       },
     ],
     [
@@ -183,7 +177,7 @@ const config: Config = {
       {
         indexBlog: false,
         indexDocs: true,
-        docsRouteBasePath: "/", // this needs to be the same as routeBasePath
+        docsRouteBasePath: "/",
         hashed: true,
       }
     ],
@@ -217,13 +211,13 @@ const config: Config = {
               sidebarId: "infrahubctlSidebar",
               label: "Infrahubctl",
               docsPluginId: "infrahubctl",
-	    },
+      },
             {
               type: "docSidebar",
               sidebarId: "emmaSidebar",
               label: "Infrahub Assistant | Emma",
               docsPluginId: "docs-emma",
-            }, 
+            },
           ],
         },
         {
