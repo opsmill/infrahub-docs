@@ -211,7 +211,7 @@ const config: Config = {
               sidebarId: "infrahubctlSidebar",
               label: "Infrahubctl",
               docsPluginId: "infrahubctl",
-      },
+        },
             {
               type: "docSidebar",
               sidebarId: "emmaSidebar",
