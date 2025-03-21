@@ -1,0 +1,4 @@
+[submodule "infrahub"]
+	path = infrahub
+	branch = stable
+	url = https://github.com/opsmill/infrahub.git
