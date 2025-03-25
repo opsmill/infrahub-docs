@@ -86,8 +86,8 @@ poetry run invoke load-schema load-data
 > The example below creates the Layer2 network service and a another Layer3 on topology fra05-pod1
 
 ```shell
-poetry run infrahubctl run generators/generate_network-services.py topology=fra05-pod1 type=layer2
-poetry run infrahubctl run generators/generate_network-services.py topology=fra05-pod1 type=layer3 vrf=production
+poetry run infrahubctl run generators/generate_network_services.py topology=fra05-pod1 type=layer2
+poetry run infrahubctl run generators/generate_network_services.py topology=fra05-pod1 type=layer3 vrf=production
 ```
 
 ### 4. Render artifacts
