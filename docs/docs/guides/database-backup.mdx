@@ -47,6 +47,7 @@ python -m utilities.db_backup neo4j restore /infrahub_backups --database-cypher-
 In this example, I am restoring `.backup` files that exist in the `/infrahub_backups` directory and my Infrahub database container uses a non-standard port for cypher access: `9876` instead of `7687`.
 
 ## Cluster Database backup and restore examples <EnterpriseBadge />
+
 ### Cluster topology
 
 | Node             | Role     |
@@ -55,7 +56,6 @@ In this example, I am restoring `.backup` files that exist in the `/infrahub_bac
 | `database-core2` | Follower |
 | `database-core3` | Follower |
 
-
 ### Context
 
 We are going to back up the Neo4j database from `database-core2` and restore it on `database-core3`, after having dropped the Neo4j database cluster-wide.
@@ -63,7 +63,6 @@ We are going to back up the Neo4j database from `database-core2` and restore it 
 :::caution Important
 Always run backup/restore commands as the `neo4j` user inside the container to avoid permission issues with the data files.
 :::
-
 
 ### Step 1: Create backup from database-core2
 
@@ -132,6 +131,7 @@ Run the restore command:
 neo4j-admin database restore \
   --from-path=/var/lib/neo4j/neo4j-2025-03-24T19-57-18.backup neo4j
 ```
+
 <center>
 ![Restore database](../media/guides/database_backup_restaure_step3.png)
 </center>
@@ -170,6 +170,7 @@ OPTIONS {
   existingDataSeedInstance: 'd05fce79-e63e-485a-9ce7-1abbf9d18fce'
 };
 ```
+
 <center>
 ![Choose seed database](../media/guides/database_backup_restaure_step7.png)
 </center>
@@ -181,6 +182,7 @@ Check that the database is coming online:
 ```bash
 SHOW DATABASES;
 ```
+
 <center>
 ![Online database](../media/guides/database_backup_restaure_step8_1.png)
 </center>
@@ -190,6 +192,7 @@ Then validate cluster sync status:
 ```bash
 SHOW SERVERS;
 ```
+
 <center>
 ![Status sync servers](../media/guides/database_backup_restaure_step8_2.png)
 </center>
