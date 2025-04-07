@@ -20,9 +20,18 @@ Clone the GitHub repository to the server you will run this demo on:
 git clone https://github.com/opsmill/infrahub-demo-dc-fabric.git
 ```
 
-### Requirements
+### Prerequisites
 
-Please ensure you have installed the [Infrahub docker-compose requirements](https://docs.infrahub.app/guides/installation#docker-compose).
+Before you get started, make sure the following tools are installed:
+
+- ✅ **Infrahub Docker Compose Requirements**
+  Follow the [Infrahub installation guide](https://docs.infrahub.app/guides/installation#docker-compose) to set up the necessary Docker Compose environment.
+
+- 🐍 **Poetry**
+  Install Poetry by following the [official installation guide](https://python-poetry.org/docs).
+
+- 🧪 **Containerlab (For Lab Testing)**
+  If you plan to run lab topologies, you'll also need [Containerlab](https://containerlab.dev/install/).
 
 ### Set environmental variables
 
@@ -146,7 +155,9 @@ poetry run infrahubctl branch create test2
 
 ### 10. Deploy your environment to ContainerLabs
 
-The Containerlab generator automatically generates a Containerlab topology artifact for every topology. Every device has its startup configuration as an artifact.
+Infrahub automatically generates a Containerlab topology for each defined topology. This topology is attached as an artifact to the corresponding topology object. Each device also includes its own startup configuration, stored as a separate artifact.
+
+Using the Containerlab CLI, we can deploy the lab—this spins up all devices as Docker containers and loads their respective startup configurations.
 
 ```shell
 # Download all artifacts automatically to ./generated-configs/
@@ -154,4 +165,21 @@ poetry run python3 scripts/get_configs.py
 
 # Start the Containerlab
 sudo -E containerlab deploy -t ./generated-configs/clab/fra05-pod1.yml --reconfigure
+```
+
+Now you can log in from any device with your SSH client!
+
+:::important
+
+username: `admin` - password: `admin`
+
+DNS entries follow this pattern: `clab-demo-dc-fabric-$nodeName`
+
+:::
+
+```shell
+ssh admin@clab-demo-dc-fabric-fra05-pod1-spine1
+(admin@clab-demo-dc-fabric-fra05-pod1-spine1) Password:
+
+fra05-pod1-spine1>
 ```
