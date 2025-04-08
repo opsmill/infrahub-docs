@@ -1,7 +1,6 @@
 agent
 Alibaba
 Ansible
-anonymized
 append_git_suffix
 APIs
 artifact_definitions
@@ -134,7 +133,6 @@ Upserting
 upserting
 uuid
 UUID
-UUIDs
 validators
 Version Control
 Vitest
