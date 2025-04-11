@@ -274,7 +274,9 @@ If your repository is private on Gitlab, or if you want to setup a (non read-onl
 
 Project access tokens are scoped to the project in Gitlab.
 
-You should select the `read_repository` scope for the access token if you want to set up the project as a ReadOnlyRepository. For a normal Repository you should select the `read_repository` and `write_repository` scopes.
+You should select the `read_repository` scope for the access token if you want to set up the project as a ReadOnlyRepository.
+
+For a normal Repository you should select the `read_repository` and `write_repository` scopes.
 
 The role of the access token should be set to `Developer` or a role with similar permissions.
 
@@ -295,7 +297,7 @@ The role of the access token should be set to `Developer` or a role with similar
 </details>
 
 :::info
-Personal access tokens, Impersonation tokens or using username/password could also work, depending on your setup. However we strongly advise against there usage as their are scoped to a user account and not a specific repository.
+Personal access tokens, Impersonation tokens or using username/password could also work, depending on your setup. However we strongly advise against there usage as they are scoped to a user account and not a specific repository.
 :::
 
 ## Installing custom CA certificates
