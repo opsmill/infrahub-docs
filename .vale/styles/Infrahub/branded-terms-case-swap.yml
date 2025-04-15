@@ -10,7 +10,7 @@ swap:
   (?:[^"]docker): Docker
   (?:[Dd]ockerhub): DockerHub
   (?:[^/][Gg]ithub): GitHub
-  (?:[^#][Gg]itlab): GitLab
+  (?:[Gg]itlab): GitLab
   (?:gitpod): GitPod
   (?:grafana): Grafana
   (?:[^/][Gg]raphql): GraphQL
