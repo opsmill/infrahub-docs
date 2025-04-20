@@ -1,4 +1,6 @@
-name: Upload docs to Custom GPT
+---
+name: Upload docs to Infrahub AI GPT
+# yamllint disable rule:truthy rule:truthy rule:line-length
 
 on:
   push:
