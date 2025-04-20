@@ -1,0 +1,34 @@
+name: Upload docs to Custom GPT
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**.md'
+      - 'docs/**.mdx'
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          git clone https://github.com/mpociot/chatgpt-file-uploader.git
+          cd chatgpt-file-uploader
+          npm install
+
+      - name: Upload docs to GPT
+        env:
+          SESSION_TOKEN: ${{ secrets.CHATGPT_SESSION_TOKEN }}
+          GPT_ID: ${{ secrets.CHATGPT_GPT_ID }}
+        run: |
+          cd chatgpt-file-uploader
+          node upload.js ../docs

@@ -269,6 +269,11 @@ const config: Config = {
           position: "right",
         },
         {
+          label: 'Ask Infrahub AI',
+          href: 'https://chatgpt.com/g/g-6805537bcda4819192c7895cc68a3148-infrahub-ai',
+          position: 'right',
+        },
+        {
           href: "https://github.com/opsmill/infrahub",
           position: "right",
           className: "header-github-link",
