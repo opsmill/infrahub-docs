@@ -99,6 +99,7 @@ The example below creates the topology fra05-pod1
 
 ### 4. Create a new l2 or l3 service
 
+In the menu navigate to **Network Service** > **Network Service** and click on the **Add Network Service** button
 [http://localhost:8000/objects/TopologyNetworkService](http://localhost:8000/objects/TopologyNetworkService)
 
 ![service](./img/service.png)
@@ -109,7 +110,15 @@ The example below creates the Layer2 network service and a another Layer3 on top
 
 :::
 
-### 5. Create a proposed change
+### 5. Add the newly created service to the `network_services` group
+
+In the menu navigate to **Object Management** > **Groups**.
+
+Search for the group `network_services` and click on it to open the group's detailed view.
+
+Open the **members** tab, click the **Add Members** button and add your newly created L2 or L3 network service.
+
+### 6. Create a proposed change
 
 ![proposed change](./img/pc.png)
 
@@ -122,7 +131,7 @@ This command will run the generator and render the artifacts
 ![diff](./img/diff.png)
 ![artifact](./img/artifact.png)
 
-### 6. Try out our pytest plugin
+### 7. Try out our pytest plugin
 
 :::note
 
@@ -139,7 +148,7 @@ The command will use our Infrahub pytest plugin. It will run the different test 
 pytest -v ./tests
 ```
 
-### 7. Create a new Branch
+### 8. Create a new Branch
 
 Create a new branch `test2` in the UI, or if you prefer to use our SDK in CLI:
 
