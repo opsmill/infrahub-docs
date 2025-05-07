@@ -64,6 +64,7 @@ const sidebars: SidebarsConfig = {
       },
       items: [
         'guides/installation',
+        'guides/installation-enterprise',
         'guides/create-schema',
         'guides/import-schema',
         'guides/menu',
@@ -84,6 +85,7 @@ const sidebars: SidebarsConfig = {
         'guides/sso',
         'guides/check',
         'guides/upgrade',
+        'guides/upgrade-enterprise',
         'guides/webhooks',
       ],
     },
@@ -218,6 +220,8 @@ const sidebars: SidebarsConfig = {
             slug: 'release-notes/infrahub',
           },
           items: [
+            'release-notes/infrahub/release-1_2_9',
+            'release-notes/infrahub/release-1_2_8',
             'release-notes/infrahub/release-1_2_7',
             'release-notes/infrahub/release-1_2_6',
             'release-notes/infrahub/release-1_2_5',
