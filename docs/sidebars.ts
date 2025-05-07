@@ -64,6 +64,7 @@ const sidebars: SidebarsConfig = {
       },
       items: [
         'guides/installation',
+        'guides/installation-enterprise',
         'guides/create-schema',
         'guides/import-schema',
         'guides/menu',
@@ -84,6 +85,7 @@ const sidebars: SidebarsConfig = {
         'guides/sso',
         'guides/check',
         'guides/upgrade',
+        'guides/upgrade-enterprise',
         'guides/webhooks',
       ],
     },

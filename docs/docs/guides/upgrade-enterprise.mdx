@@ -1,5 +1,5 @@
 ---
-title: Upgrade Infrahub Community
+title: Upgrade Infrahub Enterprise
 ---
 
 import Tabs from '@theme/Tabs';
@@ -8,7 +8,7 @@ import TabItem from '@theme/TabItem';
 The process to migrate your instance of Infrahub to the latest version will vary depending on your deployment of Infrahub.
 However, at a high-level, it will involve getting the latest version of the Infrahub code, and then performing any needed Database Migrations and Schema updates.
 
-For installation instructions, please refer to our [Installation Guide](./installation).
+For installation instructions, please refer to our [Enterprise Installation Guide](./installation-enterprise).
 
 Follow the instructions below for your current release version and deployment method.
 
@@ -29,7 +29,7 @@ In version 1.2 the upgrade process has been streamlined with a unified upgrade c
     docker compose down
 
     # Pull the new docker-compose file
-    curl https://infrahub.opsmill.io > docker-compose.yml
+    curl https://infrahub.opsmill.io/enterprise > docker-compose.yml
 
     # Run the unified upgrade command
     docker compose run infrahub-server infrahub upgrade
@@ -84,7 +84,7 @@ If the core schema is reported to have been modified during the upgrade process 
     docker compose down
 
     # Pull the new docker-compose file
-    curl https://infrahub.opsmill.io > docker-compose.yml
+    curl https://infrahub.opsmill.io/enterprise > docker-compose.yml
 
     # Run database migrations and schema update
     docker compose run infrahub-server infrahub db migrate
