@@ -1,0 +1,31 @@
+---
+name: CI Failure Notification
+# yamllint disable rule:truthy rule:truthy rule:line-length
+
+on:
+  workflow_run:
+    # List the workflows you want to watch
+    workflows:
+      - "Build and Deploy Docusaurus"
+    types:
+      - completed
+
+jobs:
+  notify:
+    # Only run this job if the triggering workflow FAILED
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v2.1.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: >
+              :x: *CI Failed*
+              Workflow: `${{ github.event.workflow_run.name }}`
+              Repository: `${{ github.repository }}`
+              Branch: `${{ github.event.workflow_run.head_branch }}`
+              <${{ github.event.workflow_run.html_url }}|View run details>
