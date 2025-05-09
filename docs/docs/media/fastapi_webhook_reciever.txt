@@ -1,11 +1,8 @@
-import base64
-import hashlib
 import hmac
-import json
-
+import hashlib
+import base64
 from fastapi import FastAPI, Request, HTTPException
 import uvicorn
-
 
 app = FastAPI()
 SHARED_KEY = b"supersecretkey"
@@ -30,7 +27,6 @@ async def catch_all(request: Request):
     message_id = headers.get("webhook-id")
     timestamp = headers.get("webhook-timestamp")
     received_signature = headers.get("webhook-signature")
-    payload_json = payload_bytes.decode()
     payload = await request.json()
 
     if not all([message_id, timestamp, received_signature, payload]):
@@ -38,7 +34,7 @@ async def catch_all(request: Request):
             status_code=400, detail="Missing required headers or payload"
         )
 
-    if not verify_signature(message_id, timestamp, payload_json, received_signature):
+    if not verify_signature(message_id, timestamp, payload, received_signature):
         raise HTTPException(status_code=403, detail="Invalid webhook signature")
 
     return {"status": "success", "message": "Webhook received and verified"}
