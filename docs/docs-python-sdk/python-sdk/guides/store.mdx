@@ -81,8 +81,8 @@ Objects are stored in the following scenario:
 
 - Objects that get created using the SDK
 
-<tabs groupid="async-sync">
-  <tabitem value="async" default>
+<Tabs groupId="async-sync">
+  <TabItem value="Async" default>
 
   ```python
   tag = await client.create("BuiltinTag", name="BLACK")
@@ -90,8 +90,8 @@ Objects are stored in the following scenario:
   tag_in_store = client.store.get(key=tag.id)
   ```
 
-  </tabitem>
-  <tabitem value="sync" default>
+  </TabItem>
+  <TabItem value="Sync" default>
 
   ```python
   tag = client.create("BuiltinTag", name="BLACK")
@@ -99,15 +99,15 @@ Objects are stored in the following scenario:
   tag_in_store = client.store.get(key=tag.id)
   ```
 
-  </tabitem>
-</tabs>
+  </TabItem>
+</Tabs>
 
 ## Retrieving objects from the store
 
 You can retrieve objects from the store using their `id` or `hfid`. When using the `hfid`, we also have to provide the `kind` of the object that we want to retrieve.
 
-<tabs groupid="async-sync">
-  <tabitem value="async" default>
+<Tabs groupId="async-sync">
+  <TabItem value="Async" default>
 
   ```python
   tag = await client.get("BuiltinTag", name__value="BLACK")
@@ -119,8 +119,8 @@ You can retrieve objects from the store using their `id` or `hfid`. When using t
   tag == tag_in_store
   ```
 
-  </tabitem>
-  <tabitem value="sync" default>
+  </TabItem>
+  <TabItem value="Sync" default>
 
   ```python
   tag = client.get("BuiltinTag", name__value="BLACK")
@@ -132,8 +132,8 @@ You can retrieve objects from the store using their `id` or `hfid`. When using t
   tag == tag_in_store
   ```
 
-  </tabitem>
-</tabs>
+  </TabItem>
+</Tabs>
 
 ## Manually storing objects in the store
 
