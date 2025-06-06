@@ -37,11 +37,11 @@ function HomepageHeader() {
                         </Link>
                         <Link
                             className={clsx(styles.heroButton, "button button--secondary button--lg")}
-                            to="https://demo.infrahub.app/"
+                            to="https://sandbox.infrahub.app/"
                         >
                             {translate({
                                 id: 'home.header.sandbox',
-                                message: 'Explore Live Demo',
+                                message: 'Explore Live Sandbox',
                             })}
                             <ArrowRightIcon/>
                         </Link>
