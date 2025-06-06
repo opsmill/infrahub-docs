@@ -67,6 +67,10 @@ const config: Config = {
       '@docusaurus/plugin-client-redirects',
       {
         redirects: [
+          // {
+          //   from: '/',
+          //   to: '/docs/home',
+          // },
           {
             from: '/ansible/ansible/',
             to: '/ansible/',
@@ -211,7 +215,7 @@ const config: Config = {
               sidebarId: "infrahubctlSidebar",
               label: "Infrahubctl",
               docsPluginId: "infrahubctl",
-        },
+            },
             {
               type: "docSidebar",
               sidebarId: "emmaSidebar",
@@ -296,7 +300,7 @@ const config: Config = {
     preprocessor: ({ filePath, fileContent }) => {
       console.log(`Processing ${filePath}`);
       const transformedContent = fileContent.replace(/\$\(\s*(\w+)\s*\)/g, (match, variableName) => {
-       //console.log(`Found variable: ${variableName}`);
+        //console.log(`Found variable: ${variableName}`);
         if (variableName === 'base_url' && globalVars.base_url === 'RELATIVE') {
           return getDocsRelative(filePath);
         }
