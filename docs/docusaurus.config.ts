@@ -67,10 +67,10 @@ const config: Config = {
       '@docusaurus/plugin-client-redirects',
       {
         redirects: [
-          {
-            from: '/',
-            to: '/docs/home',
-          },
+          // {
+          //   from: '/',
+          //   to: '/docs/home',
+          // },
           {
             from: '/ansible/ansible/',
             to: '/ansible/',
