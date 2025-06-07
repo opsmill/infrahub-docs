@@ -53,7 +53,7 @@ tasks.py
   labeler.yml
   labels.yml
   workflows/
-    ci.yml (only adding part)
+    ci.yml ## only adding part
     sync-docs.yml
 ```
 
@@ -63,22 +63,25 @@ tasks.py
 docs/
   docusaurus.config.ts
   sidebars.ts
-  docs/<projectname>  <— Put docs here
+  docs/  ## Put docs here
 .github/
   workflows/
-    ci.yml (only adding part)
-    sync-docs.yml (paths)
+    ci.yml ## only adding part
+    sync-docs.yml ## paths
 ```
 
 - `chmod 755 .github/build-docs.sh`
 
-- In `infrahub-docs`:
+### In `infrahub-docs` modify the following
 
 ```console
-docs/sidebars-<projectname>.ts
-docs/docs-<projectname>/<projectname>/readme.mdx <-- Placeholder
-docs/docusaurus.config.ts <-- Add a plugin and navbar entry
+touch docs/sidebars-<projectname>.ts
+mkdir docs/docs-<projectname>
+touch docs/docs-<projectname>/readme.mdx ### Placeholder
+vi docs/docusaurus.config.ts ### Add a plugin and navbar entry
 ```
+
+### Remaining tasks
 
 - Setup Cloudflare Pages Integration
 - Create PRs and test
