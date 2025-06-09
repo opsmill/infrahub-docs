@@ -174,6 +174,16 @@ const config: Config = {
         sidebarPath: './sidebars-infrahubctl.ts',
       },
     ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-service-catalog',
+        path: 'docs-service-catalog',
+        routeBasePath: 'demo-service-catalog',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-service-catalog.ts',
+      },
+    ],
   ],
   themes: [
     [
@@ -259,6 +269,12 @@ const config: Config = {
               sidebarId: "demoSidebar",
               label: "demo-dc-fabric",
               docsPluginId: "docs-demo",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "servicecatalogSidebar",
+              label: "demo-service-catalog",
+              docsPluginId: "docs-service-catalog",
             },
             {
               type: "docSidebar",
