@@ -13,8 +13,8 @@ This repository is a proof of concept for service catalog using Infrahub and Str
 Clone the GitHub repository to the server you will run this demo on:
 
 ```shell
-git clone https://github.com/opsmill/poc-service-catalog.git
-cd poc-service-catalog
+git clone https://github.com/opsmill/infrahub-demo-service-catalog.git
+cd infrahub-demo-service-catalog
 ```
 
 ### Prerequisites
@@ -61,7 +61,7 @@ infrahubctl object load data/
 ### Connect read-only repository
 
 ```shell
-infrahubctl repository add --ref main --read-only infrahub-demo https://github.com/opsmill/poc-service-catalog.git
+infrahubctl repository add --ref main --read-only infrahub-demo https://github.com/opsmill/infrahub-demo-service-catalog.git
 ```
 
 ### Spin service catalog app

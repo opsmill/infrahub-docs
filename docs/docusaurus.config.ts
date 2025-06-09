@@ -179,7 +179,7 @@ const config: Config = {
       {
         id: 'docs-service-catalog',
         path: 'docs-service-catalog',
-        routeBasePath: 'service-catalog',
+        routeBasePath: 'demo-service-catalog',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-service-catalog.ts',
       },
@@ -273,7 +273,7 @@ const config: Config = {
             {
               type: "docSidebar",
               sidebarId: "servicecatalogSidebar",
-              label: "poc-service-catalog",
+              label: "demo-service-catalog",
               docsPluginId: "docs-service-catalog",
             },
             {
