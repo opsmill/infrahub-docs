@@ -68,6 +68,22 @@ const config: Config = {
       {
         redirects: [
           {
+            from: '/overview/schema',
+            to: '/getting-started/overview',
+          },
+          {
+            from: '/overview/versioning',
+            to: '/getting-started/overview',
+          },
+          {
+            from: '/overview/generators',
+            to: '/getting-started/overview',
+          },
+          {
+            from: '/python-sdk',
+            to: '/python-sdk/introduction',
+          },
+          {
             from: '/python-sdk',
             to: '/python-sdk/introduction',
           },
