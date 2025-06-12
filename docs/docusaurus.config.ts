@@ -84,10 +84,6 @@ const config: Config = {
             to: '/python-sdk/introduction',
           },
           {
-            from: '/python-sdk',
-            to: '/python-sdk/introduction',
-          },
-          {
             from: '/infrahubctl',
             to: '/infrahubctl/infrahubctl',
           },
