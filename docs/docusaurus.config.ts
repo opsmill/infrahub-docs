@@ -67,10 +67,26 @@ const config: Config = {
       '@docusaurus/plugin-client-redirects',
       {
         redirects: [
-          // {
-          //   from: '/',
-          //   to: '/docs/home',
-          // },
+          {
+            from: '/overview/schema',
+            to: '/getting-started/overview',
+          },
+          {
+            from: '/overview/versioning',
+            to: '/getting-started/overview',
+          },
+          {
+            from: '/overview/generators',
+            to: '/getting-started/overview',
+          },
+          {
+            from: '/python-sdk',
+            to: '/python-sdk/introduction',
+          },
+          {
+            from: '/infrahubctl',
+            to: '/infrahubctl/infrahubctl',
+          },
           {
             from: '/ansible/ansible/',
             to: '/ansible/',
