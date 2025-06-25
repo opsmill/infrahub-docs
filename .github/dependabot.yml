@@ -1,0 +1,36 @@
+---
+# yamllint disable rule:truthy
+version: 2
+
+updates:
+  # Maintain dependencies for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    target-branch: main
+    labels:
+      - "changes/patch"
+    groups:
+      all:
+        patterns:
+          - "*"
+
+  # Group all pip updates except infrahub-sdk
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "12:00"
+    target-branch: main
+    labels:
+      - "changes/patch"
+    groups:
+      all:
+        patterns:
+          - "^(?!infrahub-sdk$).*"  # Regex to exclude infrahub-sdk
+      infrahub-sdk:
+        patterns:
+          - "infrahub-sdk"
