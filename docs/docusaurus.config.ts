@@ -200,6 +200,12 @@ const config: Config = {
         sidebarPath: './sidebars-service-catalog.ts',
       },
     ],
+    [
+      '@docusaurus/plugin-google-tag-manager',
+      {
+        containerId: 'GTM-MQ2RZ3SP',
+      },
+    ],
   ],
   themes: [
     [
