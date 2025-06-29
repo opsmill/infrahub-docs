@@ -206,6 +206,23 @@ const config: Config = {
         containerId: 'GTM-MQ2RZ3SP',
       },
     ],
+    [
+      '@signalwire/docusaurus-plugin-llms-txt',
+      {
+        siteTitle: 'Infrahub Documentation',
+        siteDescription: 'Comprehensive guide to Infrahub - the modern infrastructure management platform',
+        depth: 2,
+        content: {
+          enableMarkdownFiles: true,
+          enableLlmsFullTxt: true,
+          includeBlog: false,
+          includePages: true,
+          includeDocs: true,
+          includeVersionedDocs: true,
+          relativePaths: true
+        }
+      },
+    ],
   ],
   themes: [
     [
