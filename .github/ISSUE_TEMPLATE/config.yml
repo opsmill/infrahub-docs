@@ -27,6 +27,3 @@ contact_links:
   - name: 💬 Discord Community
     url: https://discord.gg/opsmill
     about: Ask questions and discuss Infrahub with the community
-  - name: 📖 Documentation Website Issues
-    url: https://github.com/opsmill/infrahub-docs/issues/new/choose
-    about: Only for issues specific to the documentation website build or aggregation (not content)

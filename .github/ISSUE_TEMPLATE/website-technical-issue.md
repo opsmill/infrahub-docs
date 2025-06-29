@@ -1,8 +1,6 @@
 ---
 name: 🏗️ Documentation Website Technical Issue
 about: Issues with the documentation website build, aggregation, or infrastructure (not content)
-title: '[WEBSITE] '
-labels: ['documentation-website']
 ---
 
 ## Documentation Website Technical Issue
