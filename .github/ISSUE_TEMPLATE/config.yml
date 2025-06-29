@@ -1,9 +1,10 @@
+---
 blank_issues_enabled: false
 contact_links:
   - name: 🐛 Infrahub Core Issues
     url: https://github.com/opsmill/infrahub/issues/new/choose
     about: Report bugs or request features for Infrahub core functionality and documentation
-  - name: 🐍 Python SDK Issues  
+  - name: 🐍 Python SDK Issues
     url: https://github.com/opsmill/infrahub-sdk-python/issues/new
     about: Report bugs or request features for the Infrahub Python SDK and its documentation
   - name: 🤖 Ansible Collection Issues
