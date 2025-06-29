@@ -9,7 +9,11 @@
 - **Infrahub core documentation**: [opsmill/infrahub](https://github.com/opsmill/infrahub) repository
 - **Python SDK documentation**: [opsmill/infrahub-sdk-python](https://github.com/opsmill/infrahub-sdk-python) repository  
 - **Ansible collection documentation**: [opsmill/infrahub-ansible](https://github.com/opsmill/infrahub-ansible) repository
-- **Other integrations**: Check the specific integration repository in the [OpsMill GitHub organization](https://github.com/opsmill)
+- **Service catalog documentation**: [opsmill/infrahub-demo-service-catalog](https://github.com/opsmill/infrahub-demo-service-catalog) repository
+- **Nornir integration documentation**: [opsmill/nornir-infrahub](https://github.com/opsmill/nornir-infrahub) repository
+- **Schema library documentation**: [opsmill/schema-library](https://github.com/opsmill/schema-library) repository
+- **Infrahub Sync documentation**: [opsmill/infrahub-sync](https://github.com/opsmill/infrahub-sync) repository
+- **Emma documentation**: [opsmill/emma](https://github.com/opsmill/emma) repository
 
 This repository only aggregates and builds the documentation website. Changes made here will be overwritten during the next sync from the source repositories.
 
