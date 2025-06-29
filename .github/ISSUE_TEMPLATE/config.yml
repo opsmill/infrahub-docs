@@ -12,7 +12,7 @@ contact_links:
   - name: 🗂️ Service Catalog Issues
     url: https://github.com/opsmill/infrahub-demo-service-catalog/issues/new
     about: Report bugs or request features for the Infrahub service catalog demo and its documentation
-  - name: 🔧 Nornir Integration Issues
+  - name: 🔧 Nornir Plugin Issues
     url: https://github.com/opsmill/nornir-infrahub/issues/new
     about: Report bugs or request features for the Nornir Infrahub integration and its documentation
   - name: 📚 Schema Library Issues
