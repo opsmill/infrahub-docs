@@ -33,11 +33,5 @@ labels: ['documentation-website']
 2. 
 3. 
 
-### Expected behavior
-<!-- What should happen -->
-
-### Actual behavior  
-<!-- What actually happens -->
-
 ### Additional context
 <!-- Any other context, screenshots, or information about the problem -->
