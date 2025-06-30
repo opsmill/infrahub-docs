@@ -1,0 +1,30 @@
+---
+blank_issues_enabled: false
+contact_links:
+  - name: 🐛 Infrahub Core Issues
+    url: https://github.com/opsmill/infrahub/issues/new/choose
+    about: Report bugs or request features for Infrahub core functionality and documentation
+  - name: 🐍 Python SDK Issues
+    url: https://github.com/opsmill/infrahub-sdk-python/issues/new
+    about: Report bugs or request features for the Infrahub Python SDK and its documentation
+  - name: 🤖 Ansible Collection Issues
+    url: https://github.com/opsmill/infrahub-ansible/issues/new
+    about: Report bugs or request features for the Infrahub Ansible collection and its documentation
+  - name: 🗂️ Service Catalog Issues
+    url: https://github.com/opsmill/infrahub-demo-service-catalog/issues/new
+    about: Report bugs or request features for the Infrahub service catalog demo and its documentation
+  - name: 🔧 Nornir Plugin Issues
+    url: https://github.com/opsmill/nornir-infrahub/issues/new
+    about: Report bugs or request features for the Nornir Infrahub integration and its documentation
+  - name: 📚 Schema Library Issues
+    url: https://github.com/opsmill/schema-library/issues/new
+    about: Report bugs or request features for the Infrahub schema library and its documentation
+  - name: 🔄 Infrahub Sync Issues
+    url: https://github.com/opsmill/infrahub-sync/issues/new
+    about: Report bugs or request features for Infrahub Sync and its documentation
+  - name: 🤖 Emma Issues
+    url: https://github.com/opsmill/emma/issues/new
+    about: Report bugs or request features for Emma and its documentation
+  - name: 💬 Discord Community
+    url: https://discord.gg/opsmill
+    about: Ask questions and discuss Infrahub with the community

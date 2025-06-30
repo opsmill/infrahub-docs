@@ -1,5 +1,24 @@
 # Infrahub documentation website
 
+⚠️ **Important Notice**: This repository is a **documentation aggregation site** that combines documentation from multiple Infrahub repositories. Most of the documentation content here is **read-only** and automatically synced from other repositories.
+
+## Before opening an issue or pull request
+
+**Please do not open issues or pull requests for documentation content in this repository.** Instead, please open them in the appropriate source repository where the documentation actually lives:
+
+- **Infrahub core documentation**: [opsmill/infrahub](https://github.com/opsmill/infrahub) repository
+- **Python SDK documentation**: [opsmill/infrahub-sdk-python](https://github.com/opsmill/infrahub-sdk-python) repository  
+- **Ansible collection documentation**: [opsmill/infrahub-ansible](https://github.com/opsmill/infrahub-ansible) repository
+- **Service catalog documentation**: [opsmill/infrahub-demo-service-catalog](https://github.com/opsmill/infrahub-demo-service-catalog) repository
+- **Nornir integration documentation**: [opsmill/nornir-infrahub](https://github.com/opsmill/nornir-infrahub) repository
+- **Schema library documentation**: [opsmill/schema-library](https://github.com/opsmill/schema-library) repository
+- **Infrahub Sync documentation**: [opsmill/infrahub-sync](https://github.com/opsmill/infrahub-sync) repository
+- **Emma documentation**: [opsmill/emma](https://github.com/opsmill/emma) repository
+
+This repository only aggregates and builds the documentation website. Changes made here will be overwritten during the next sync from the source repositories.
+
+## About this repository
+
 This folder contains the source code and documentation powering [https://docs.infrahub.app](https://docs.infrahub.app).
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
