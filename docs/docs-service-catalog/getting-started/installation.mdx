@@ -1,0 +1,88 @@
+---
+title: Installation
+description: Before you can run the demo, you need to install the prerequisites and set up the environment.
+---
+import ReferenceLink from "../../src/components/Card";
+
+Before you can run the demo, you need to install the prerequisites and set up the environment.
+
+<ReferenceLink title="Need help or have questions? Join our Discord community for support!" url="https://discord.gg/opsmill" openInNewTab/>
+
+## Prerequisites
+
+Before you get started, make sure the following tools are installed:
+
+- 🐳 **Docker**: Could be [Docker Desktop](https://docs.docker.com/desktop/) on your laptop or any Docker endpoint on a VM.
+- 🐍 **Poetry**: Install Poetry by following the [official installation guide](https://python-poetry.org/docs).
+
+## Steps
+
+### 1. Clone the repository
+
+Clone the GitHub repository.
+
+```shell
+git clone https://github.com/opsmill/infrahub-demo-service-catalog.git
+cd infrahub-demo-service-catalog
+```
+
+### 2. Set environmental variables
+
+These environment variables are used to connect to the Infrahub instance and authenticate API requests.
+
+```shell
+export INFRAHUB_ADDRESS="http://localhost:8000"
+export INFRAHUB_API_TOKEN="06438eb2-8019-4776-878c-0941b1f1d1ec"
+```
+
+### 3. Install the dependencies
+
+Our demos use [Poetry](https://python-poetry.org/) to manage the Python environment.
+
+```shell
+poetry install
+```
+
+### 4. Start Infrahub
+
+:::important
+
+Make sure to start Infrahub using the following command to ensure the `service_catalog` module is loaded correctly! This will also start the Streamlit app for the service catalog.
+
+```shell
+poetry run invoke start
+```
+
+:::
+
+### 5. Load schema and data into Infrahub
+
+These commands will load the schema and data into Infrahub.
+
+```shell
+poetry run infrahubctl schema load schemas/ --wait 10
+poetry run infrahubctl object load data/
+```
+
+### 6. Connect read-only repository
+
+:::info
+
+Infrahub can connect to external repositories to fetch scripts, templates, or other resources. Learn more about [git integration](https://docs.infrahub.app/topics/repository) in the Infrahub documentation.
+
+:::
+
+Connect the demo repository as a read-only source with the following command:
+
+```shell
+poetry run infrahubctl repository add --ref main --read-only infrahub-demo https://github.com/opsmill/infrahub-demo-service-catalog.git
+```
+
+## Confirmation
+
+- 👉 Log in to the [Infrahub UI](http://localhost:8000/login) on port `8000` with username `admin` and password `infrahub`.
+- 👉 Access the [Service Catalog](http://localhost:8501/) on port `8501`.
+
+## Next steps
+
+With the demo set up, you can now explore the service catalog and its features in the [user walkthrough documentation](user-walkthrough).

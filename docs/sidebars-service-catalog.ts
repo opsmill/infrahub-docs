@@ -1,8 +1,18 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
   servicecatalogSidebar: [
-    'readme',
+    'home',
+    {
+      type: 'category',
+      label: 'Getting Started',
+      collapsed: false,
+      items: [
+        'getting-started/installation',
+        'getting-started/user-walkthrough',
+        'getting-started/developer-walkthrough',
+      ],
+    },
   ]
 };
 

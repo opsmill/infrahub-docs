@@ -1,0 +1,511 @@
+---
+title: Developer Walkthrough
+description: A step-by-step guide to running the demo from a developer perspective.
+---
+import ReferenceLink from "../../src/components/Card";
+
+In this walkthrough, we detail the key building blocks of the demo, explain how it works, and describe how the components interact. This guide is intended for developers who want to understand the implementation details of the service catalog PoC.
+
+<ReferenceLink title="Need help or have questions? Join our Discord community for support!" url="https://discord.gg/opsmill" openInNewTab/>
+
+## The schema
+
+To structure and store data, we define a schema in Infrahub. You can find the schema files in the `schemas` folder.
+
+### Consuming the schema library
+
+Much of the schema is based on the [Infrahub schema library](https://github.com/opsmill/schema-library), which provides reusable schema components for quickly scaffolding a schema.
+
+- `base`: Contains generic definitions for `IPAM` (IP address, prefix, etc.), `DCIM` (network device, interface, etc.), `location`, and `organization` (provider, manufacturer). Importing this folder is mandatory as it provides the basic definitions required for extensions.
+- `location_minimal`: Defines a hierarchical tree for country, metro, and site.
+- `vlan`: Includes nodes for VLANs and L2 domains.
+
+<ReferenceLink title="Learn about schema library" url="https://docs.infrahub.app/schema-library" openInNewTab/>
+
+### Custom service schema
+
+The service layer is unique to each organization, so we define a custom schema to represent services and their components.
+
+```yaml title="/schemas/service/service.yml"
+---
+# yaml-language-server: $schema=https://schema.infrahub.app/infrahub/schema/latest.json
+version: "1.0"
+
+generics:
+  # To enable future expansions, we define a generic service object.
+  # This object holds all common attributes shared across the services.
+  # Additionally, we can leverage this generic structure to simplify relationships.
+  - name: Generic
+    namespace: Service
+    description: Generic service...
+    label: Service
+    icon: mdi:package-variant
+    include_in_menu: true
+    human_friendly_id:
+      - service_identifier__value
+    order_by:
+      - service_identifier__value
+    display_labels:
+      - service_identifier__value
+    attributes:
+      - name: service_identifier
+        kind: Text
+        unique: true
+        order_weight: 1000
+        optional: false
+        branch: agnostic
+      - name: account_reference
+        kind: Text
+        order_weight: 1010
+        optional: false
+        branch: agnostic
+
+nodes:
+  # The DedicatedInternet schema node inherits from the generic service object and includes a few additional attributes.
+  # These attributes are relatively high-level (e.g., an ip_package with T-shirt size values) and are primarily intended as inputs for users.
+  - name: DedicatedInternet
+    namespace: Service
+    description: This service provides customers with a dedicated physical port, ensuring complete internet connectivity.
+    label: Dedicated Internet
+    icon: mdi:ethernet
+    menu_placement: ServiceGeneric
+    inherit_from:
+      - ServiceGeneric
+    include_in_menu: true
+    # By default, Infrahub creates data within branches (parallel realities), but it also supports branch-agnostic objects.
+    # A branch-agnostic object is propagated to all branches, regardless of where it was created.
+    # Here, branch-agnostic behavior is applied in the schema to the service object and key attributes, such as service_identifier.
+    # This ensures consistent tracking of a service across all ongoing implementations and branches.
+    branch: agnostic
+    attributes:
+      - name: status
+        kind: Dropdown
+        optional: false
+        default_value: draft
+        order_weight: 1050
+        # Putting this one as branch aware otherwise generator put it as active in the branch and so on main as well
+        # even tho the service is really active only when the branch is merged...
+        branch: aware
+        choices:
+          - name: draft
+            label: Draft
+            color: "#D3D3D3"
+          - name: in-delivery
+            label: In Delivery
+            color: "#A8E6A2"
+          - name: active
+            label: Active
+            color: "#66CC66"
+          - name: in-decomissioning
+            label: In Decomissioning
+            color: "#FFAB59"
+          - name: decomissioned
+            label: Decomissioned
+            color: "#FF6B6B"
+      - name: bandwidth
+        kind: Dropdown
+        optional: false
+        order_weight: 1100
+        branch: aware
+        choices:
+          - name: "100"
+            label: Hundred Megabits
+            description: Provides a 100 Mbps bandwidth.
+          - name: "1000"
+            label: One Gigabit
+            description: Provides a 1 Gbps bandwidth.
+          - name: "10000"
+            label: Ten Gigabits
+            description: Provides a 10 Gbps bandwidth.
+      - name: ip_package
+        kind: Dropdown
+        optional: false
+        order_weight: 1120
+        branch: aware
+        choices:
+          - name: small
+            label: Small
+            description: Provide customer with 6 IPs.
+            color: "#6a5acd"
+          - name: medium
+            label: Medium
+            description: Provide customer with 14 IPs.
+            color: "#9090de"
+          - name: large
+            label: Large
+            description: Provide customer with 30 IPs.
+            color: "#ffa07a"
+    # We implement various relationships to capture all the building blocks of the service (such as prefixes, interfaces, etc.)
+    relationships:
+      # From a site’s perspective, I only need a list of services and do not want multiple relationships for each type of service.
+      # However, for a specific type of service, I want to enforce rules within the relationships.
+      # For example, a distributed service could link to multiple sites, whereas a DedicatedInternet service is tied to a single site.
+      # By configuring directions in relationships to point toward the generic service from a site’s perspective and initiating the relationship in the node pointing toward the site, we achieve the desired behavior.
+      # Using the same identifier in the relationship allows Infrahub to recognize it as a single, unified relationship.
+      - name: location
+        peer: LocationSite
+        order_weight: 1150
+        cardinality: one
+        direction: inbound
+        identifier: service_site
+        optional: false
+        branch: agnostic
+      - name: dedicated_interfaces
+        peer: DcimInterface
+        kind: Attribute
+        order_weight: 1200
+        cardinality: many
+        direction: inbound
+        identifier: service_interface
+      - name: vlan
+        peer: IpamVLAN
+        kind: Attribute
+        order_weight: 1300
+        cardinality: one
+        direction: inbound
+        identifier: service_vlan
+      - name: gateway_ip_address
+        peer: IpamIPAddress
+        order_weight: 1350
+        cardinality: one
+        direction: inbound
+        identifier: service_ip_address
+      - name: prefix
+        peer: IpamPrefix
+        kind: Attribute
+        order_weight: 1400
+        cardinality: one
+        direction: inbound
+        identifier: service_prefix
+
+extensions:
+  nodes:
+    - kind: LocationSite
+      relationships:
+        - name: services
+          peer: ServiceGeneric
+          cardinality: many
+          direction: outbound
+          identifier: service_site
+          branch: agnostic
+    - kind: DcimInterface
+      relationships:
+        - name: service
+          peer: ServiceGeneric
+          cardinality: one
+          direction: outbound
+          identifier: service_interface
+    - kind: IpamVLAN
+      relationships:
+        - name: service
+          peer: ServiceGeneric
+          cardinality: one
+          direction: outbound
+          identifier: service_vlan
+    - kind: IpamIPAddress
+      relationships:
+        - name: service
+          peer: ServiceGeneric
+          cardinality: one
+          direction: outbound
+          identifier: service_ip_address
+    - kind: IpamPrefix
+      relationships:
+        - name: service
+          peer: ServiceGeneric
+          cardinality: one
+          direction: outbound
+          identifier: service_prefix
+    - kind: CoreProposedChange
+      relationships:
+        - name: tags
+          peer: BuiltinTag
+          cardinality: many
+```
+
+:::success
+
+We now have the data model and data to support our use case. It captures everything from services to the backbone, with some abstraction for flexibility. This setup is a strong foundation for automation.
+
+:::
+
+<ReferenceLink title="Learn about Infrahub flexible schema" url="https://docs.infrahub.app/guides/create-schema" openInNewTab/>
+
+## The generator
+
+The generator is a powerful feature of Infrahub that allows you to codify the rules and processes associated with your service implementation. It enables fast and consistent implementation across the board.
+
+:::important
+
+We want to build the generator with the concept of **idempotency** in mind, meaning it should be repeatable: it assigns resources the first time it runs, and if run again, it changes nothing if the desired state is already achieved. This approach ensures the code is robust and predictable.
+
+Infrahub provides a set of features to help:
+- Resource manager: It allows users to create pools and allocate resources from them, such as prefixes, IP addresses, or even numbers. We will use this feature to allocate our prefixes/vlan in a branch-agnostic and idempotent way. Learn more about [resource managers](https://docs.infrahub.app/topics/resource-manager).
+- `allow_upsert=True`: This parameter is provided when saving the node, allowing it to be created if it doesn't exist or updated if it does. This is useful for ensuring that the generator can run multiple times without creating duplicates or errors.
+
+:::
+
+```python title="/generators/implement_dedicated_internet.py"
+from __future__ import annotations
+
+import logging
+import random
+
+from infrahub_sdk.generator import InfrahubGenerator
+from infrahub_sdk.node import InfrahubNode
+from infrahub_sdk.protocols import CoreIPPrefixPool, CoreNumberPool
+from service_catalog.protocols_async import (
+    DcimDevice,
+    DcimInterfaceL3,
+    IpamIPAddress,
+    IpamPrefix,
+    IpamVLAN,
+    ServiceDedicatedInternet,
+)
+
+ACTIVE_STATUS = "active"
+SERVICE_VLAN_POOL: str = "Customer vlan pool"
+SERVICE_PREFIX_POOL: str = "Customer prefixes pool"
+
+IP_PACKAGE_TO_PREFIX_SIZE: dict[str, int] = {"small": 29, "medium": 28, "large": 27}
+
+
+class DedicatedInternetGenerator(InfrahubGenerator):
+    customer_service: ServiceDedicatedInternet | None = None
+    allocated_vlan: IpamVLAN | None = None
+    allocated_prefix: IpamPrefix | None = None
+    gateway_ip: IpamIPAddress | None = None
+
+    log = logging.getLogger("infrahub.tasks")
+
+    async def generate(self, data: dict) -> None:
+        service_dict: dict = data["ServiceDedicatedInternet"]["edges"][0]["node"]
+
+        # Translate the dict to proper object
+        self.customer_service: ServiceDedicatedInternet = await InfrahubNode.from_graphql(
+            client=self.client,
+            data=service_dict,
+            branch=self.branch,
+        )
+
+        # Move the service as active
+        # TODO: Not happy with having this one here...
+        self.customer_service.status.value = "active"
+        await self.customer_service.save(allow_upsert=True)
+
+        # Allocate the VLAN to the service
+        await self.allocate_vlan()
+
+        # Translate teeshirt size to int
+        self.prefix_length: int = IP_PACKAGE_TO_PREFIX_SIZE[self.customer_service.ip_package.value]
+
+        # Allocate the prefix to the service
+        await self.allocate_prefix()
+
+        # Allocate port
+        await self.allocate_port()
+
+        # Create L3 interface for gateway
+        await self.allocate_gateway()
+
+    async def allocate_vlan(self) -> None:
+        """Create a VLAN with ID coming from the pool provided and assign this VLAN to the service."""
+        self.log.info("Allocating VLAN to this service...")
+
+        # Get resource pool
+        resource_pool = await self.client.get(
+            kind=CoreNumberPool,
+            name__value=SERVICE_VLAN_POOL,
+        )
+
+        # Craft and save the vlan
+        self.allocated_vlan = await self.client.create(
+            kind=IpamVLAN,
+            name=f"vlan__{self.customer_service.service_identifier.value}",
+            vlan_id=resource_pool,  # Here we get the vlan ID from the pool
+            description=f"VLAN allocated to service {self.customer_service.service_identifier.value}",
+            status=ACTIVE_STATUS,
+            role="customer",
+            l2domain=["default"],
+            service=self.customer_service,
+        )
+
+        # And save it to Infrahub
+        await self.allocated_vlan.save(allow_upsert=True)
+
+        self.log.info(f"VLAN `{self.allocated_vlan.name.value}` assigned!")
+
+    async def allocate_prefix(self) -> None:
+        """Allocate a prefix coming from a resource pool to the service."""
+        self.log.info("Allocating prefix from pool...")
+
+        # Get resource pool
+        resource_pool = await self.client.get(
+            kind=CoreIPPrefixPool,
+            name__value=SERVICE_PREFIX_POOL,
+        )
+
+        # Craft the data dict for prefix
+        prefix_data: dict = {
+            "status": "active",
+            "description": f"Prefix allocated to service {self.customer_service.service_identifier.value}",
+            "service": [self.customer_service.id],
+            "role": "customer",
+            "vlan": [self.allocated_vlan.id],
+        }
+
+        # Create resource from the pool
+        self.allocated_prefix = await self.client.allocate_next_ip_prefix(
+            resource_pool,
+            kind=IpamPrefix,
+            data=prefix_data,
+            prefix_length=self.prefix_length,
+            identifier=self.customer_service.service_identifier.value,
+        )
+
+        self.log.info(f"Prefix `{self.allocated_prefix}` assigned!")
+
+        await self.allocated_prefix.save(allow_upsert=True)
+
+    async def allocate_port(self) -> None:
+        """Allocate a port to the service."""
+        allocated_port = None
+
+        self.log.info("Allocating port to this service...")
+
+        # Fetch interfaces records
+        await self.customer_service.dedicated_interfaces.fetch()
+        self.log.info(
+            f"There are {len(self.customer_service.dedicated_interfaces.peers)} interfaces attached to this service.",
+        )
+
+        # If we have any interface attached to the service
+        if len(self.customer_service.dedicated_interfaces.peers) > 0:
+            # Loop over interfaces attached to the service
+            for interface in self.customer_service.dedicated_interfaces.peers:
+                # Get device related to the interface
+                await interface.peer.device.fetch()
+                # If the device is "core"
+                if interface.peer.device.peer.role.value == "core":
+                    self.log.info(f"Port `{interface.peer.display_label}` already allocated to the service.")
+                    # Big assomption but we assume port is already allocated
+                    self.index = interface.peer.device.peer.index.value
+                    allocated_port = interface
+                    break
+
+        # If we don't have yet a port, we need to find one
+        if allocated_port is None:
+            self.log.info("Haven't found any port allocated to this service.")
+
+            # Here, we pick randomly. In a real-life scenario, we might want to give this more thought
+            self.index = random.randint(1, 2)
+
+            # Find the switch on the site
+            switch = await self.client.get(
+                kind=DcimDevice,
+                location__ids=[self.customer_service.location.id],
+                role__value="core",
+                index__value=self.index,
+            )
+            self.log.info(f"Looking for port on {switch}...")
+
+            # Fetch switch interface data
+            await switch.interfaces.fetch()
+
+            # Find first interface on that switch that is free
+            selected_interface = next(
+                (
+                    interface
+                    for interface in switch.interfaces.peers
+                    if interface.peer.role.value == "customer"
+                    and interface.peer.status.value == "free"
+                    and interface.peer.service.id is None
+                ),
+                None,  # Default value if no match is found
+            )
+
+            # If we don't have any interface available
+            if selected_interface is None:
+                msg: str = f"There is no physical port to allocate to customer on {switch}"
+                self.log.exception(msg)
+                raise Exception(msg)
+            self.log.info(f"Found port {selected_interface.peer.display_label} to allocate to the service.")
+            allocated_port = selected_interface
+
+        allocated_port = allocated_port.peer
+
+        # Enforce all params of this interface
+        allocated_port.enabled.value = True
+        allocated_port.status.value = "active"
+        allocated_port.l2_mode.value = "Access"
+        allocated_port.role.value = "customer"
+        allocated_port.description.value = f"Port allocated to service {self.customer_service.service_identifier.value}"
+        allocated_port.speed.value = int(self.customer_service.bandwidth.value)
+        allocated_port.service = self.customer_service
+        allocated_port.untagged_vlan = self.allocated_vlan
+
+        # Finally save
+        await allocated_port.save(allow_upsert=True)
+
+    async def allocate_gateway(self) -> None:
+        """Allocate a gateway to the service."""
+        self.log.info("Allocating gateway to this service...")
+
+        # Find the corresponding router
+        router = await self.client.get(
+            kind=DcimDevice,
+            location__ids=[self.customer_service.location.id],
+            role__value="edge",
+            index__value=self.index,
+        )
+
+        # Work around issue
+        if isinstance(self.allocated_vlan.vlan_id.value, int):
+            vlan_id: int = self.allocated_vlan.vlan_id.value
+        else:
+            vlan_id: int = self.allocated_vlan.vlan_id.value["value"]
+
+        # Create interface
+        gateway_interface = await self.client.create(
+            kind=DcimInterfaceL3,
+            name=f"vlan_{vlan_id!s}",
+            speed=1000,
+            device=router,
+            status="active",
+            role="customer",
+            description=f"Gateway interface for service {self.customer_service.service_identifier.value}",
+            enabled=True,
+            service=self.customer_service,
+            untagged_vlan=self.allocated_vlan,
+        )
+        await gateway_interface.save(allow_upsert=True)
+
+        # Compute the gateway ip
+        address: str = f"{next(self.allocated_prefix.prefix.value.hosts())!s}/{self.prefix_length!s}"
+
+        # Create IP object
+        self.gateway_ip = await self.client.create(
+            kind=IpamIPAddress,
+            address=address,
+            service=self.customer_service,
+            interface=gateway_interface,
+        )
+        await self.gateway_ip.save(allow_upsert=True)
+
+        self.log.info(f"Gateway `{self.gateway_ip.address.value}` assigned!")
+
+        # Add gateway to prefix
+        self.allocated_prefix.gateway = self.gateway_ip
+
+        # Save prefix
+        await self.allocated_prefix.save(allow_upsert=True)
+
+```
+
+:::success
+
+At this stage, we have a generator that transforms a high-level service request into a complete service, sourcing resources from predefined pools with consistency and in just seconds.
+
+:::
+
+<ReferenceLink title="Learn about Infrahub generators" url="https://docs.infrahub.app/topics/generator" openInNewTab/>
