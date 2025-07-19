@@ -201,6 +201,16 @@ const config: Config = {
       },
     ],
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-exporter',
+        path: 'docs-exporter',
+        routeBasePath: 'exporter',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-exporter.ts',
+      },
+    ],
+    [
       '@docusaurus/plugin-google-tag-manager',
       {
         containerId: 'GTM-MQ2RZ3SP',
@@ -283,6 +293,12 @@ const config: Config = {
               sidebarId: "ansibleSidebar",
               label: "Ansible",
               docsPluginId: "docs-ansible",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "exporterSidebar",
+              label: "Infrahub Exporter",
+              docsPluginId: "docs-exporter",
             },
             {
               type: "docSidebar",
