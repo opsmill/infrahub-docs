@@ -68,6 +68,10 @@ const config: Config = {
       {
         redirects: [
           {
+            from: '/topics/auth',
+            to: '/topics/authentication',
+          },
+          {
             from: '/overview/schema',
             to: '/getting-started/overview',
           },
