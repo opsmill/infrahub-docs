@@ -1,0 +1,124 @@
+---
+title: Infrahub Integrations
+---
+
+import ReferenceLink from "../src/components/Card";
+
+Infrahub integrates with a wide range of network management and automation tools to help you synchronize data, automate workflows, and manage your infrastructure. This page provides an overview of all available integrations and their capabilities.
+
+## Network Automation and Validation Platforms
+
+### Ansible
+
+The OpsMill Infrahub Ansible Collection provides modules and plugins to seamlessly interact with Infrahub through Ansible. This integration enables you to define and enforce the desired state of your infrastructure using Ansible playbooks.
+
+**Key capabilities:**
+
+- Dynamic inventory from Infrahub GraphQL data
+- Node creation, updates, and deletion
+- Branch management and manipulation
+- GraphQL queries and lookups
+- Artifact retrieval and management
+
+<ReferenceLink title="Ansible Documentation" url="/ansible" />
+
+### Nornir
+
+A Nornir plugin that allows Infrahub to serve as an inventory source for Nornir-based network automation workflows. This integration simplifies network automation by providing structured data directly from your Infrahub instance.
+
+**Key capabilities:**
+
+- Inventory management with GraphQL-based host and group data
+- Artifact management for configuration templates and files
+- Host-specific artifact regeneration
+- Bulk artifact generation across multiple devices
+
+<ReferenceLink title="Nornir Documentation" url="/nornir" />
+
+### NetPicker
+
+NetPicker provides network testing and compliance validation capabilities that integrate with Infrahub as a source of truth. This integration enables automated compliance checking by comparing live device configurations against Infrahub data.
+
+**Key capabilities:**
+
+- Device interface compliance validation
+- Configuration drift detection between Infrahub and live devices
+- Automated assertion-based testing for network infrastructure
+- Integration with pytest frameworks for network testing workflows
+
+<ReferenceLink title="NetPicker Infrahub Integration" url="https://github.com/netpicker/pytests-for-networking/blob/main/Integrations/Infrahub/infrahub.py" openInNewTab />
+
+## Data Synchronization with Infrahub Sync
+
+Infrahub Sync is a versatile Python package that synchronizes data between source systems and Infrahub. Built on `diffsync`, it provides flexible and efficient data synchronization across different network management platforms.
+
+### Network Management Systems
+
+#### IP Fabric
+
+Synchronizes network discovery data from IP Fabric's infrastructure management platform into Infrahub. IP Fabric provides automatic network discovery and advanced analytics through SSH/Telnet connectivity.
+
+**Key data synchronized:**
+
+- Device inventory with hardware details
+- Network topology and relationships
+- Interface and connectivity information
+- Platform and software version data
+
+#### LibreNMS
+
+Integrates with the open-source LibreNMS network monitoring system to import device and monitoring data into Infrahub for centralized infrastructure management.
+
+#### Observium
+
+Connects with Observium's network monitoring platform to synchronize device discovery and performance data with Infrahub for comprehensive network visibility.
+
+### Infrastructure Documentation Systems
+
+#### Nautobot
+
+Synchronizes data from Nautobot, an open-source network source of truth platform. Supports both Nautobot v1 and v2 data models with flexible schema mapping.
+
+**Key data synchronized:**
+
+- Device and platform information
+- Location and site hierarchies
+- Manufacturer and hardware data
+- Tags and custom attributes
+
+#### NetBox
+
+Imports infrastructure data from NetBox, the popular open-source IPAM and DCIM tool, into Infrahub while maintaining data relationships and hierarchies.
+
+**Key data synchronized:**
+
+- Device inventory and rack layouts
+- IP address management (IPAM) data
+- Location hierarchies (regions, sites, racks)
+- Circuit and connection documentation
+
+### BGP and Peering Management
+
+#### Peering Manager
+
+Bi-directional synchronization with Peering Manager for comprehensive BGP session and interconnection management.
+
+**Key data synchronized:**
+
+- BGP communities and routing policies
+- Peering session configurations
+- Internet exchange point (IXP) data
+- AS (Autonomous System) information
+
+### Network Data Collection
+
+#### Slurp'it
+
+Integrates with Slurp'it's network data collection platform to import structured network configuration and operational data into Infrahub.
+
+**Key data synchronized:**
+
+- Device vendor and model information
+- Network configuration templates
+- Routing table and interface data
+- Custom planning and operational data
