@@ -234,6 +234,7 @@ const config: Config = {
         hashed: true,
       }
     ],
+    '@docusaurus/theme-mermaid',
   ],
   themeConfig: {
     navbar: {
@@ -352,6 +353,7 @@ const config: Config = {
 
   markdown: {
     format: "mdx",
+    mermaid: true,
     preprocessor: ({ filePath, fileContent }) => {
       console.log(`Processing ${filePath}`);
       const transformedContent = fileContent.replace(/\$\(\s*(\w+)\s*\)/g, (match, variableName) => {
