@@ -22,18 +22,19 @@ The OpsMill Infrahub Ansible Collection provides modules and plugins to seamless
 
 <ReferenceLink title="Ansible Documentation" url="/ansible" />
 
-### Nornir
+### Kriten
 
-A Nornir plugin that allows Infrahub to serve as an inventory source for Nornir-based network automation workflows. This integration simplifies network automation by providing structured data directly from your Infrahub instance.
+Kriten is an API-first automation engine that transforms containerized scripts into secure REST API endpoints. The integration with Infrahub creates a powerful automation pipeline that separates data modeling from task execution, enabling secure cross-domain automation.
 
 **Key capabilities:**
 
-- Inventory management with GraphQL-based host and group data
-- Artifact management for configuration templates and files
-- Host-specific artifact regeneration
-- Bulk artifact generation across multiple devices
+- Webhook-triggered automation from Infrahub events
+- Automatic API generation from containerized scripts
+- Enterprise-grade security with RBAC and audit trails
+- Support for synchronous and asynchronous job execution
+- Multi-language script support for diverse automation needs
 
-<ReferenceLink title="Nornir Documentation" url="/nornir" />
+<ReferenceLink title="Infrahub-Kriten Integration" url="https://opsmill.com/blog/infrahub-kriten-integration/" openInNewTab />
 
 ### Netpicker
 
@@ -48,30 +49,38 @@ Netpicker provides network testing and compliance validation capabilities that i
 
 <ReferenceLink title="NetPicker Infrahub Integration" url="https://github.com/netpicker/pytests-for-networking/blob/main/Integrations/Infrahub/infrahub.py" openInNewTab />
 
+### Nornir
+
+A Nornir plugin that allows Infrahub to serve as an inventory source for Nornir-based network automation workflows. This integration simplifies network automation by providing structured data directly from your Infrahub instance.
+
+**Key capabilities:**
+
+- Inventory management with GraphQL-based host and group data
+- Artifact management for configuration templates and files
+- Host-specific artifact regeneration
+- Bulk artifact generation across multiple devices
+
+<ReferenceLink title="Nornir Documentation" url="/nornir" />
+
 ## Data synchronization with Infrahub Sync
 
 Infrahub Sync is a versatile Python package that synchronizes data between source systems and Infrahub. Built on `diffsync`, it provides flexible and efficient data synchronization across different network management platforms.
 
+<ReferenceLink title="Infrahub Sync Overview" url="/sync" />
+
 ### Network management systems
-
-#### IP Fabric
-
-Synchronizes network discovery data from IP Fabric's infrastructure management platform into Infrahub. IP Fabric provides automatic network discovery and advanced analytics through SSH/Telnet connectivity.
-
-**Key data synchronized:**
-
-- Device inventory with hardware details
-- Network topology and relationships
-- Interface and connectivity information
-- Platform and software version data
 
 #### LibreNMS
 
 Integrates with the open-source LibreNMS network monitoring system to import device and monitoring data into Infrahub for centralized infrastructure management.
 
+<ReferenceLink title="LibreNMS Adapter" url="/sync/adapters/librenms" />
+
 #### Observium
 
 Connects with Observium network monitoring platform to synchronize device discovery and performance data with Infrahub for comprehensive network visibility.
+
+<ReferenceLink title="Observium Adapter" url="/sync/adapters/observium" />
 
 ### Infrastructure documentation systems
 
@@ -86,6 +95,8 @@ Synchronizes data from Nautobot, an open-source network source of truth platform
 - Manufacturer and hardware data
 - Tags and custom attributes
 
+<ReferenceLink title="Nautobot Adapter" url="/sync/adapters/nautobot" />
+
 #### Netbox
 
 Imports infrastructure data from NetBox, the popular open-source IPAM and DCIM tool, into Infrahub while maintaining data relationships and hierarchies.
@@ -97,7 +108,7 @@ Imports infrastructure data from NetBox, the popular open-source IPAM and DCIM t
 - Location hierarchies (regions, sites, racks)
 - Circuit and connection documentation
 
-### BGP and peering management
+<ReferenceLink title="Netbox Adapter" url="/sync/adapters/netbox" />
 
 #### Peering manager
 
@@ -110,9 +121,27 @@ Bi-directional synchronization with Peering Manager for comprehensive BGP sessio
 - Internet exchange point (IXP) data
 - AS (Autonomous System) information
 
+<ReferenceLink title="Peering Manager Adapter" url="/sync/adapters/peering-manager" />
+
 ### Network data collection
 
+#### IP Fabric
+
+Synchronizes network discovery data from IP Fabric's infrastructure management platform into Infrahub. IP Fabric provides automatic network discovery and advanced analytics through SSH/Telnet connectivity.
+
+**Key data synchronized:**
+
+- Device inventory with hardware details
+- Network topology and relationships
+- Platform and software version data
+
+<ReferenceLink title="IP Fabric Adapter" url="/sync/adapters/ipfabric" />
+
 #### Slurp'it
+
+- Custom planning and operational data
+
+<ReferenceLink title="Slurp'It Adapter" url="/sync/adapters/slurpit" />
 
 Integrates with Slurp'it network data collection platform to import structured network configuration and operational data into Infrahub.
 
