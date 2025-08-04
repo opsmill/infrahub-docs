@@ -1,0 +1,273 @@
+---
+title: Building Your First Schema
+---
+
+This guide walks you through creating your first Infrahub schema using Emma's AI Schema Builder. We'll create a simple but practical schema for modeling network devices.
+
+## What We'll Build
+
+By the end of this guide, you'll have created a "NetworkDevice" schema that includes:
+
+- Basic device information (name, model, serial number)
+- Network configuration (management IP, location)
+- Operational status and metadata
+- Relationships to location and vendor schemas
+
+## Prerequisites
+
+Before starting, ensure you have:
+
+- Emma running and connected to your Infrahub instance
+- Basic understanding of what schemas are (see [First Steps](../getting-started/first-steps))
+- An OpenAI API key configured for AI features
+
+## Step 1: Plan Your Schema
+
+Before jumping into the Schema Builder, think about what you want to model:
+
+**Core Attributes:**
+
+- `name` - Unique device identifier
+- `model` - Device model/part number
+- `serial_number` - Hardware serial number
+- `management_ip` - IP address for device management
+- `status` - Operational status (active, maintenance, decommissioned)
+
+**Relationships:**
+
+- `location` - Reference to a Location object
+- `vendor` - Reference to a Vendor/Organization object
+
+**Metadata:**
+
+- `description` - Human-readable description
+- `tags` - Flexible tagging system
+
+## Step 2: Open the Schema Builder
+
+1. **Navigate to Schema Builder** in Emma's sidebar
+2. **Verify AI configuration** - Ensure your OpenAI API key is set
+3. **Check Infrahub connection** - Confirm you're connected to the right instance and branch
+
+## Step 3: Describe Your Schema
+
+In the Schema Builder interface, enter this description:
+
+```text
+Create a NetworkDevice schema for modeling network infrastructure devices with the following requirements:
+
+Core Information:
+- name: unique identifier for the device
+- model: device model or part number
+- serial_number: hardware serial number
+- description: human-readable description
+
+Network Configuration:
+- management_ip: IPv4 address for device management
+- management_interface: name of the management interface
+
+Location and Organization:
+- location: relationship to a Location object
+- vendor: relationship to an Organization object representing the device vendor
+
+Operational Status:
+- status: enumeration with values: active, maintenance, decommissioned, planned
+- commissioned_date: when the device was put into service
+- last_seen: timestamp of last successful connection
+
+The schema should inherit from the base Device schema if available, and include proper validation for IP addresses and required fields.
+```
+
+## Step 4: Review the Generated Schema
+
+The AI will generate a complete YAML schema. Review it carefully:
+
+### Check the Schema Structure
+
+```yaml
+# Example generated schema (yours may vary)
+---
+version: '1.0'
+schemas:
+  - name: NetworkDevice
+    namespace: Infrastructure
+    description: Network infrastructure device
+    inherit_from:
+      - CoreDevice
+    attributes:
+      - name: name
+        kind: Text
+        unique: true
+        optional: false
+      - name: model
+        kind: Text
+        optional: true
+      # ... more attributes
+    relationships:
+      - name: location
+        peer: LocationGeneric
+        optional: true
+        cardinality: one
+      # ... more relationships
+```
+
+### Verify Key Elements
+
+✅ **Naming**: Schema name follows your conventions  
+✅ **Namespace**: Appropriate namespace for organization  
+✅ **Inheritance**: Inherits from appropriate base schema  
+✅ **Attributes**: All required attributes are present with correct types  
+✅ **Relationships**: References to Location and Organization schemas  
+✅ **Validation**: IP address validation and required field constraints  
+
+## Step 5: Refine If Needed
+
+If the generated schema needs adjustments, refine your description:
+
+**Add missing details:**
+
+```text
+Also include:
+- hostname: DNS hostname for the device
+- firmware_version: current firmware version
+- power_consumption: power usage in watts
+```
+
+**Adjust relationships:**
+
+```text
+The location relationship should be required (not optional) and
+the vendor relationship should reference Organization objects
+with a role filter for vendors only.
+```
+
+**Modify validation:**
+
+```text
+The management_ip should validate as a proper IPv4 address,
+and the serial_number should be required and unique.
+```
+
+## Step 6: Load the Schema
+
+Once you're satisfied with the generated schema:
+
+1. **Copy the YAML** from the Schema Builder output
+2. **Navigate to Schema Loader** in Emma's sidebar
+3. **Paste the schema** into the YAML editor
+4. **Preview the schema** to verify it looks correct
+5. **Load into Infrahub** by clicking "Load Schema"
+
+## Step 7: Verify the Schema
+
+After loading, verify your schema worked correctly:
+
+### Using the Schema Visualizer
+
+1. **Go to Schema Visualizer**
+2. **Find your NetworkDevice schema** in the schema list
+3. **Examine the relationships** to Location and Organization
+4. **Verify the attributes** appear correctly
+
+### Using Infrahub Directly
+
+1. **Open your Infrahub instance** in a web browser
+2. **Navigate to Schema** section
+3. **Find NetworkDevice** in the schema list
+4. **Review the generated schema** definition
+
+## Step 8: Test with Sample Data
+
+Now test your schema by adding some sample data:
+
+### Using the Data Importer
+
+Create a simple CSV file:
+
+```csv
+name,model,serial_number,management_ip,status,description
+switch-01,Cisco 3850,FCW2140L0EF,192.168.1.10,active,Core distribution switch
+router-01,Cisco ISR4431,FJC2140L0AG,192.168.1.1,active,Main internet gateway
+switch-02,Cisco 3850,FCW2140L0EH,192.168.1.11,maintenance,Access layer switch
+```
+
+Then:
+
+1. **Go to Data Importer** in Emma
+2. **Upload your CSV file**
+3. **Map columns** to your NetworkDevice schema attributes
+4. **Preview the import** to verify mappings
+5. **Execute the import** to create your first devices
+
+### Verify the Data
+
+1. **Check Infrahub** to see your imported devices
+2. **Use the Data Exporter** to export and verify the data
+3. **Navigate between relationships** to see how location and vendor references work
+
+## Common Issues and Solutions
+
+### Schema Generation Issues
+
+**Problem**: AI generates incorrect attribute types  
+**Solution**: Be more specific about data types in your description (e.g., "IPv4 address" instead of "IP address")
+
+**Problem**: Missing relationships  
+**Solution**: Explicitly mention all required relationships and their cardinality
+
+**Problem**: Schema doesn't inherit correctly  
+**Solution**: Check if base schemas exist in your Infrahub instance first
+
+### Schema Loading Issues
+
+**Problem**: Validation errors when loading  
+**Solution**: Check that referenced schemas (Location, Organization) exist in Infrahub
+
+**Problem**: Namespace conflicts  
+**Solution**: Use unique namespaces or check existing schema names
+
+### Data Import Issues
+
+**Problem**: Relationship resolution fails  
+**Solution**: Ensure referenced objects (locations, vendors) exist before importing devices
+
+**Problem**: Validation errors on IP addresses  
+**Solution**: Verify IP address format in your CSV data
+
+## Next Steps
+
+Congratulations! You've created your first schema with Emma. Here's what to explore next:
+
+### Extend Your Schema
+
+- **Add more attributes** like rack position, power requirements, or warranty information
+- **Create related schemas** for interfaces, VLANs, or IP addresses
+- **Model hierarchical relationships** like chassis and line cards
+
+### Build a Complete Model
+
+- **Create supporting schemas** for racks, cabinets, and rooms
+- **Add network connectivity** with cable and interface schemas
+- **Include service modeling** for applications and services
+
+### Advanced Features
+
+- **Try the Schema Library** to find pre-built schemas you can extend
+- **Use the Schema Visualizer** to understand complex relationships
+- **Explore experimental features** like the Query Builder
+
+### Best Practices
+
+- **Start simple** and add complexity gradually
+- **Plan relationships** before creating dependent schemas
+- **Test with sample data** before importing production data
+- **Document your schemas** for team collaboration
+
+## Resources
+
+- [Schema Builder Reference](../features/schema-builder) - Detailed Schema Builder documentation
+- [Schema Library](../features/schema-library) - Pre-built schemas and examples
+- [Data Import & Export](../features/data-import-export) - Advanced data import techniques
+- [Infrahub Schema Documentation](https://docs.infrahub.app/reference/schema/) - Official schema reference
+
+You're now ready to build more complex schemas and models with Emma!

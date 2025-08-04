@@ -1,0 +1,450 @@
+---
+title: Feature Flags
+---
+
+Emma uses feature flags to enable experimental and beta functionality. This allows you to try new features while maintaining stability in production environments.
+
+## Overview
+
+Feature flags in Emma control access to:
+
+- **Experimental features** - Early implementations that may change significantly
+- **Beta features** - Stable implementations undergoing final testing
+- **Advanced features** - Complex functionality for power users
+
+## Configuration
+
+Set feature flags using the `EMMA_FEATURE_FLAGS` environment variable:
+
+```bash
+# Single feature
+export EMMA_FEATURE_FLAGS="query_builder"
+
+# Multiple features (comma-separated)
+export EMMA_FEATURE_FLAGS="query_builder,template_builder"
+```
+
+## Available Feature Flags
+
+### `query_builder` (Alpha)
+
+**Description:** Interactive GraphQL query builder for Infrahub
+
+**Status:** Alpha - Basic functionality implemented, interface may change
+
+**What it enables:**
+
+- Visual query builder interface
+- GraphQL query generation and execution
+- Result formatting and export
+- Query history and favorites
+
+**Use cases:**
+
+- Custom data extraction from Infrahub
+- Ad-hoc reporting and analysis
+- Learning GraphQL query syntax
+- Debugging data relationships
+
+**Requirements:**
+
+- None (works with basic Infrahub connection)
+
+**Limitations:**
+
+- Limited to read-only queries
+- Basic error handling
+- No query optimization suggestions
+- Interface is subject to change
+
+**Example usage:**
+
+1. Enable the feature flag
+2. Navigate to "Query Builder" in Emma's sidebar
+3. Use the visual interface to build queries
+4. Execute queries and view results
+
+### `template_builder` (Alpha)
+
+**Description:** Template creation and management system
+
+**Status:** Alpha - Core functionality working, needs refinement
+
+**What it enables:**
+
+- Template creation interface
+- Template library management
+- Variable substitution
+- Template sharing and export
+
+**Use cases:**
+
+- Creating reusable configuration templates
+- Standardizing infrastructure deployments
+- Generating documentation templates
+- Configuration as code workflows
+
+**Requirements:**
+
+- Write access to Infrahub
+- Understanding of template syntax
+
+**Limitations:**
+
+- Basic template syntax support
+- Limited validation
+- No template versioning
+- Experimental UI
+
+**Example usage:**
+
+1. Enable the feature flag
+2. Access "Template Builder" from the sidebar
+3. Create templates with variables
+4. Test template rendering with sample data
+
+### `advanced_import` (Beta)
+
+**Description:** Enhanced data import capabilities
+
+**Status:** Beta - Feature complete, undergoing testing
+
+**What it enables:**
+
+- Advanced CSV parsing options
+- Custom data transformation rules
+- Relationship auto-resolution
+- Import validation previews
+- Batch processing optimizations
+
+**Use cases:**
+
+- Complex data migrations
+- Custom data format handling
+- Large dataset imports
+- Data quality validation
+
+**Requirements:**
+
+- Standard Emma data import permissions
+- Understanding of data transformation concepts
+
+**Limitations:**
+
+- Increased memory usage
+- Longer processing times for complex transformations
+
+**Example usage:**
+
+1. Enable the feature flag
+2. Use Data Importer with enhanced options
+3. Configure advanced parsing and transformation rules
+4. Preview and validate before importing
+
+### `bulk_operations` (Alpha)
+
+**Description:** Bulk operations for schemas and data
+
+**Status:** Alpha - Basic implementation, needs performance optimization
+
+**What it enables:**
+
+- Bulk schema loading
+- Mass data operations
+- Batch delete functionality
+- Progress tracking for large operations
+
+**Use cases:**
+
+- Initial system setup with many schemas
+- Large-scale data cleanup
+- Mass updates across multiple objects
+- System migrations
+
+**Requirements:**
+
+- Administrator-level permissions
+- Understanding of bulk operation impacts
+
+**Limitations:**
+
+- Performance limitations with very large datasets
+- Limited rollback capabilities
+- Potential impact on Infrahub performance
+
+**Example usage:**
+
+1. Enable the feature flag
+2. Access bulk operation interfaces
+3. Select multiple items for batch operations
+4. Monitor progress and handle errors
+
+### `ai_suggestions` (Experimental)
+
+**Description:** AI-powered suggestions throughout Emma's interface
+
+**Status:** Experimental - Research implementation, may be removed
+
+**What it enables:**
+
+- Schema attribute suggestions
+- Data validation suggestions
+- Relationship recommendations
+- Import mapping assistance
+
+**Use cases:**
+
+- First-time users learning schema design
+- Data quality improvement
+- Relationship discovery
+- Import optimization
+
+**Requirements:**
+
+- OpenAI API key configured
+- Sufficient OpenAI API credits
+- Network access to OpenAI services
+
+**Limitations:**
+
+- Requires external API calls
+- May slow down interface
+- Suggestions quality varies
+- Additional API costs
+
+**Example usage:**
+
+1. Configure OpenAI API key
+2. Enable the feature flag
+3. Look for AI suggestion indicators in the UI
+4. Review and apply suggestions as appropriate
+
+## Feature Flag Management
+
+### Checking Active Flags
+
+Emma displays active feature flags in several places:
+
+**Settings Panel:**
+
+- Lists all enabled flags
+- Shows feature status (Alpha, Beta, Experimental)
+- Provides links to feature documentation
+
+**Feature Indicators:**
+
+- Icons next to experimental features
+- Tooltips explaining feature status
+- Warnings about stability
+
+### Dynamic Configuration
+
+Some feature flags can be toggled at runtime:
+
+**Session-level flags** (temporary):
+
+- Set via URL parameters: `?features=query_builder,template_builder`
+- Override environment variables for testing
+- Reset when browser session ends
+
+**User preferences** (persistent):
+
+- Stored in browser local storage
+- Survive browser restarts
+- Can be cleared via settings panel
+
+### Validation and Error Handling
+
+Emma validates feature flags on startup:
+
+**Valid flag formats:**
+
+```bash
+# Correct
+export EMMA_FEATURE_FLAGS="query_builder,template_builder"
+
+# Also correct (spaces are stripped)
+export EMMA_FEATURE_FLAGS="query_builder, template_builder"
+```
+
+**Invalid configurations:**
+
+```bash
+# Unknown flags are ignored with warnings
+export EMMA_FEATURE_FLAGS="invalid_flag,query_builder"
+# Warning: Unknown feature flag 'invalid_flag' ignored
+
+# Empty values are acceptable
+export EMMA_FEATURE_FLAGS=""
+```
+
+## Best Practices
+
+### Development Environments
+
+**Enable experimental features** for testing:
+
+```bash
+export EMMA_FEATURE_FLAGS="query_builder,template_builder,ai_suggestions"
+```
+
+**Benefits:**
+
+- Access to latest functionality
+- Opportunity to provide feedback
+- Early adoption of useful features
+
+**Considerations:**
+
+- Features may break or change
+- Performance may be sub-optimal
+- Some features require additional setup
+
+### Production Environments
+
+**Use only stable features** in production:
+
+```bash
+# Only enable well-tested features
+export EMMA_FEATURE_FLAGS="advanced_import"
+```
+
+**Recommended approach:**
+
+1. Test features in development first
+2. Enable beta features in staging
+3. Only use stable features in production
+4. Monitor for issues after enabling new features
+
+### Team Deployments
+
+**Coordinate feature usage** across teams:
+
+- Document which features are enabled in each environment
+- Communicate feature changes to team members
+- Provide training for new experimental features
+- Establish rollback procedures
+
+## Feature Lifecycle
+
+Emma features follow a development lifecycle:
+
+### Experimental
+
+- **Purpose:** Research and initial implementation
+- **Stability:** May be removed or significantly changed
+- **Support:** Limited documentation and support
+- **Recommendation:** Development environments only
+
+### Alpha
+
+- **Purpose:** Core functionality complete, needs refinement
+- **Stability:** Basic functionality works, interfaces may change
+- **Support:** Basic documentation, community support
+- **Recommendation:** Development and staging environments
+
+### Beta
+
+- **Purpose:** Feature complete, undergoing final testing
+- **Stability:** Stable functionality, minor interface changes possible
+- **Support:** Full documentation, supported by team
+- **Recommendation:** Safe for production with monitoring
+
+### Stable
+
+- **Purpose:** Production-ready feature
+- **Stability:** Fully stable, changes follow deprecation policy
+- **Support:** Full support and documentation
+- **Recommendation:** Safe for all environments
+
+### Deprecated
+
+- **Purpose:** Feature being phased out
+- **Stability:** Still works but may be removed in future versions
+- **Support:** Limited support, migration guidance provided
+- **Recommendation:** Plan migration to replacement features
+
+## Migration and Compatibility
+
+### Version Compatibility
+
+Feature flags may change between Emma versions:
+
+**Major versions** (e.g., 1.x to 2.x):
+
+- Feature flags may be renamed or removed
+- New features may be added
+- Check migration guide for changes
+
+**Minor versions** (e.g., 1.1 to 1.2):
+
+- New features may be added
+- Existing features may change status
+- Backward compatibility maintained
+
+**Patch versions** (e.g., 1.1.1 to 1.1.2):
+
+- Feature flags unchanged
+- Bug fixes only
+
+### Feature Graduation
+
+When experimental features become stable:
+
+1. **Feature flag removed** - Feature becomes always available
+2. **Configuration maintained** - No changes to your setup required
+3. **Documentation updated** - Feature moves to main documentation
+4. **Migration period** - Old flag maintained temporarily for compatibility
+
+### Deprecation Process
+
+When features are deprecated:
+
+1. **Deprecation notice** - Warning in documentation and UI
+2. **Migration guide** - Instructions for moving to replacement
+3. **Grace period** - Feature continues to work for several versions
+4. **Removal** - Feature flag and functionality removed
+
+## Troubleshooting Feature Flags
+
+### Common Issues
+
+**Feature not appearing:**
+
+- Check feature flag spelling
+- Verify environment variable is set correctly
+- Restart Emma after changing environment variables
+- Check Emma logs for feature flag warnings
+
+**Feature causing issues:**
+
+- Disable the feature flag temporarily
+- Check feature-specific documentation
+- Report issues with feature flag and Emma version information
+
+**Performance problems:**
+
+- Some experimental features may impact performance
+- Disable CPU-intensive features if needed
+- Monitor system resources when testing new features
+
+### Getting Help
+
+When reporting feature flag issues:
+
+1. **Include Emma version** and deployment method
+2. **List active feature flags** from your configuration
+3. **Describe the specific feature** causing issues
+4. **Provide steps to reproduce** the problem
+5. **Include relevant logs** with feature flag context
+
+### Feedback and Contributions
+
+Emma's experimental features benefit from user feedback:
+
+- **Test new features** and report issues
+- **Suggest improvements** for experimental interfaces
+- **Share use cases** for features you find valuable
+- **Contribute documentation** for features you use
+
+Feature flags allow Emma to evolve rapidly while maintaining stability. Use them to access cutting-edge functionality and help shape Emma's future development.

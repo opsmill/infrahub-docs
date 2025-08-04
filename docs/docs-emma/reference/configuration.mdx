@@ -1,0 +1,420 @@
+---
+title: Configuration Reference
+---
+
+This reference covers all configuration options available in Emma, including environment variables, feature flags, and runtime settings.
+
+## Environment Variables
+
+### Required Variables
+
+| Variable | Description | Example | Notes |
+|----------|-------------|---------|-------|
+| `INFRAHUB_ADDRESS` | URL of Infrahub instance | `http://localhost:8000` | Must be accessible from Emma |
+| `INFRAHUB_API_TOKEN` | API authentication token | `06438eb2-8019-4776-878c-0941b1f1d1ec` | Generate in Infrahub admin |
+
+### Optional Variables
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `INFRAHUB_TIMEOUT` | API request timeout (seconds) | `30` | `60` |
+| `INFRAHUB_RETRIES` | Number of API retry attempts | `3` | `5` |
+| `EMMA_FEATURE_FLAGS` | Comma-separated experimental features | `""` | `query_builder,template_builder` |
+| `STREAMLIT_SERVER_PORT` | Port for Emma web interface | `8501` | `8080` |
+| `STREAMLIT_SERVER_ADDRESS` | Interface to bind to | `0.0.0.0` | `127.0.0.1` |
+
+### AI Configuration
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `OPENAI_API_KEY` | OpenAI API key for AI features | `""` | `sk-...` |
+| `OPENAI_MODEL` | AI model to use | `gpt-3.5-turbo` | `gpt-4` |
+| `OPENAI_TEMPERATURE` | AI creativity level (0.0-2.0) | `0.7` | `0.3` |
+| `OPENAI_MAX_TOKENS` | Maximum tokens per AI response | `2000` | `4000` |
+
+### Logging Configuration
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `STREAMLIT_LOGGER_LEVEL` | Streamlit logging level | `INFO` | `DEBUG` |
+| `PYTHONPATH` | Python path for modules | `""` | `/app` |
+| `LOG_LEVEL` | Emma application log level | `INFO` | `DEBUG` |
+
+## Feature Flags
+
+Feature flags enable experimental functionality in Emma. Set via `EMMA_FEATURE_FLAGS` environment variable.
+
+### Available Flags
+
+| Flag | Description | Status | Dependencies |
+|------|-------------|--------|--------------|
+| `query_builder` | GraphQL query builder interface | Alpha | None |
+| `template_builder` | Template creation and management | Alpha | None |
+| `advanced_import` | Enhanced data import features | Beta | None |
+| `bulk_operations` | Bulk schema and data operations | Alpha | None |
+| `ai_suggestions` | AI-powered suggestions in UI | Experimental | OpenAI API key |
+
+### Setting Feature Flags
+
+**Single flag:**
+
+```bash
+export EMMA_FEATURE_FLAGS="query_builder"
+```
+
+**Multiple flags:**
+
+```bash
+export EMMA_FEATURE_FLAGS="query_builder,template_builder,ai_suggestions"
+```
+
+**Docker Compose:**
+
+```yaml
+environment:
+  - EMMA_FEATURE_FLAGS=query_builder,template_builder
+```
+
+**Kubernetes:**
+
+```yaml
+env:
+- name: EMMA_FEATURE_FLAGS
+  value: "query_builder,template_builder"
+```
+
+## Runtime Configuration
+
+### In-App Settings
+
+Emma provides runtime configuration through the web interface:
+
+#### Connection Settings
+
+- **Infrahub Address**: Override environment variable for current session
+- **API Token**: Override environment variable for current session
+- **Branch**: Select Infrahub branch to work with
+- **Timeout**: Adjust request timeout for slow connections
+
+#### AI Settings
+
+- **OpenAI API Key**: Configure AI features
+- **Model Selection**: Choose AI model (gpt-3.5-turbo, gpt-4)
+- **Temperature**: Adjust AI creativity (0.0 = deterministic, 2.0 = very creative)
+- **Max Tokens**: Limit AI response length
+
+#### Import/Export Settings
+
+- **Batch Size**: Records to process per batch (default: 100)
+- **Validation Level**: Strict, moderate, or lenient validation
+- **Error Handling**: Stop on error or continue with warnings
+- **Relationship Resolution**: Automatic or manual relationship handling
+
+#### Display Settings
+
+- **Theme**: Light or dark mode
+- **Page Layout**: Wide or narrow layout
+- **Auto-refresh**: Automatic data refresh interval
+- **Pagination**: Number of items per page
+
+### Configuration Persistence
+
+Settings configured in the Emma interface are stored in:
+
+**Local Development:**
+
+- Browser session storage (temporary)
+- Browser local storage (persistent across sessions)
+
+**Docker Deployment:**
+
+- Volume-mounted configuration file
+- Environment variables take precedence
+
+**Kubernetes:**
+
+- ConfigMaps for application settings
+- Secrets for sensitive data (API keys, tokens)
+
+## Deployment Configurations
+
+### Docker Compose
+
+Complete docker-compose.yml configuration:
+
+```yaml
+version: '3.8'
+services:
+  emma:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      # Required
+      - INFRAHUB_ADDRESS=http://infrahub:8000
+      - INFRAHUB_API_TOKEN=${INFRAHUB_API_TOKEN}
+
+      # Optional
+      - INFRAHUB_TIMEOUT=60
+      - EMMA_FEATURE_FLAGS=query_builder,template_builder
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+
+      # Streamlit Configuration
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+      - STREAMLIT_LOGGER_LEVEL=INFO
+
+    volumes:
+      - emma-config:/app/config
+    networks:
+      - infrahub-network
+    depends_on:
+      - infrahub
+    restart: unless-stopped
+
+volumes:
+  emma-config:
+
+networks:
+  infrahub-network:
+    external: true
+```
+
+### Kubernetes
+
+Emma deployment configuration:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emma
+  labels:
+    app: emma
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: emma
+  template:
+    metadata:
+      labels:
+        app: emma
+    spec:
+      containers:
+      - name: emma
+        image: emma:latest
+        ports:
+        - containerPort: 8501
+        env:
+        - name: INFRAHUB_ADDRESS
+          value: "http://infrahub:8000"
+        - name: INFRAHUB_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: emma-secrets
+              key: api-token
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: emma-secrets
+              key: openai-key
+        - name: EMMA_FEATURE_FLAGS
+          valueFrom:
+            configMapKeyRef:
+              name: emma-config
+              key: feature-flags
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+      volumes:
+      - name: config
+        configMap:
+          name: emma-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emma
+spec:
+  selector:
+    app: emma
+  ports:
+  - port: 8501
+    targetPort: 8501
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: emma-config
+data:
+  feature-flags: "query_builder,template_builder"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: emma-secrets
+type: Opaque
+data:
+  api-token: <base64-encoded-token>
+  openai-key: <base64-encoded-key>
+```
+
+## Security Configuration
+
+### API Token Security
+
+**Best Practices:**
+
+- Use dedicated service accounts for Emma
+- Rotate tokens regularly
+- Limit token permissions to required operations
+- Never log or expose tokens in plaintext
+
+**Token Permissions:**
+
+Emma requires the following Infrahub permissions:
+
+- Schema read/write access
+- Data read/write access
+- Branch access (if using feature branches)
+- API access
+
+### Network Security
+
+**Firewall Rules:**
+
+- Emma port (default 8501) should be restricted to authorized users
+- Infrahub connection should use HTTPS in production
+- Consider VPN or private networks for sensitive deployments
+
+**TLS/SSL:**
+For production deployments, configure TLS:
+
+```bash
+# Using reverse proxy (nginx, traefik, etc.)
+# Emma itself runs HTTP, proxy handles HTTPS
+```
+
+### Data Security
+
+**Sensitive Data Handling:**
+
+- API tokens stored securely (secrets management)
+- Temporary files cleaned up automatically
+- No sensitive data logged by default
+- CSV uploads processed in memory when possible
+
+## Performance Configuration
+
+### Resource Limits
+
+**Memory:**
+
+- Minimum: 256MB
+- Recommended: 512MB
+- Large datasets: 1GB+
+
+**CPU:**
+
+- Minimum: 0.1 cores
+- Recommended: 0.5 cores
+- Heavy AI usage: 1+ cores
+
+**Storage:**
+
+- Application: ~100MB
+- Temporary files: Variable based on data volume
+- Configuration: &lt;1MB
+
+### Optimization Settings
+
+**For Large Datasets:**
+
+```bash
+# Increase timeouts
+export INFRAHUB_TIMEOUT=120
+
+# Optimize batch sizes
+# Set in Emma UI: Import/Export Settings → Batch Size: 50
+```
+
+**For Slow Networks:**
+
+```bash
+# Increase retries and timeout
+export INFRAHUB_TIMEOUT=60
+export INFRAHUB_RETRIES=5
+```
+
+**For High-Volume Usage:**
+
+```bash
+# Enable performance features
+export EMMA_FEATURE_FLAGS="bulk_operations,advanced_import"
+```
+
+## Configuration Validation
+
+Emma validates configuration on startup and provides helpful error messages:
+
+**Common Validation Errors:**
+
+```text
+ERROR: INFRAHUB_ADDRESS is required
+ERROR: Cannot connect to Infrahub at http://localhost:8000
+WARNING: OPENAI_API_KEY not set - AI features disabled
+WARNING: Unknown feature flag 'invalid_flag' ignored
+```
+
+**Configuration Check:**
+
+```bash
+# Test configuration without starting full application
+poetry run python -c "from emma.utils import validate_config; validate_config()"
+```
+
+## Migration and Upgrades
+
+### Configuration Migration
+
+When upgrading Emma, configuration may need updates:
+
+**Version 1.x to 2.x:**
+
+- New required environment variables
+- Changed feature flag names
+- Updated AI model configurations
+
+**Check Release Notes:**
+Always review release notes for configuration changes and migration steps.
+
+### Backup Configuration
+
+**Docker:**
+
+```bash
+# Backup configuration volume
+docker run --rm -v emma-config:/data -v $(pwd):/backup busybox tar czf /backup/emma-config.tar.gz -C /data .
+```
+
+**Kubernetes:**
+
+```bash
+# Export ConfigMaps and Secrets
+kubectl get configmap emma-config -o yaml > emma-config-backup.yaml
+kubectl get secret emma-secrets -o yaml > emma-secrets-backup.yaml
+```
+
+This configuration reference provides comprehensive guidance for setting up Emma in various environments. For troubleshooting configuration issues, see the [Troubleshooting Guide](./troubleshooting).

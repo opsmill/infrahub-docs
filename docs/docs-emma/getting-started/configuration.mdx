@@ -1,0 +1,179 @@
+---
+title: Configuration
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Emma connects to Infrahub using standard environment variables and configuration options. This guide covers all the ways to configure Emma for your environment.
+
+## Environment Variables
+
+Emma uses the same environment variables as other Infrahub tools for consistency:
+
+### Required Configuration
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `INFRAHUB_ADDRESS` | URL of your Infrahub instance | `http://localhost:8000` |
+| `INFRAHUB_API_TOKEN` | API token for authentication | `06438eb2-8019-4776-878c-0941b1f1d1ec` |
+
+### Optional Configuration
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `EMMA_FEATURE_FLAGS` | Comma-separated list of experimental features | `""` | `query_builder,template_builder` |
+| `INFRAHUB_TIMEOUT` | API request timeout in seconds | `30` | `60` |
+
+## Setting Environment Variables
+
+<Tabs>
+<TabItem value="local" label="Local Development" default>
+
+For local development, create a `.env` file in the Emma root directory:
+
+```bash
+# .env file
+INFRAHUB_ADDRESS=http://localhost:8000
+INFRAHUB_API_TOKEN=your-api-token-here
+EMMA_FEATURE_FLAGS=query_builder
+```
+
+Or export them in your shell:
+
+```bash
+export INFRAHUB_ADDRESS="http://localhost:8000"
+export INFRAHUB_API_TOKEN="06438eb2-8019-4776-878c-0941b1f1d1ec"
+export EMMA_FEATURE_FLAGS="query_builder,template_builder"
+```
+
+</TabItem>
+<TabItem value="docker" label="Docker">
+
+When using Docker, set environment variables in your `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+services:
+  emma:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - INFRAHUB_ADDRESS=http://infrahub:8000
+      - INFRAHUB_API_TOKEN=your-api-token-here
+      - EMMA_FEATURE_FLAGS=query_builder
+```
+
+Or use an environment file:
+
+```yaml
+services:
+  emma:
+    build: .
+    env_file:
+      - .env
+```
+
+</TabItem>
+<TabItem value="production" label="Production">
+
+For production deployments, use secure methods to inject environment variables:
+
+**Kubernetes:**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: emma
+spec:
+  template:
+    spec:
+      containers:
+      - name: emma
+        env:
+        - name: INFRAHUB_ADDRESS
+          value: "https://infrahub.example.com"
+        - name: INFRAHUB_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: emma-secrets
+              key: api-token
+```
+
+**Docker Swarm:**
+
+```yaml
+version: '3.8'
+services:
+  emma:
+    environment:
+      - INFRAHUB_ADDRESS=https://infrahub.example.com
+      - INFRAHUB_API_TOKEN_FILE=/run/secrets/api_token
+    secrets:
+      - api_token
+```
+
+</TabItem>
+</Tabs>
+
+## Getting an API Token
+
+To get an API token from Infrahub:
+
+1. **Log into your Infrahub instance** at your `INFRAHUB_ADDRESS`
+2. **Navigate to Settings** → **API Tokens**
+3. **Create a new token** with appropriate permissions
+4. **Copy the token** and use it as your `INFRAHUB_API_TOKEN`
+
+:::warning
+API tokens provide full access to your Infrahub instance. Store them securely and never commit them to version control.
+:::
+
+## In-App Configuration
+
+Emma also provides configuration options within the web interface:
+
+### Infrahub Connection Settings
+
+- **Address**: Override the environment variable for the current session
+- **Branch**: Select which Infrahub branch to work with
+- **Timeout**: Adjust request timeout for slow connections
+
+### AI Assistant Settings
+
+- **OpenAI API Key**: Configure AI features for schema generation
+- **Model Selection**: Choose between different AI models
+- **Temperature**: Adjust AI creativity level
+
+Access these settings through the sidebar in any Emma page.
+
+## Feature Flags
+
+Emma uses feature flags to enable experimental functionality:
+
+| Flag | Description | Status |
+|------|-------------|--------|
+| `query_builder` | GraphQL query builder interface | Alpha |
+| `template_builder` | Template creation tools | Alpha |
+
+Enable feature flags by setting `EMMA_FEATURE_FLAGS`:
+
+```bash
+export EMMA_FEATURE_FLAGS="query_builder,template_builder"
+```
+
+## Next Steps
+
+With Emma configured, you're ready to take your [First Steps](./first-steps) with the application.
+
+## Configuration Validation
+
+Emma validates your configuration on startup. Common configuration issues:
+
+- **Invalid Infrahub address**: Check the URL format and network connectivity
+- **Authentication errors**: Verify your API token is valid and has necessary permissions
+- **Connection timeouts**: Increase timeout values for slow networks
+
+For detailed troubleshooting, see the [Troubleshooting Guide](../reference/troubleshooting).

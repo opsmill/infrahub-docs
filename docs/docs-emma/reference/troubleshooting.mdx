@@ -1,0 +1,447 @@
+---
+title: Troubleshooting
+---
+
+This guide covers common issues you might encounter while using Emma and how to resolve them.
+
+## Connection Issues
+
+### Cannot Connect to Infrahub
+
+**Symptoms:**
+
+- Emma shows "Connection Failed" status
+- API calls timeout or fail
+- Cannot load schemas or data
+
+**Solutions:**
+
+1. **Check Infrahub Address**
+
+   ```bash
+   # Verify the address is correct and accessible
+   curl http://localhost:8000/api/schema/
+   ```
+
+2. **Verify API Token**
+   - Ensure the token is valid and not expired
+   - Check token permissions in Infrahub
+   - Try generating a new token
+
+3. **Network Connectivity**
+   - Check if Infrahub is running: `docker ps` or service status
+   - Verify port accessibility: `telnet localhost 8000`
+   - Check firewall rules and network configuration
+
+4. **Docker Network Issues** (when using containers)
+
+   ```bash
+   # Check if containers can communicate
+   docker network ls
+   docker network inspect <network-name>
+   
+   # Connect Emma to Infrahub network
+   docker network connect <infrahub-network> emma-emma-1
+   ```
+
+### Authentication Errors
+
+**Error:** "Unauthorized" or "403 Forbidden"
+
+**Solutions:**
+
+- Verify `INFRAHUB_API_TOKEN` is set correctly
+- Check token permissions in Infrahub admin interface
+- Ensure token hasn't expired
+- Try accessing Infrahub directly with the token:
+
+  ```bash
+  curl -H "X-INFRAHUB-KEY: your-token" http://localhost:8000/api/schema/
+  ```
+
+## Schema Issues
+
+### Schema Loading Failures
+
+**Error:** "Failed to load schema" or validation errors
+
+**Common Causes and Solutions:**
+
+1. **Missing Dependencies**
+   - Load base schemas before dependent schemas
+   - Check inheritance chain requirements
+   - Verify referenced schemas exist
+
+2. **Invalid YAML Syntax**
+   - Use a YAML validator to check syntax
+   - Check indentation (use spaces, not tabs)
+   - Verify quotes and special characters
+
+3. **Schema Conflicts**
+   - Check for naming conflicts with existing schemas
+   - Verify namespace uniqueness
+   - Review attribute naming conventions
+
+4. **Permission Issues**
+   - Ensure API token has schema modification permissions
+   - Check branch permissions if using feature branches
+
+### AI Schema Builder Issues
+
+**Problem:** AI generates incorrect or incomplete schemas
+
+**Solutions:**
+
+1. **Improve Descriptions**
+   - Be more specific about requirements
+   - Include examples of desired attributes
+   - Mention relationships explicitly
+   - Reference existing schemas
+
+2. **Check OpenAI Configuration**
+   - Verify API key is valid and has credits
+   - Check rate limits and quotas
+   - Try a simpler description first
+
+3. **Validate Generated Schemas**
+   - Always review AI output carefully
+   - Test schemas with sample data
+   - Compare with similar schemas in the library
+
+## Data Import/Export Issues
+
+### Import Failures
+
+**Common Problems:**
+
+1. **File Format Issues**
+
+   ```text
+   Error: "Unable to parse CSV file"
+   ```
+
+   **Solutions:**
+   - Ensure file is UTF-8 encoded
+   - Check for proper CSV format with headers
+   - Remove or escape special characters
+   - Verify file size is under 100MB
+
+2. **Mapping Errors**
+
+   ```text
+   Error: "Column 'xyz' cannot be mapped to attribute 'abc'"
+   ```
+
+   **Solutions:**
+   - Check attribute names match schema definition
+   - Verify data types are compatible
+   - Review required vs optional fields
+   - Check relationship target schemas exist
+
+3. **Validation Failures**
+
+   ```text
+   Error: "Validation failed for record 123"
+   ```
+
+   **Solutions:**
+   - Check data format (dates, IPs, emails)
+   - Verify enum values are valid
+   - Ensure required fields are populated
+   - Check uniqueness constraints
+
+4. **Relationship Resolution**
+
+   ```text
+   Error: "Cannot resolve relationship to 'Location'"
+   ```
+
+   **Solutions:**
+   - Ensure referenced objects exist in Infrahub
+   - Check relationship field naming
+   - Verify object identifiers are correct
+   - Create referenced objects first
+
+### Export Failures
+
+**Common Problems:**
+
+1. **Permission Errors**
+   - Verify read permissions for target schemas
+   - Check branch access permissions
+   - Ensure API token has export rights
+
+2. **Performance Issues**
+   - Reduce export size with filters
+   - Export in smaller batches
+   - Check Infrahub resource usage
+   - Increase timeout settings
+
+3. **Format Issues**
+   - Verify encoding settings
+   - Check delimiter configuration
+   - Review special character handling
+
+## Performance Issues
+
+### Slow Response Times
+
+**Symptoms:**
+
+- Long loading times for schemas or data
+- Timeouts during operations
+- Unresponsive interface
+
+**Solutions:**
+
+1. **Check System Resources**
+
+   ```bash
+   # Monitor system resources
+   htop  # or top
+   docker stats  # for containerized deployments
+   ```
+
+2. **Optimize Operations**
+   - Reduce batch sizes for imports
+   - Use filters to limit data exports
+   - Close unused browser tabs
+   - Clear browser cache
+
+3. **Network Optimization**
+   - Check network latency to Infrahub
+   - Use local deployments for development
+   - Increase timeout settings
+
+4. **Infrahub Performance**
+   - Check Infrahub logs for errors
+   - Monitor database performance
+   - Verify adequate system resources
+
+### Memory Issues
+
+**Error:** "Out of memory" or browser crashes
+
+**Solutions:**
+
+- Reduce file sizes for imports
+- Process data in smaller batches
+- Close other applications
+- Increase system memory if possible
+- Use command-line tools for very large datasets
+
+## Browser and Interface Issues
+
+### Display Problems
+
+**Issues:**
+
+- Missing UI elements
+- Formatting problems
+- Broken layouts
+
+**Solutions:**
+
+1. **Clear Browser Cache**
+   - Hard refresh (Ctrl+F5 or Cmd+Shift+R)
+   - Clear browser cache and cookies
+   - Try incognito/private mode
+
+2. **Check Browser Compatibility**
+   - Use supported browsers (Chrome, Firefox, Safari, Edge)
+   - Update to latest browser version
+   - Disable problematic browser extensions
+
+3. **Check Console Errors**
+   - Open browser developer tools (F12)
+   - Look for JavaScript errors in console
+   - Check network tab for failed requests
+
+### Streamlit-Specific Issues
+
+**Error:** "Please run this app with streamlit run"
+
+**Solution:**
+
+```bash
+# Ensure you're using the correct command
+poetry run streamlit run main.py
+
+# Or for direct Python execution
+python -m streamlit run main.py
+```
+
+**Error:** Session state errors
+
+**Solutions:**
+
+- Refresh the page
+- Clear browser session storage
+- Restart Emma application
+
+## Configuration Issues
+
+### Environment Variables
+
+**Problem:** Configuration not being applied
+
+**Check List:**
+
+1. **Verify Variables Are Set**
+
+   ```bash
+   echo $INFRAHUB_ADDRESS
+   echo $INFRAHUB_API_TOKEN
+   env | grep INFRAHUB
+   ```
+
+2. **Docker Environment Issues**
+
+   ```yaml
+   # In docker-compose.yml
+   environment:
+     - INFRAHUB_ADDRESS=http://infrahub:8000
+     - INFRAHUB_API_TOKEN=${INFRAHUB_API_TOKEN}
+   ```
+
+3. **Environment File Issues**
+
+   ```bash
+   # Check .env file exists and format
+   cat .env
+   # Ensure no spaces around = signs
+   # CORRECT: INFRAHUB_ADDRESS=http://localhost:8000
+   # WRONG:   INFRAHUB_ADDRESS = http://localhost:8000
+   ```
+
+### Feature Flags
+
+**Problem:** Experimental features not working
+
+**Solutions:**
+
+```bash
+# Check feature flags are set
+echo $EMMA_FEATURE_FLAGS
+
+# Set feature flags correctly
+export EMMA_FEATURE_FLAGS="query_builder,template_builder"
+
+# For Docker
+docker run -e EMMA_FEATURE_FLAGS="query_builder" emma
+```
+
+## Logging and Debugging
+
+### Enable Debug Logging
+
+**For Local Development:**
+
+```bash
+# Set Streamlit logging level
+export STREAMLIT_LOGGER_LEVEL=debug
+
+# Set Python logging level
+export PYTHONPATH=.
+poetry run python -c "import logging; logging.basicConfig(level=logging.DEBUG)"
+```
+
+**For Docker:**
+
+```yaml
+# In docker-compose.yml
+environment:
+  - STREAMLIT_LOGGER_LEVEL=debug
+  - PYTHONPATH=/app
+```
+
+### Check Application Logs
+
+**Local Development:**
+
+```bash
+# Run with verbose output
+poetry run streamlit run main.py --logger.level=debug
+
+# Check Emma logs
+tail -f ~/.streamlit/logs/
+```
+
+**Docker Deployment:**
+
+```bash
+# Check container logs
+docker logs emma-emma-1
+
+# Follow logs in real-time
+docker logs -f emma-emma-1
+```
+
+### Common Log Patterns
+
+**Connection Issues:**
+
+```text
+ERROR: Failed to connect to Infrahub at http://localhost:8000
+ERROR: Authentication failed - invalid token
+```
+
+**Schema Issues:**
+
+```text
+ERROR: Schema validation failed
+WARNING: Referenced schema 'Location' not found
+```
+
+**Import Issues:**
+
+```text
+ERROR: Failed to parse CSV at line 123
+WARNING: Relationship resolution failed for 'device-01'
+```
+
+## Getting Help
+
+### Before Asking for Help
+
+1. **Check this troubleshooting guide**
+2. **Review Emma documentation**
+3. **Check Infrahub documentation** at https://docs.infrahub.app
+4. **Search existing issues** on GitHub
+
+### Gathering Information
+
+When reporting issues, include:
+
+1. **Emma version** and deployment method
+2. **Infrahub version** and configuration
+3. **Error messages** (full text, not screenshots)
+4. **Steps to reproduce** the issue
+5. **Environment details** (OS, browser, Docker version)
+6. **Relevant logs** with debug logging enabled
+
+### Where to Get Help
+
+- **GitHub Issues**: https://github.com/opsmill/emma/issues
+- **Infrahub Community**: https://github.com/opsmill/infrahub/discussions
+- **Documentation**: https://docs.infrahub.app
+
+### Emergency Procedures
+
+**If Emma is completely broken:**
+
+1. **Check Infrahub directly** to ensure it's working
+2. **Restart Emma** application or containers
+3. **Clear browser cache** and try again
+4. **Check recent changes** and revert if necessary
+5. **Use Infrahub directly** as a workaround
+
+**If data import corrupted data:**
+
+1. **Stop the import** immediately
+2. **Use Infrahub branches** to isolate changes
+3. **Review import logs** for affected records
+4. **Use Infrahub's version control** to revert if needed
+5. **Export and verify** data integrity
+
+Remember: Emma is experimental software. Always backup your Infrahub data before major operations and test changes in non-production environments first.
