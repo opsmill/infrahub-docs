@@ -12,6 +12,104 @@ In this walkthrough, we detail the key building blocks of the demo, explain how 
 
 To structure and store data, we define a schema in Infrahub. You can find the schema files in the `schemas` folder.
 
+### Schema architecture overview
+
+The following diagram illustrates the complete schema architecture, showing how different objects relate to each other in the Service Catalog demo:
+
+```mermaid
+graph TB
+    %% Style definitions
+    classDef service fill:#e6f3ff,stroke:#4a90e2,stroke-width:3px
+    classDef dcim fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    classDef ipam fill:#e6ffe6,stroke:#4caf50,stroke-width:2px
+    classDef location fill:#ffe6f2,stroke:#e91e63,stroke-width:2px
+    classDef generic fill:#f0f0f0,stroke:#666,stroke-width:2px,stroke-dasharray: 5 5
+
+    %% Service Layer
+    ServiceGeneric["Service Generic (Generic)"]:::generic
+    ServiceDedicatedInternet["Service Dedicated Internet<br/>- status<br/>- bandwidth<br/>- ip_package"]:::service
+    
+    %% Location Layer
+    LocationGeneric["Location Generic (Generic)"]:::generic
+    LocationHosting["Location Hosting (Generic)"]:::generic
+    LocationSite["Location Site (Concrete)"]:::location
+    
+    %% DCIM Layer
+    DcimGenericDevice["Dcim Generic Device (Generic)"]:::generic
+    DcimPhysicalDevice["Dcim Physical Device (Generic)"]:::generic
+    DcimDevice["Dcim Device (Concrete)"]:::dcim
+    DcimInterface["Dcim Interface (Generic)"]:::generic
+    DcimInterfaceL2["Dcim Interface L2 (Concrete)"]:::dcim
+    DcimInterfaceL3["Dcim Interface L3 (Concrete)"]:::dcim
+    
+    %% IPAM Layer
+    IpamIPAddress["Ipam IP Address"]:::ipam
+    IpamPrefix["Ipam Prefix<br/>- status<br/>- role"]:::ipam
+    IpamVLAN["Ipam VLAN<br/>- vlan_id<br/>- status<br/>- role"]:::ipam
+    IpamL2Domain["Ipam L2 Domain"]:::ipam
+    
+    %% Inheritance relationships
+    ServiceGeneric -.->|inherits| ServiceDedicatedInternet
+    LocationGeneric -.->|inherits| LocationHosting
+    LocationHosting -.->|inherits| LocationSite
+    DcimGenericDevice -.->|inherits| DcimPhysicalDevice
+    DcimPhysicalDevice -.->|inherits| DcimDevice
+    DcimInterface -.->|inherits| DcimInterfaceL2
+    DcimInterface -.->|inherits| DcimInterfaceL3
+    
+    %% Service Relationships
+    ServiceDedicatedInternet -->|"location (1:1)"| LocationSite
+    ServiceDedicatedInternet -->|"dedicated_interfaces (1:many)"| DcimInterface
+    ServiceDedicatedInternet -->|"vlan (1:1)"| IpamVLAN
+    ServiceDedicatedInternet -->|"gateway_ip_address (1:1)"| IpamIPAddress
+    ServiceDedicatedInternet -->|"prefix (1:1)"| IpamPrefix
+    
+    %% Location Relationships
+    LocationSite -->|"services (1:many)"| ServiceGeneric
+    LocationHosting -->|"devices (1:many)"| DcimPhysicalDevice
+    LocationHosting -->|"prefixes (1:many)"| IpamPrefix
+    LocationHosting -->|"vlans (1:many)"| IpamVLAN
+    
+    %% Device Relationships
+    DcimDevice -->|"location (1:1)"| LocationHosting
+    DcimGenericDevice -->|"interfaces (1:many)"| DcimInterface
+    DcimGenericDevice -->|"primary_address (1:1)"| IpamIPAddress
+    
+    %% Interface Relationships
+    DcimInterfaceL2 -->|"untagged_vlan (1:1)"| IpamVLAN
+    DcimInterfaceL2 -->|"tagged_vlan (1:many)"| IpamVLAN
+    DcimInterfaceL3 -->|"ip_addresses (1:many)"| IpamIPAddress
+    
+    %% IPAM Relationships
+    IpamIPAddress -->|"interface (1:1)"| DcimInterfaceL3
+    IpamPrefix -->|"vlan (1:1)"| IpamVLAN
+    IpamVLAN -->|"l2domain (1:1)"| IpamL2Domain
+    IpamL2Domain -->|"vlans (1:many)"| IpamVLAN
+    
+    %% Highlight key service flow
+    ServiceDedicatedInternet -.->|"allocates from pool"| IpamVLAN
+    ServiceDedicatedInternet -.->|"allocates from pool"| IpamPrefix
+    ServiceDedicatedInternet -.->|"finds available"| DcimInterface
+    ServiceDedicatedInternet -.->|"creates gateway"| IpamIPAddress
+```
+
+#### Key concepts in the diagram
+
+1. **Generic vs Concrete Objects**:
+   - **Generic** (dashed boxes): Abstract base classes that define common attributes
+   - **Concrete** (solid boxes): Actual objects that can be instantiated
+
+2. **Object Categories**:
+   - **Service Layer** (blue): Service definitions and instances
+   - **Location Layer** (pink): Geographic hierarchy and hosting locations
+   - **DCIM Layer** (orange): Physical devices and interfaces
+   - **IPAM Layer** (green): Network resources (IPs, VLANs, prefixes)
+
+3. **Relationship Types**:
+   - **Inheritance** (dashed arrows): Shows class hierarchy
+   - **Associations** (solid arrows): Shows data relationships with cardinality
+   - **Resource Allocation** (dotted arrows): Shows dynamic provisioning flow
+
 ### Consuming the schema library
 
 Much of the schema is based on the [Infrahub schema library](https://github.com/opsmill/schema-library), which provides reusable schema components for quickly scaffolding a schema.
@@ -240,6 +338,7 @@ The generator is a powerful feature of Infrahub that allows you to codify the ru
 We want to build the generator with the concept of **idempotency** in mind, meaning it should be repeatable: it assigns resources the first time it runs, and if run again, it changes nothing if the desired state is already achieved. This approach ensures the code is robust and predictable.
 
 Infrahub provides a set of features to help:
+
 - Resource manager: It allows users to create pools and allocate resources from them, such as prefixes, IP addresses, or even numbers. We will use this feature to allocate our prefixes/vlan in a branch-agnostic and idempotent way. Learn more about [resource managers](https://docs.infrahub.app/topics/resource-manager).
 - `allow_upsert=True`: This parameter is provided when saving the node, allowing it to be created if it doesn't exist or updated if it does. This is useful for ensuring that the generator can run multiple times without creating duplicates or errors.
 
@@ -502,10 +601,141 @@ class DedicatedInternetGenerator(InfrahubGenerator):
 
 ```
 
-:::success
+### Generator architecture patterns
 
-At this stage, we have a generator that transforms a high-level service request into a complete service, sourcing resources from predefined pools with consistency and in just seconds.
+1. **Resource Tracking**: Every allocation linked to the service
+2. **Relationship Integrity**: Bi-directional references maintained
+3. **Error Handling**: Fail fast with clear messages
+4. **Logging**: Detailed progress tracking for troubleshooting
 
-:::
+### Service provisioning flow
+
+Here's a focused view of how resources flow during service provisioning:
+
+```mermaid
+flowchart LR
+    %% Style definitions
+    classDef request fill:#ffd700,stroke:#333,stroke-width:2px
+    classDef pool fill:#87ceeb,stroke:#333,stroke-width:2px
+    classDef resource fill:#98fb98,stroke:#333,stroke-width:2px
+    classDef service fill:#ffb6c1,stroke:#333,stroke-width:2px
+
+    %% Nodes
+    SR[Service Request]:::request
+    SP[Service Object]:::service
+    
+    VP["VLAN Pool<br/>100-199"]:::pool
+    PP["Prefix Pool<br/>10.0.0.0/16"]:::pool
+    
+    V[VLAN 142]:::resource
+    P["Prefix 10.0.42.0/28"]:::resource
+    SW["Switch Port<br/>ge-0/0/5"]:::resource
+    GW["Gateway IP<br/>10.0.42.1/28"]:::resource
+    
+    %% Flow
+    SR -->|Creates| SP
+    SP -->|"Allocates from"| VP
+    SP -->|"Allocates from"| PP
+    VP -->|Provides| V
+    PP -->|Provides| P
+    SP -->|"Finds available"| SW
+    P -->|"First IP becomes"| GW
+    
+    %% Assignments
+    V -.->|"Assigned to"| SP
+    P -.->|"Assigned to"| SP
+    SW -.->|"Assigned to"| SP
+    GW -.->|"Assigned to"| SP
+```
+
+### Summary: From request to reality
+
+The generator transforms a service request:
+
+```yaml
+Service: DI-12345
+Location: Atlanta 
+Bandwidth: 1 Gbps
+IP Package: Medium
+```
+
+Into fully provisioned infrastructure:
+
+- VLAN 142 allocated and configured
+- IP prefix 10.0.42.0/28 assigned
+- Switch port ge-0/0/5 configured
+- Router interface vlan_142 with IP 10.0.42.1/28
+
+All in seconds, consistently, and idempotently!
 
 <ReferenceLink title="Learn about Infrahub generators" url="https://docs.infrahub.app/topics/generator" openInNewTab/>
+
+## The service portal architecture
+
+### Streamlit for the user interface
+
+The demo uses [Streamlit](https://streamlit.io/) for the user interface because it:
+
+- Builds web UIs with pure Python (no JavaScript required)
+- Provides ready-made components for forms and data display
+- Integrates seamlessly with the Infrahub Python SDK
+- Enables rapid prototyping of service catalogs
+
+### Portal design patterns
+
+#### Infrahub SDK integration
+
+The portal uses several patterns to efficiently interact with Infrahub:
+
+```python title="Client Caching Pattern"
+@st.cache_resource
+def get_client(branch: str = "main") -> InfrahubClientSync:
+    """Create and cache Infrahub client."""
+    address = get_instance_address()
+    return InfrahubClientSync(
+        address=address,
+        config=Config(default_branch=branch)
+    )
+```
+
+:::tip Why Cache the Client?
+The `@st.cache_resource` decorator:
+
+- Creates client once and reuses it
+- Reduces connection overhead
+- Maintains consistent state
+- Improves page load performance
+:::
+
+<ReferenceLink title="Learn about Streamlit" url="https://streamlit.io/" openInNewTab/>
+
+## Architecture takeaways
+
+### Key design decisions
+
+1. **Schema as Foundation**: Well-designed schema enables everything else
+2. **Automation through Generators**: Complex provisioning made straightforward
+3. **Resource Management**: Centralized pools prevent conflicts
+4. **Branch-Based Workflows**: Safe testing and rollback capabilities
+5. **User-Friendly Abstractions**: Hide complexity behind clear choices
+
+### Extending the demo
+
+Consider these enhancements for production use:
+
+- Additional service types (MPLS, Cloud Connect, etc.)
+- Approval workflows with human checkpoints
+- Integration with ITSM platforms
+- Automated testing of provisioned services
+- Rollback and decommissioning automation
+
+## Next steps
+
+Now that you understand the architecture:
+
+1. **Run the Demo**: Follow the [installation guide](installation) to set up locally
+2. **Try the Portal**: Walk through the [user experience](user-walkthrough)
+3. **Explore Further**: Modify the schema or create new service types
+4. **Build Your Own**: Apply these patterns to your infrastructure needs
+
+The combination of Infrahub's flexible schema, powerful generators, and Python-based portals enables you to build sophisticated service automation tailored to your organization's needs.

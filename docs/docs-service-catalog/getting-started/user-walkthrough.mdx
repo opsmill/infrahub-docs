@@ -1,85 +1,303 @@
 ---
-title: User Walkthrough
-description: A step-by-step guide to running the demo from a user perspective.
+title: How to Use the Service Catalog Demo
+description: Experience the complete service delivery workflow from request to provisioning using both the Service Catalog portal and Infrahub interface.
 ---
 import ReferenceLink from "../../src/components/Card";
 
-This walkthrough will guide you through the steps to run the demo from a user perspective. It assumes you have already set up the environment as described in the [installation guide](installation).
+This guide demonstrates the complete service delivery workflow through two user perspectives: requesting services through the catalog and managing them through Infrahub. You'll see how automated provisioning transforms service requests into fully configured network services.
 
 <ReferenceLink title="Need help or have questions? Join our Discord community for support!" url="https://discord.gg/opsmill" openInNewTab/>
 
-If you want more information about the business case and how this PoC was built, you can read the corresponding [blog post](https://opsmill.com/blog/how-to-turn-your-source-of-truth-into-a-service-factory/) on the OpsMill website.
+## Prerequisites
+
+Before starting, ensure you have:
+
+- Completed the [installation guide](installation)
+- Both services running:
+    - Service Catalog at `http://localhost:8501`
+    - Infrahub at `http://localhost:8000`
+
+## Understanding the workflow
+
+The demo simulates a typical enterprise service delivery process:
+
+1. **Service Request**: Customer/engineer requests a service through self-service portal
+2. **Automatic Processing**: Infrahub generates proposed changes with allocated resources
+3. **Review & Approval**: Network architect reviews and approves the implementation
+4. **Resource Allocation**: System automatically provisions VLANs, IPs, and configurations
+5. **Service Delivery**: Customer receives access details for their new service
 
 <ReferenceLink title="Blog post" url="https://opsmill.com/blog/how-to-turn-your-source-of-truth-into-a-service-factory/" openInNewTab/>
 
-## 🧑‍🔧 Service delivery engineer
+## Step 1: Request a new service (service engineer role)
 
-The goal as a service delivery engineer is to request new services for customers and follow the ongoing implementations.
+### Understanding the service catalog interface
 
-### Open a new service request
+The Service Catalog provides a simplified, user-friendly interface for requesting network services without requiring deep technical knowledge.
 
-- You can access the service catalog at `http://localhost:8501`.
-- Then, navigate to "Dedicated Internet" using the sidebar.
-- Fill out the form to request a new dedicated internet service.
-- Submit the request.
+### Create a dedicated internet service request
+
+1. **Access the Service Catalog**
+   - Open your browser to `http://localhost:8501`
+   - You'll see the main dashboard with available service types
+
+2. **Navigate to Service Creation**
+   - Click on the "🔌 Dedicated Internet" card from the home page
+   - Or use the sidebar navigation to go to "Dedicated Internet"
+
+3. **Fill Out the Service Request Form**
+
+   The form presents user-friendly options that hide technical complexity:
+
+   - **Service Identifier**: Choose a unique name (for example: "DI-DEMO-001")
+   - **Account Reference**: Customer or project identifier
+   - **Location**: Select from available sites (Atlanta, Dallas, Denver, Seattle)
+   - **Bandwidth**: Choose from human-readable options:
+     - "Hundred Megabits" (100 Mbps)
+     - "One Gigabit" (1 Gbps)
+     - "Ten Gigabits" (10 Gbps)
+   - **IP Package**: Select based on customer needs:
+     - "Small" (6 usable IPs)
+       - "Medium" (14 usable IPs)
+     - "Large" (30 usable IPs)
+
+4. **Submit the Request**
+   - Click "Submit" to create the service request
+   - The system creates a new branch in Infrahub for this change
 
 ![Streamlit Form](./../media/form.png)
 
-:::success
+:::tip What Happens Behind the Scenes
+When you submit the request:
 
-Your request will be submitted to Infrahub, where it will be processed by a network architect.
-
+1. A new git branch is created in Infrahub
+2. The service object is created with "draft" status
+3. A generator is triggered to allocate resources
+4. A "Proposed Change" is created for review
 :::
 
-### List ongoing requests
+### Track your service requests
 
-- Navigate to "Service Requests" using the sidebar.
-- You will see a list of all your requests, including the one you just submitted.
-- You might come back to that page later to check the fully implemented service.
+1. **View All Requests**
+   - Navigate to "📦 Service Requests" in the sidebar
+   - You'll see a table of all service requests with their current status
+
+2. **Monitor Request Progress**
+
+   The table shows key information:
+   - **Service ID**: Your unique identifier
+   - **Status**: Current state (Draft, In Delivery, Active)
+   - **Location**: Where the service will be deployed
+   - **Bandwidth & IP Package**: Technical specifications
+   - **Account**: Customer reference
+
+3. **Understanding Status Progression**
+   - **Draft**: Initial request submitted, awaiting processing
+   - **In Delivery**: Resources allocated, implementation in progress
+   - **Active**: Service fully provisioned and operational
 
 ![Service Requests](./../media/service_requests.png)
 
-:::success
-
-When the request is approved, you will be able to see the details of the service and its components.
-
+:::note Why Two Interfaces?
+The Service Catalog provides a simplified view for business users, while Infrahub offers detailed technical views for network engineers. This separation allows each role to work with appropriate tools.
 :::
 
-## 🧑‍💻 Network architect
+## Step 2: Review infrastructure state (network architect role)
 
-The goal as a network architect is to carry out day-to-day operations and implement the requested services.
+### Understanding Infrahub's role
 
-### View current state of the network
+Infrahub serves as the "source of truth" for your network infrastructure, maintaining detailed models of:
 
-- You can access Infrahub at `http://localhost:8000`.
-- Log in with the username `admin` and password `infrahub`.
-- On the left sidebar, there are several objects that represent the current state of the network.
-- Click `Location` > `Site` to see the list of sites.
-- Click on a site to view its details, including the assigned components like VLANs and devices.
+- Physical locations and equipment
+- Network configurations and relationships
+- Service allocations and dependencies
+- Change history and version control
+
+### Access the Infrahub interface
+
+1. **Log into Infrahub**
+   - Navigate to `http://localhost:8000`
+   - Username: `admin`
+   - Password: `infrahub`
+
+2. **Explore the Infrastructure Model**
+
+   The left sidebar organizes infrastructure data by category:
+
+   **Locations**
+   - Countries, metros, and sites
+   - Geographic hierarchy for service placement
+
+   **DCIM (Data Center Infrastructure Management)**
+   - Devices (switches, routers, servers)
+   - Interfaces and connections
+   - Hardware specifications
+
+   **IPAM (IP Address Management)**
+   - IP prefixes and addresses
+   - VLANs and L2 domains
+   - Resource pools for allocation
+
+   **Services**
+   - Service definitions and instances
+   - Resource assignments
+   - Customer relationships
+
+3. **Examine Site Details**
+   - Click `Location` > `Site` to see all sites
+   - Select a site (for example: "Atlanta")
+   - Review the site's components:
+     - Associated devices and their roles
+     - Current VLAN assignments
+     - Available resource pools
+     - Existing services
 
 ![Site View](./../media/site.png)
 
-:::success
+:::info Infrastructure as Code Benefits
+By modeling infrastructure in Infrahub:
 
-Infrahub can store all the data related to the network, including sites, devices, VLANs, and more, allowing teams to have a centralized view of the network's intended state.
-
+- All changes are version-controlled
+- Relationships between components are maintained
+- Resource conflicts are automatically prevented
+- Changes can be tested before implementation
 :::
 
-### Review and approve service requests
+### Review and approve service implementation
 
-- Navigate to `Proposed Changes` in the left sidebar.
-- You should see an entry for the service request you submitted as a service delivery engineer.
-- Click on the entry to view the details of the proposed changes.
-- Click the `Checks` tab to review the checks that have been run on the proposed changes (the generator one should be successful).
-- Click the `Data` tab; you should see the service data entered earlier.
-- Click the `Refresh Diff` button.
-- You should now see the full-blown service, including components like VLANs and gateways assigned by the generator.
-- Moving back to the `Overview` tab, you can click the `Merge` button to approve the changes.
+1. **Access Proposed Changes**
+   - Navigate to `Proposed Changes` in the left sidebar
+   - You'll see the service request you created earlier
+   - Each request creates a separate branch for safe testing
+
+2. **Examine the Automated Provisioning**
+
+   Click on your service request to see detailed tabs:
+
+   **Overview Tab**
+   - Summary of the proposed change
+   - Author and timestamp information
+   - Current status and available actions
+
+   **Checks Tab**
+   - Automated validation results
+   - Generator execution status (should show success)
+   - Any constraint violations or conflicts
+
+   **Data Tab**
+   - Original service request data
+   - Your form inputs (location, bandwidth, etc.)
+   - Service metadata and relationships
+
+3. **Review Resource Allocation**
+   - Click "Refresh Diff" to see what the generator created
+   - Examine the provisioned resources:
+
+   **VLAN Assignment**
+
+   ```text
+   New VLAN: vlan__DI-DEMO-001
+   ID: 142 (allocated from pool)
+   Role: customer
+   Status: active
+   ```
+
+   **IP Prefix Allocation**
+
+   ```text
+   New Prefix: 10.0.42.0/28
+   Gateway: 10.0.42.1
+   Usable IPs: 10.0.42.2 - 10.0.42.14
+   ```
+
+   **Interface Configuration**
+
+   ```text
+   Switch Port: ge-0/0/5 on core-switch-1
+   Speed: 1000 Mbps
+   VLAN: 142 (untagged)
+   Status: active
+   ```
+
+   **Router Interface**
+
+   ```text
+   Interface: vlan_142 on edge-router-1
+   IP Address: 10.0.42.1/28
+   Status: active
+   ```
+
+4. **Approve the Implementation**
+   - Return to the "Overview" tab
+   - Review the summary of changes
+   - Click "Merge" to approve and implement
+   - The branch merges into main, making changes live
 
 ![Proposed Change](./../media/proposed_change.png)
 
-:::success
+:::tip Approval Workflow Benefits
+This review process provides:
 
-As a network architect, the only thing you need to do is review the proposed changes and approve them. Infrahub takes care of allocating the resources and implementing the service exactly as you've defined it in the generator.
-
+- **Safety**: Changes tested in isolation before going live
+- **Visibility**: Full resource allocation visible before approval
+- **Audit Trail**: Complete history of who approved what and when
+- **Rollback**: Ability to revert changes if issues arise
 :::
+
+## Step 3: Verify service delivery
+
+### Confirm active service
+
+1. **Check Service Status**
+   - Return to the Service Catalog (`http://localhost:8501`)
+   - Navigate to "Service Requests"
+   - Your service should now show "Active" status
+
+2. **Review Allocated Resources**
+   - In Infrahub, navigate to the service under `Service` > `Dedicated Internet`
+   - Click on your service to see all allocated components
+   - Verify relationships to VLANs, interfaces, and IP addresses
+
+3. **Understand the Customer Experience**
+
+   At this point, a real customer would receive:
+
+   - **Connection Details**: Switch port and patch panel location
+   - **IP Configuration**: Gateway IP, subnet mask, and usable IP range
+   - **VLAN Information**: VLAN ID for their traffic
+   - **Support Contacts**: Who to contact for service issues
+
+:::success Workflow Complete!
+You've successfully:
+
+1. ✅ Requested a service through the self-service portal
+2. ✅ Reviewed the automated resource allocation
+3. ✅ Approved the implementation as a network architect
+4. ✅ Delivered a fully configured network service
+
+All in minutes, with zero manual configuration errors!
+:::
+
+## Key takeaways
+
+### Business benefits
+
+- **Speed**: Service delivery in minutes instead of days/weeks
+- **Consistency**: Standardized configurations eliminate human error
+- **Self-Service**: Reduces bottlenecks and improves customer satisfaction
+- **Visibility**: Complete audit trail and resource tracking
+
+### Technical benefits
+
+- **Resource Management**: Automatic allocation prevents conflicts
+- **Version Control**: All changes tracked and reversible
+- **Validation**: Automated checks prevent invalid configurations
+- **Integration**: API-driven architecture enables broader automation
+
+### Next steps
+
+Now that you understand the user experience:
+
+- Explore the [developer walkthrough](developer-walkthrough) to understand the technical implementation
+- Try creating additional service types or modifying existing ones
+- Consider how similar patterns could apply to your organization's services
