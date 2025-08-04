@@ -201,6 +201,16 @@ const config: Config = {
       },
     ],
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-integrations',
+        path: 'docs-integrations',
+        routeBasePath: 'integrations',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-integrations.ts',
+      },
+    ],
+    [
       '@docusaurus/plugin-google-tag-manager',
       {
         containerId: 'GTM-MQ2RZ3SP',
@@ -279,6 +289,12 @@ const config: Config = {
           position: 'left',
           label: 'Integrations',
           items: [
+            {
+              type: "docSidebar",
+              sidebarId: "integrationsSidebar",
+              label: "All Integrations",
+              docsPluginId: "docs-integrations",
+            },
             {
               type: "docSidebar",
               sidebarId: "ansibleSidebar",
