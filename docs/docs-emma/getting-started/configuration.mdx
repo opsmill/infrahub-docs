@@ -7,25 +7,25 @@ import TabItem from '@theme/TabItem';
 
 Emma connects to Infrahub using standard environment variables and configuration options. This guide covers all the ways to configure Emma for your environment.
 
-## Environment Variables
+## Environment variables
 
 Emma uses the same environment variables as other Infrahub tools for consistency:
 
-### Required Configuration
+### Required configuration
 
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `INFRAHUB_ADDRESS` | URL of your Infrahub instance | `http://localhost:8000` |
 | `INFRAHUB_API_TOKEN` | API token for authentication | `06438eb2-8019-4776-878c-0941b1f1d1ec` |
 
-### Optional Configuration
+### Optional configuration
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
 | `EMMA_FEATURE_FLAGS` | Comma-separated list of experimental features | `""` | `query_builder,template_builder` |
 | `INFRAHUB_TIMEOUT` | API request timeout in seconds | `30` | `60` |
 
-## Setting Environment Variables
+## Setting environment variables
 
 <Tabs>
 <TabItem value="local" label="Local Development" default>
@@ -118,7 +118,7 @@ services:
 </TabItem>
 </Tabs>
 
-## Getting an API Token
+## Getting an API token
 
 To get an API token from Infrahub:
 
@@ -131,17 +131,17 @@ To get an API token from Infrahub:
 API tokens provide full access to your Infrahub instance. Store them securely and never commit them to version control.
 :::
 
-## In-App Configuration
+## In-app configuration
 
 Emma also provides configuration options within the web interface:
 
-### Infrahub Connection Settings
+### Infrahub connection settings
 
 - **Address**: Override the environment variable for the current session
 - **Branch**: Select which Infrahub branch to work with
 - **Timeout**: Adjust request timeout for slow connections
 
-### AI Assistant Settings
+### AI assistant settings
 
 - **OpenAI API Key**: Configure AI features for schema generation
 - **Model Selection**: Choose between different AI models
@@ -149,7 +149,7 @@ Emma also provides configuration options within the web interface:
 
 Access these settings through the sidebar in any Emma page.
 
-## Feature Flags
+## Feature flags
 
 Emma uses feature flags to enable experimental functionality:
 
@@ -164,11 +164,11 @@ Enable feature flags by setting `EMMA_FEATURE_FLAGS`:
 export EMMA_FEATURE_FLAGS="query_builder,template_builder"
 ```
 
-## Next Steps
+## Next steps
 
 With Emma configured, you're ready to take your [First Steps](./first-steps) with the application.
 
-## Configuration Validation
+## Configuration validation
 
 Emma validates your configuration on startup. Common configuration issues:
 

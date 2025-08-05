@@ -2,9 +2,9 @@
 title: Building Your First Schema
 ---
 
-This guide walks you through creating your first Infrahub schema using Emma's AI Schema Builder. We'll create a simple but practical schema for modeling network devices.
+This guide walks you through creating your first Infrahub schema using Emma's AI Schema Builder. We'll create a practical schema for modeling network devices.
 
-## What We'll Build
+## What we'll build
 
 By the end of this guide, you'll have created a "NetworkDevice" schema that includes:
 
@@ -18,10 +18,10 @@ By the end of this guide, you'll have created a "NetworkDevice" schema that incl
 Before starting, ensure you have:
 
 - Emma running and connected to your Infrahub instance
-- Basic understanding of what schemas are (see [First Steps](../getting-started/first-steps))
+- Basic understanding of what schemas are (see [First Steps](../getting-started/first-steps.mdx))
 - An OpenAI API key configured for AI features
 
-## Step 1: Plan Your Schema
+## Step 1: Plan your schema
 
 Before jumping into the Schema Builder, think about what you want to model:
 
@@ -43,13 +43,13 @@ Before jumping into the Schema Builder, think about what you want to model:
 - `description` - Human-readable description
 - `tags` - Flexible tagging system
 
-## Step 2: Open the Schema Builder
+## Step 2: Open the schema builder
 
 1. **Navigate to Schema Builder** in Emma's sidebar
 2. **Verify AI configuration** - Ensure your OpenAI API key is set
 3. **Check Infrahub connection** - Confirm you're connected to the right instance and branch
 
-## Step 3: Describe Your Schema
+## Step 3: Describe your schema
 
 In the Schema Builder interface, enter this description:
 
@@ -78,11 +78,11 @@ Operational Status:
 The schema should inherit from the base Device schema if available, and include proper validation for IP addresses and required fields.
 ```
 
-## Step 4: Review the Generated Schema
+## Step 4: Review the generated schema
 
 The AI will generate a complete YAML schema. Review it carefully:
 
-### Check the Schema Structure
+### Check the schema structure
 
 ```yaml
 # Example generated schema (yours may vary)
@@ -111,16 +111,16 @@ schemas:
       # ... more relationships
 ```
 
-### Verify Key Elements
+### Verify key elements
 
-✅ **Naming**: Schema name follows your conventions  
-✅ **Namespace**: Appropriate namespace for organization  
-✅ **Inheritance**: Inherits from appropriate base schema  
-✅ **Attributes**: All required attributes are present with correct types  
-✅ **Relationships**: References to Location and Organization schemas  
-✅ **Validation**: IP address validation and required field constraints  
+✅ **Naming**: Schema name follows your conventions
+✅ **Namespace**: Appropriate namespace for organization
+✅ **Inheritance**: Inherits from appropriate base schema
+✅ **Attributes**: All required attributes are present with correct types
+✅ **Relationships**: References to Location and Organization schemas
+✅ **Validation**: IP address validation and required field constraints
 
-## Step 5: Refine If Needed
+## Step 5: Refine if needed
 
 If the generated schema needs adjustments, refine your description:
 
@@ -148,7 +148,7 @@ The management_ip should validate as a proper IPv4 address,
 and the serial_number should be required and unique.
 ```
 
-## Step 6: Load the Schema
+## Step 6: Load the schema
 
 Once you're satisfied with the generated schema:
 
@@ -158,31 +158,31 @@ Once you're satisfied with the generated schema:
 4. **Preview the schema** to verify it looks correct
 5. **Load into Infrahub** by clicking "Load Schema"
 
-## Step 7: Verify the Schema
+## Step 7: Verify the schema
 
 After loading, verify your schema worked correctly:
 
-### Using the Schema Visualizer
+### Using the schema visualizer
 
 1. **Go to Schema Visualizer**
 2. **Find your NetworkDevice schema** in the schema list
 3. **Examine the relationships** to Location and Organization
 4. **Verify the attributes** appear correctly
 
-### Using Infrahub Directly
+### Using Infrahub directly
 
 1. **Open your Infrahub instance** in a web browser
 2. **Navigate to Schema** section
 3. **Find NetworkDevice** in the schema list
 4. **Review the generated schema** definition
 
-## Step 8: Test with Sample Data
+## Step 8: Test with sample data
 
 Now test your schema by adding some sample data:
 
-### Using the Data Importer
+### Using the data importer
 
-Create a simple CSV file:
+Create a CSV file:
 
 ```csv
 name,model,serial_number,management_ip,status,description
@@ -199,75 +199,75 @@ Then:
 4. **Preview the import** to verify mappings
 5. **Execute the import** to create your first devices
 
-### Verify the Data
+### Verify the data
 
 1. **Check Infrahub** to see your imported devices
 2. **Use the Data Exporter** to export and verify the data
 3. **Navigate between relationships** to see how location and vendor references work
 
-## Common Issues and Solutions
+## Common issues and solutions
 
-### Schema Generation Issues
+### Schema generation issues
 
-**Problem**: AI generates incorrect attribute types  
-**Solution**: Be more specific about data types in your description (e.g., "IPv4 address" instead of "IP address")
+**Problem**: AI generates incorrect attribute types
+**Solution**: Be more specific about data types in your description, for example: "IPv4 address" instead of "IP address"
 
-**Problem**: Missing relationships  
+**Problem**: Missing relationships
 **Solution**: Explicitly mention all required relationships and their cardinality
 
-**Problem**: Schema doesn't inherit correctly  
+**Problem**: Schema doesn't inherit correctly
 **Solution**: Check if base schemas exist in your Infrahub instance first
 
-### Schema Loading Issues
+### Schema loading issues
 
-**Problem**: Validation errors when loading  
+**Problem**: Validation errors when loading
 **Solution**: Check that referenced schemas (Location, Organization) exist in Infrahub
 
-**Problem**: Namespace conflicts  
+**Problem**: Namespace conflicts
 **Solution**: Use unique namespaces or check existing schema names
 
-### Data Import Issues
+### Data import issues
 
-**Problem**: Relationship resolution fails  
+**Problem**: Relationship resolution fails
 **Solution**: Ensure referenced objects (locations, vendors) exist before importing devices
 
-**Problem**: Validation errors on IP addresses  
+**Problem**: Validation errors on IP addresses
 **Solution**: Verify IP address format in your CSV data
 
-## Next Steps
+## Next steps
 
 Congratulations! You've created your first schema with Emma. Here's what to explore next:
 
-### Extend Your Schema
+### Extend your schema
 
 - **Add more attributes** like rack position, power requirements, or warranty information
 - **Create related schemas** for interfaces, VLANs, or IP addresses
 - **Model hierarchical relationships** like chassis and line cards
 
-### Build a Complete Model
+### Build a complete model
 
 - **Create supporting schemas** for racks, cabinets, and rooms
 - **Add network connectivity** with cable and interface schemas
 - **Include service modeling** for applications and services
 
-### Advanced Features
+### Advanced features
 
 - **Try the Schema Library** to find pre-built schemas you can extend
 - **Use the Schema Visualizer** to understand complex relationships
 - **Explore experimental features** like the Query Builder
 
-### Best Practices
+### Best practices
 
-- **Start simple** and add complexity gradually
+- **Start with basics** and add complexity gradually
 - **Plan relationships** before creating dependent schemas
 - **Test with sample data** before importing production data
 - **Document your schemas** for team collaboration
 
 ## Resources
 
-- [Schema Builder Reference](../features/schema-builder) - Detailed Schema Builder documentation
-- [Schema Library](../features/schema-library) - Pre-built schemas and examples
-- [Data Import & Export](../features/data-import-export) - Advanced data import techniques
+- [Schema Builder Reference](../features/schema-builder.mdx) - Detailed Schema Builder documentation
+- [Schema Library](https://docs.infrahub.app/schema-library) - Pre-built schemas and examples
+- [Data Import & Export](../features/data-import-export.mdx) - Advanced data import techniques
 - [Infrahub Schema Documentation](https://docs.infrahub.app/reference/schema/) - Official schema reference
 
 You're now ready to build more complex schemas and models with Emma!

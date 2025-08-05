@@ -4,16 +4,16 @@ title: Configuration Reference
 
 This reference covers all configuration options available in Emma, including environment variables, feature flags, and runtime settings.
 
-## Environment Variables
+## Environment variables
 
-### Required Variables
+### Required variables
 
 | Variable | Description | Example | Notes |
 |----------|-------------|---------|-------|
 | `INFRAHUB_ADDRESS` | URL of Infrahub instance | `http://localhost:8000` | Must be accessible from Emma |
 | `INFRAHUB_API_TOKEN` | API authentication token | `06438eb2-8019-4776-878c-0941b1f1d1ec` | Generate in Infrahub admin |
 
-### Optional Variables
+### Optional variables
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
@@ -23,7 +23,7 @@ This reference covers all configuration options available in Emma, including env
 | `STREAMLIT_SERVER_PORT` | Port for Emma web interface | `8501` | `8080` |
 | `STREAMLIT_SERVER_ADDRESS` | Interface to bind to | `0.0.0.0` | `127.0.0.1` |
 
-### AI Configuration
+### AI configuration
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
@@ -32,7 +32,7 @@ This reference covers all configuration options available in Emma, including env
 | `OPENAI_TEMPERATURE` | AI creativity level (0.0-2.0) | `0.7` | `0.3` |
 | `OPENAI_MAX_TOKENS` | Maximum tokens per AI response | `2000` | `4000` |
 
-### Logging Configuration
+### Logging configuration
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
@@ -40,11 +40,11 @@ This reference covers all configuration options available in Emma, including env
 | `PYTHONPATH` | Python path for modules | `""` | `/app` |
 | `LOG_LEVEL` | Emma application log level | `INFO` | `DEBUG` |
 
-## Feature Flags
+## Feature flags
 
 Feature flags enable experimental functionality in Emma. Set via `EMMA_FEATURE_FLAGS` environment variable.
 
-### Available Flags
+### Available flags
 
 | Flag | Description | Status | Dependencies |
 |------|-------------|--------|--------------|
@@ -54,7 +54,7 @@ Feature flags enable experimental functionality in Emma. Set via `EMMA_FEATURE_F
 | `bulk_operations` | Bulk schema and data operations | Alpha | None |
 | `ai_suggestions` | AI-powered suggestions in UI | Experimental | OpenAI API key |
 
-### Setting Feature Flags
+### Setting feature flags
 
 **Single flag:**
 
@@ -83,41 +83,41 @@ env:
   value: "query_builder,template_builder"
 ```
 
-## Runtime Configuration
+## Runtime configuration
 
-### In-App Settings
+### In-app settings
 
 Emma provides runtime configuration through the web interface:
 
-#### Connection Settings
+#### Connection settings
 
 - **Infrahub Address**: Override environment variable for current session
 - **API Token**: Override environment variable for current session
 - **Branch**: Select Infrahub branch to work with
 - **Timeout**: Adjust request timeout for slow connections
 
-#### AI Settings
+#### AI settings
 
 - **OpenAI API Key**: Configure AI features
 - **Model Selection**: Choose AI model (gpt-3.5-turbo, gpt-4)
 - **Temperature**: Adjust AI creativity (0.0 = deterministic, 2.0 = very creative)
 - **Max Tokens**: Limit AI response length
 
-#### Import/Export Settings
+#### Import/export settings
 
 - **Batch Size**: Records to process per batch (default: 100)
 - **Validation Level**: Strict, moderate, or lenient validation
 - **Error Handling**: Stop on error or continue with warnings
 - **Relationship Resolution**: Automatic or manual relationship handling
 
-#### Display Settings
+#### Display settings
 
 - **Theme**: Light or dark mode
 - **Page Layout**: Wide or narrow layout
 - **Auto-refresh**: Automatic data refresh interval
 - **Pagination**: Number of items per page
 
-### Configuration Persistence
+### Configuration persistence
 
 Settings configured in the Emma interface are stored in:
 
@@ -136,7 +136,7 @@ Settings configured in the Emma interface are stored in:
 - ConfigMaps for application settings
 - Secrets for sensitive data (API keys, tokens)
 
-## Deployment Configurations
+## Deployment configurations
 
 ### Docker Compose
 
@@ -271,9 +271,9 @@ data:
   openai-key: <base64-encoded-key>
 ```
 
-## Security Configuration
+## Security configuration
 
-### API Token Security
+### API token security
 
 **Best Practices:**
 
@@ -291,7 +291,7 @@ Emma requires the following Infrahub permissions:
 - Branch access (if using feature branches)
 - API access
 
-### Network Security
+### Network security
 
 **Firewall Rules:**
 
@@ -307,7 +307,7 @@ For production deployments, configure TLS:
 # Emma itself runs HTTP, proxy handles HTTPS
 ```
 
-### Data Security
+### Data security
 
 **Sensitive Data Handling:**
 
@@ -316,9 +316,9 @@ For production deployments, configure TLS:
 - No sensitive data logged by default
 - CSV uploads processed in memory when possible
 
-## Performance Configuration
+## Performance configuration
 
-### Resource Limits
+### Resource limits
 
 **Memory:**
 
@@ -338,7 +338,7 @@ For production deployments, configure TLS:
 - Temporary files: Variable based on data volume
 - Configuration: &lt;1MB
 
-### Optimization Settings
+### Optimization settings
 
 **For Large Datasets:**
 
@@ -365,7 +365,7 @@ export INFRAHUB_RETRIES=5
 export EMMA_FEATURE_FLAGS="bulk_operations,advanced_import"
 ```
 
-## Configuration Validation
+## Configuration validation
 
 Emma validates configuration on startup and provides helpful error messages:
 
@@ -385,9 +385,9 @@ WARNING: Unknown feature flag 'invalid_flag' ignored
 poetry run python -c "from emma.utils import validate_config; validate_config()"
 ```
 
-## Migration and Upgrades
+## Migration and upgrades
 
-### Configuration Migration
+### Configuration migration
 
 When upgrading Emma, configuration may need updates:
 
@@ -400,7 +400,7 @@ When upgrading Emma, configuration may need updates:
 **Check Release Notes:**
 Always review release notes for configuration changes and migration steps.
 
-### Backup Configuration
+### Backup configuration
 
 **Docker:**
 

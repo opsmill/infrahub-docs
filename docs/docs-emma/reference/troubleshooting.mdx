@@ -4,9 +4,9 @@ title: Troubleshooting
 
 This guide covers common issues you might encounter while using Emma and how to resolve them.
 
-## Connection Issues
+## Connection issues
 
-### Cannot Connect to Infrahub
+### Cannot connect to Infrahub
 
 **Symptoms:**
 
@@ -44,7 +44,7 @@ This guide covers common issues you might encounter while using Emma and how to 
    docker network connect <infrahub-network> emma-emma-1
    ```
 
-### Authentication Errors
+### Authentication errors
 
 **Error:** "Unauthorized" or "403 Forbidden"
 
@@ -59,9 +59,9 @@ This guide covers common issues you might encounter while using Emma and how to 
   curl -H "X-INFRAHUB-KEY: your-token" http://localhost:8000/api/schema/
   ```
 
-## Schema Issues
+## Schema issues
 
-### Schema Loading Failures
+### Schema loading failures
 
 **Error:** "Failed to load schema" or validation errors
 
@@ -86,7 +86,7 @@ This guide covers common issues you might encounter while using Emma and how to 
    - Ensure API token has schema modification permissions
    - Check branch permissions if using feature branches
 
-### AI Schema Builder Issues
+### AI schema builder issues
 
 **Problem:** AI generates incorrect or incomplete schemas
 
@@ -108,9 +108,9 @@ This guide covers common issues you might encounter while using Emma and how to 
    - Test schemas with sample data
    - Compare with similar schemas in the library
 
-## Data Import/Export Issues
+## Data import/export issues
 
-### Import Failures
+### Import failures
 
 **Common Problems:**
 
@@ -162,7 +162,7 @@ This guide covers common issues you might encounter while using Emma and how to 
    - Verify object identifiers are correct
    - Create referenced objects first
 
-### Export Failures
+### Export failures
 
 **Common Problems:**
 
@@ -182,9 +182,9 @@ This guide covers common issues you might encounter while using Emma and how to 
    - Check delimiter configuration
    - Review special character handling
 
-## Performance Issues
+## Performance issues
 
-### Slow Response Times
+### Slow response times
 
 **Symptoms:**
 
@@ -218,7 +218,7 @@ This guide covers common issues you might encounter while using Emma and how to 
    - Monitor database performance
    - Verify adequate system resources
 
-### Memory Issues
+### Memory issues
 
 **Error:** "Out of memory" or browser crashes
 
@@ -230,9 +230,9 @@ This guide covers common issues you might encounter while using Emma and how to 
 - Increase system memory if possible
 - Use command-line tools for very large datasets
 
-## Browser and Interface Issues
+## Browser and interface issues
 
-### Display Problems
+### Display problems
 
 **Issues:**
 
@@ -257,7 +257,7 @@ This guide covers common issues you might encounter while using Emma and how to 
    - Look for JavaScript errors in console
    - Check network tab for failed requests
 
-### Streamlit-Specific Issues
+### Streamlit-specific issues
 
 **Error:** "Please run this app with streamlit run"
 
@@ -279,9 +279,9 @@ python -m streamlit run main.py
 - Clear browser session storage
 - Restart Emma application
 
-## Configuration Issues
+## Configuration issues
 
-### Environment Variables
+### Environment variables
 
 **Problem:** Configuration not being applied
 
@@ -314,7 +314,7 @@ python -m streamlit run main.py
    # WRONG:   INFRAHUB_ADDRESS = http://localhost:8000
    ```
 
-### Feature Flags
+### Feature flags
 
 **Problem:** Experimental features not working
 
@@ -331,9 +331,9 @@ export EMMA_FEATURE_FLAGS="query_builder,template_builder"
 docker run -e EMMA_FEATURE_FLAGS="query_builder" emma
 ```
 
-## Logging and Debugging
+## Logging and debugging
 
-### Enable Debug Logging
+### Enable debug logging
 
 **For Local Development:**
 
@@ -355,7 +355,7 @@ environment:
   - PYTHONPATH=/app
 ```
 
-### Check Application Logs
+### Check application logs
 
 **Local Development:**
 
@@ -377,7 +377,7 @@ docker logs emma-emma-1
 docker logs -f emma-emma-1
 ```
 
-### Common Log Patterns
+### Common log patterns
 
 **Connection Issues:**
 
@@ -400,16 +400,16 @@ ERROR: Failed to parse CSV at line 123
 WARNING: Relationship resolution failed for 'device-01'
 ```
 
-## Getting Help
+## Getting help
 
-### Before Asking for Help
+### Before asking for help
 
 1. **Check this troubleshooting guide**
 2. **Review Emma documentation**
 3. **Check Infrahub documentation** at https://docs.infrahub.app
 4. **Search existing issues** on GitHub
 
-### Gathering Information
+### Gathering information
 
 When reporting issues, include:
 
@@ -420,13 +420,13 @@ When reporting issues, include:
 5. **Environment details** (OS, browser, Docker version)
 6. **Relevant logs** with debug logging enabled
 
-### Where to Get Help
+### Where to get help
 
 - **GitHub Issues**: https://github.com/opsmill/emma/issues
 - **Infrahub Community**: https://github.com/opsmill/infrahub/discussions
 - **Documentation**: https://docs.infrahub.app
 
-### Emergency Procedures
+### Emergency procedures
 
 **If Emma is completely broken:**
 

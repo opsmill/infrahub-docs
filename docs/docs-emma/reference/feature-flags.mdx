@@ -24,7 +24,7 @@ export EMMA_FEATURE_FLAGS="query_builder"
 export EMMA_FEATURE_FLAGS="query_builder,template_builder"
 ```
 
-## Available Feature Flags
+## Available feature flags
 
 ### `query_builder` (Alpha)
 
@@ -179,7 +179,7 @@ export EMMA_FEATURE_FLAGS="query_builder,template_builder"
 3. Select multiple items for batch operations
 4. Monitor progress and handle errors
 
-### `ai_suggestions` (Experimental)
+### `ai_suggestions` (experimental)
 
 **Description:** AI-powered suggestions throughout Emma's interface
 
@@ -219,9 +219,9 @@ export EMMA_FEATURE_FLAGS="query_builder,template_builder"
 3. Look for AI suggestion indicators in the UI
 4. Review and apply suggestions as appropriate
 
-## Feature Flag Management
+## Feature flag management
 
-### Checking Active Flags
+### Checking active flags
 
 Emma displays active feature flags in several places:
 
@@ -237,7 +237,7 @@ Emma displays active feature flags in several places:
 - Tooltips explaining feature status
 - Warnings about stability
 
-### Dynamic Configuration
+### Dynamic configuration
 
 Some feature flags can be toggled at runtime:
 
@@ -253,7 +253,7 @@ Some feature flags can be toggled at runtime:
 - Survive browser restarts
 - Can be cleared via settings panel
 
-### Validation and Error Handling
+### Validation and error handling
 
 Emma validates feature flags on startup:
 
@@ -278,9 +278,9 @@ export EMMA_FEATURE_FLAGS="invalid_flag,query_builder"
 export EMMA_FEATURE_FLAGS=""
 ```
 
-## Best Practices
+## Best practices
 
-### Development Environments
+### Development environments
 
 **Enable experimental features** for testing:
 
@@ -300,7 +300,7 @@ export EMMA_FEATURE_FLAGS="query_builder,template_builder,ai_suggestions"
 - Performance may be sub-optimal
 - Some features require additional setup
 
-### Production Environments
+### Production environments
 
 **Use only stable features** in production:
 
@@ -316,7 +316,7 @@ export EMMA_FEATURE_FLAGS="advanced_import"
 3. Only use stable features in production
 4. Monitor for issues after enabling new features
 
-### Team Deployments
+### Team deployments
 
 **Coordinate feature usage** across teams:
 
@@ -325,7 +325,7 @@ export EMMA_FEATURE_FLAGS="advanced_import"
 - Provide training for new experimental features
 - Establish rollback procedures
 
-## Feature Lifecycle
+## Feature lifecycle
 
 Emma features follow a development lifecycle:
 
@@ -364,30 +364,30 @@ Emma features follow a development lifecycle:
 - **Support:** Limited support, migration guidance provided
 - **Recommendation:** Plan migration to replacement features
 
-## Migration and Compatibility
+## Migration and compatibility
 
-### Version Compatibility
+### Version compatibility
 
 Feature flags may change between Emma versions:
 
-**Major versions** (e.g., 1.x to 2.x):
+**Major versions**, for example: 1.x to 2.x:
 
 - Feature flags may be renamed or removed
 - New features may be added
 - Check migration guide for changes
 
-**Minor versions** (e.g., 1.1 to 1.2):
+**Minor versions**, for example: 1.1 to 1.2:
 
 - New features may be added
 - Existing features may change status
 - Backward compatibility maintained
 
-**Patch versions** (e.g., 1.1.1 to 1.1.2):
+**Patch versions**, for example: 1.1.1 to 1.1.2:
 
 - Feature flags unchanged
 - Bug fixes only
 
-### Feature Graduation
+### Feature graduation
 
 When experimental features become stable:
 
@@ -396,7 +396,7 @@ When experimental features become stable:
 3. **Documentation updated** - Feature moves to main documentation
 4. **Migration period** - Old flag maintained temporarily for compatibility
 
-### Deprecation Process
+### Deprecation process
 
 When features are deprecated:
 
@@ -405,9 +405,9 @@ When features are deprecated:
 3. **Grace period** - Feature continues to work for several versions
 4. **Removal** - Feature flag and functionality removed
 
-## Troubleshooting Feature Flags
+## Troubleshooting feature flags
 
-### Common Issues
+### Common issues
 
 **Feature not appearing:**
 
@@ -428,7 +428,7 @@ When features are deprecated:
 - Disable CPU-intensive features if needed
 - Monitor system resources when testing new features
 
-### Getting Help
+### Getting help
 
 When reporting feature flag issues:
 
@@ -438,7 +438,7 @@ When reporting feature flag issues:
 4. **Provide steps to reproduce** the problem
 5. **Include relevant logs** with feature flag context
 
-### Feedback and Contributions
+### Feedback and contributions
 
 Emma's experimental features benefit from user feedback:
 

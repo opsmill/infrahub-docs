@@ -19,7 +19,6 @@ const sidebars: SidebarsConfig = {
         'features/schema-builder',
         'features/data-import-export',
         'features/schema-management',
-        'features/schema-library',
       ],
     },
     {
