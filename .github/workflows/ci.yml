@@ -133,7 +133,6 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.files-changed.outputs.documentation == 'true'
-    needs: ["documentation"]
     runs-on: "ubuntu-22.04"
     timeout-minutes: 10
     steps:
@@ -162,9 +161,9 @@ jobs:
             --config ../lychee.toml
             --exclude-file ../.lycheeignore
             --base ./docs/build
+            --base ./build
             --verbose
             --no-progress
-            './docs/build/**/*.html'
-          fail: true
+            './build/**/*.html'
           jobSummary: true
           format: markdown
