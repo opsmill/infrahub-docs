@@ -125,9 +125,6 @@ jobs:
         run: ./vale --glob='!{docs/docs-schema-library/reference/*}' $(find ./docs -type f \( -name "*.mdx" -o -name "*.md" \) )
 
   check-links:
-    defaults:
-      run:
-        working-directory: ./docs
     if: |
       always() && !cancelled() &&
       !contains(needs.*.result, 'failure') &&
@@ -150,20 +147,23 @@ jobs:
           cache: 'npm'
           cache-dependency-path: docs/package-lock.json
       - name: "Install dependencies"
+        working-directory: ./docs
         run: npm install
       - name: "Setup Python environment"
         run: "pip install invoke toml"
       - name: "Build docs website"
+        working-directory: ./docs
         run: "invoke docs"
       - name: "Check all links"
         uses: lycheeverse/lychee-action@v2
         with:
           args: |
-            --config ../lychee.toml
-            --exclude-file ../.lycheeignore
-            --base ./build
             --verbose
             --no-progress
-            './build/**/*.html'
+            --config './lychee.toml'
+            --exclude-file './.lycheeignore'
+            --base './docs/build'
+            './docs/build/**/*.html'
+          fail: true
           jobSummary: true
           format: markdown
