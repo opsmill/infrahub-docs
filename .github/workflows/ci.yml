@@ -154,16 +154,21 @@ jobs:
       - name: "Build docs website"
         working-directory: ./docs
         run: "invoke docs"
+      - name: "Start Docusaurus server"
+        working-directory: ./docs
+        run: |
+          npm run serve &
+          sleep 10  # Wait for server to start
       - name: "Check all links"
         uses: lycheeverse/lychee-action@v2
         with:
           args: |
-            --verbose
             --no-progress
             --config './lychee.toml'
             --exclude-file './.lycheeignore'
-            --base './docs/build'
-            './docs/build/**/*.html'
+            --max-cache-age 1h
+            'http://localhost:3000'
           fail: true
           jobSummary: true
           format: markdown
+          output: './lychee-report.md'

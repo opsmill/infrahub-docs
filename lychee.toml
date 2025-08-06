@@ -22,6 +22,15 @@ accept = [200, 201, 202, 203, 204, 301, 302, 303, 307, 308]
 # Check internal links (links within the same domain)
 skip_missing = false
 
+# Include anchor/fragment checking
+include_fragments = true
+
+# Cache results for 1 hour to speed up repeated checks
+cache = true
+
+# Treat these URL schemes as valid
+schemes = ["http", "https"]
+
 # Exclude patterns (can also be in .lycheeignore)
 exclude = [
   # Common patterns for example/placeholder URLs
