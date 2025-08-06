@@ -161,7 +161,6 @@ jobs:
           args: |
             --config ../lychee.toml
             --exclude-file ../.lycheeignore
-            --base ./docs/build
             --base ./build
             --verbose
             --no-progress
