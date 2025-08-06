@@ -123,3 +123,48 @@ jobs:
           VALE_VERSION: ${{ env.VALE_VERSION }}
       - name: "Validate documentation style"
         run: ./vale --glob='!{docs/docs-schema-library/reference/*}' $(find ./docs -type f \( -name "*.mdx" -o -name "*.md" \) )
+
+  check-links:
+    defaults:
+      run:
+        working-directory: ./docs
+    if: |
+      always() && !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.files-changed.outputs.documentation == 'true'
+    needs: ["documentation"]
+    runs-on: "ubuntu-22.04"
+    timeout-minutes: 10
+    steps:
+      - name: "Check out repository code"
+        uses: "actions/checkout@v4"
+        with:
+          submodules: true
+      - name: "Submodule remote update"
+        run: git submodule update --recursive --remote
+      - name: Install NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: docs/package-lock.json
+      - name: "Install dependencies"
+        run: npm install
+      - name: "Setup Python environment"
+        run: "pip install invoke toml"
+      - name: "Build docs website"
+        run: "invoke docs"
+      - name: "Check all links"
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: |
+            --config ../lychee.toml
+            --exclude-file ../.lycheeignore
+            --base ./docs/build
+            --verbose
+            --no-progress
+            './docs/build/**/*.html'
+          fail: true
+          jobSummary: true
+          format: markdown
