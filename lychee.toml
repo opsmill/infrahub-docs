@@ -55,6 +55,6 @@ exclude = [
 # "Authorization" = "Bearer token"
 
 # Remap URLs (useful for checking staging/production URLs locally)
-[[remap]]
-# Example: Remap production URLs to local build
+# Note: Uncomment and modify the example below if you need URL remapping
+# [remap]
 # "https://docs.infrahub.app" = "file://./docs/build"
