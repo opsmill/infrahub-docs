@@ -17,8 +17,11 @@ https://example.org
 https://your-infrahub-instance.com
 https://infrahub.example.com
 
-# GitHub edit links (may require authentication)
+# GitHub edit/tree/blob links (cause rate limiting)
 https://github.com/.*/edit/.*
+https://github.com/.*/tree/.*
+https://github.com/.*/blob/.*
+https://github.com/opsmill/.*/tree/stable/docs/.*
 
 # Social media that may block bots
 https://twitter.com

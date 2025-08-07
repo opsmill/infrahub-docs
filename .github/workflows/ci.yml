@@ -158,15 +158,12 @@ jobs:
         working-directory: ./docs
         run: |
           npm run serve &
-          sleep 10  # Wait for server to start
+          for i in {1..100}; do if curl -s -o /dev/null http://localhost:3000; then break; fi; sleep 1; done
       - name: "Check all links"
         uses: lycheeverse/lychee-action@v2
         with:
           args: |
             --no-progress
-            --config './lychee.toml'
-            --exclude-file './.lycheeignore'
-            --max-cache-age 1h
             'http://localhost:3000'
           fail: true
           jobSummary: true
