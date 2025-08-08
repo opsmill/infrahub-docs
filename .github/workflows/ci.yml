@@ -123,3 +123,49 @@ jobs:
           VALE_VERSION: ${{ env.VALE_VERSION }}
       - name: "Validate documentation style"
         run: ./vale --glob='!{docs/docs-schema-library/reference/*}' $(find ./docs -type f \( -name "*.mdx" -o -name "*.md" \) )
+
+  check-links:
+    if: |
+      always() && !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.files-changed.outputs.documentation == 'true'
+    needs: ["files-changed", "documentation"]
+    runs-on: "ubuntu-22.04"
+    timeout-minutes: 10
+    steps:
+      - name: "Check out repository code"
+        uses: "actions/checkout@v4"
+        with:
+          submodules: true
+      - name: "Submodule remote update"
+        run: git submodule update --recursive --remote
+      - name: Install NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: docs/package-lock.json
+      - name: "Install dependencies"
+        working-directory: ./docs
+        run: npm install
+      - name: "Setup Python environment"
+        run: "pip install invoke toml"
+      - name: "Build docs website"
+        working-directory: ./docs
+        run: "invoke docs"
+      - name: "Start Docusaurus server"
+        working-directory: ./docs
+        run: |
+          npm run serve &
+          for i in {1..100}; do if curl -s -o /dev/null http://localhost:3000; then break; fi; sleep 1; done
+      - name: "Check all links"
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: |
+            --no-progress
+            'http://localhost:3000'
+          fail: true
+          jobSummary: true
+          format: markdown
+          output: './lychee-report.md'
