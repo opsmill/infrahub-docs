@@ -8,7 +8,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.10, < 3.13"
 invoke = "^2.1.2"
-jsonschema = "4.24.0"
+jsonschema = "4.25.1"
 
 [tool.poetry.group.dev.dependencies]
 yamllint = "^1.35.1"
