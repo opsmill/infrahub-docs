@@ -6,7 +6,7 @@ on:
   workflow_run:
     # List the workflows you want to watch
     workflows:
-      - "Build and Deploy Docusaurus"
+      - CI
     types:
       - completed
 
