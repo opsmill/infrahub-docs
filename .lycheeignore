@@ -2,10 +2,9 @@
 # https://github.com/lycheeverse/lychee
 
 # Local development URLs
-http://localhost
-http://127.0.0.1
-https://localhost
-https://127.0.0.1
+http://localhost:8000
+http://localhost:8080
+http://localhost:8501
 
 # Example domains
 http://example.com
@@ -22,6 +21,9 @@ https://github.com/.*/edit/.*
 https://github.com/.*/tree/.*
 https://github.com/.*/blob/.*
 https://github.com/opsmill/.*/tree/stable/docs/.*
+
+# Nautobot API docs requires auth
+https://demo.nautobot.com/api/docs
 
 # Social media that may block bots
 https://twitter.com

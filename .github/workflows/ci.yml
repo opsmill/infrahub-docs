@@ -111,7 +111,7 @@ jobs:
       needs.documentation.outputs.build-status == 'success'
     needs: ["files-changed", "documentation"]
     runs-on: ubuntu-22.04
-    timeout-minutes: 10
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: ./docs
@@ -130,6 +130,8 @@ jobs:
           cache-dependency-path: docs/package-lock.json
       - name: Install dependencies
         run: npm install
+      - name: Install sitemap2urllist
+        run: cargo install --locked sitemap2urllist
       - name: Install Python dependencies
         run: pip install invoke toml
       - name: Build documentation
@@ -156,7 +158,8 @@ jobs:
           args: |
             --no-progress
             --config ./lychee.toml
-            'http://localhost:3000'
+            --remap 'https://docs.infrahub.app http://localhost:3000'
+            $(sitemap2urllist http://localhost:3000/sitemap.xml | sed 's,https://docs.infrahub.app,http://localhost:3000,g')
           fail: true
           jobSummary: true
           format: markdown

@@ -36,7 +36,6 @@ exclude = [
   # Common patterns for example/placeholder URLs
   "example\\.com",
   "example\\.org",
-  "localhost",
   "127\\.0\\.0\\.1",
   
   # GitHub edit/tree/blob links (these flood GitHub with requests)
