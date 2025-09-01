@@ -138,16 +138,16 @@ jobs:
         run: |
           npm run serve &
           echo "Waiting for server to start..."
-          for i in {1..60}; do
+          for i in {1..100}; do
             if curl -s -o /dev/null http://localhost:3000; then
               echo "Server started successfully"
               break
             fi
-            if [ $i -eq 60 ]; then
+            if [ $i -eq 100 ]; then
               echo "Server failed to start within timeout"
               exit 1
             fi
-            echo "Waiting... ($i/60)"
+            echo "Waiting... ($i/100)"
             sleep 1
           done
       - name: Check links
