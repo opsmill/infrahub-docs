@@ -1,90 +1,140 @@
 ---
-title: Emma
+title: Welcome to Emma
 ---
 
-Emma is the experimental little sister of Otto, and she is to help you interact with Infrahub.
-
-Currently, Emma can help you to:
-
-- Import CSV Data into Infrahub
-- Export Data from Infrahub in CSV format
-- Build, Load, and Visualize the Infrahub schema
-
-:::warning
-Emma is experimental by design, and may not work as expected. She tests out new ideas before her big brother Otto gets involved and implements them in Infrahub.
-:::
+Emma is an experimental AI-powered assistant designed to help you interact with Infrahub, OpsMill's next-generation infrastructure management platform. Emma helps you manage infrastructure schemas and data through an intuitive web interface.
 
 ![Emma Homepage](static/home_page.png)
 
-## Getting started
-
-### `curl` quickstart
-
-This command will use the [Infrahub Quickstart](https://docs.infrahub.app/guides/installation#quick-start-via-curl) method to download a Docker Compose file and start Infrahub and Emma.
-
-:::note
-The Infrahub version number in the URL should be updated to the [latest version](https://github.com/opsmill/infrahub/tags).
+:::warning Experimental Software
+Emma is experimental by design and may not work as expected. She tests out new ideas before her big brother Otto gets involved and implements them in Infrahub.
 :::
 
-```console
-curl https://infrahub.opsmill.io/1.1.6-emma | docker compose -f - up -d
+## What Emma can do
+
+Emma provides powerful tools for infrastructure management:
+
+### 🏗️ **Schema management**
+
+- **[AI Schema Builder](./features/schema-builder.mdx)** - Create schemas using natural language descriptions
+- **[Schema Library](https://docs.infrahub.app/schema-library)** - Browse and use community-validated schemas
+- **[Schema Loader](./features/schema-management.mdx)** - Load schemas into your Infrahub instance
+- **[Schema Visualizer](./features/schema-management.mdx)** - Visual representation of schema relationships
+
+### 📊 **Data operations**
+
+- **[Data Import](./features/data-import-export.mdx)** - Import CSV data into Infrahub with intelligent mapping
+- **[Data Export](./features/data-import-export.mdx)** - Export Infrahub data to CSV for analysis and backup
+
+### 🔬 **Experimental features**
+
+- **Query Builder** - Interactive GraphQL query interface (feature flag required)
+- **Template Builder** - Create and manage infrastructure templates (feature flag required)
+
+## Quick start
+
+Ready to get started? Choose your preferred installation method:
+
+### 🚀 **Fastest setup**
+
+Use the one-command quickstart to get Emma and Infrahub running together:
+
+```bash
+curl https://infrahub.opsmill.io/1.3.3-emma | docker compose -f - up -d
 ```
 
-Then connect to the WebUI of [Infrahub](http://localhost:8000) and [Emma](http://localhost:8501)
+Then open [Emma](http://localhost:8501) and [Infrahub](http://localhost:8000) in your browser.
 
-### Running locally with `poetry`
+### 📚 **Full installation guide**
 
-To run Emma locally using Poetry, follow these steps:
+For detailed installation instructions, including local development setup and production deployments, see the **[Installation Guide](./getting-started/installation.mdx)**.
 
-1. **Clone the Emma repository**
+## Documentation structure
 
-```console
-git clone https://github.com/opsmill/emma.git
-```
+### 🚀 Getting started
 
-2. **Install Dependencies:**
+Perfect for new users:
 
- ```console
- cd emma
- poetry install
- ```
+- **[Installation](./getting-started/installation.mdx)** - Set up Emma in various environments
+- **[Configuration](./getting-started/configuration.mdx)** - Configure Emma and connect to Infrahub
+- **[First Steps](./getting-started/first-steps.mdx)** - Your first experience with Emma
 
-3. **Run the Application:**
+### ⚙️ Features
 
- ```console
- poetry run streamlit run main.py
- ```
+Deep dives into Emma's capabilities:
 
-4. **Set Environment Variables:**
+- **[AI Schema Builder](./features/schema-builder.mdx)** - AI-powered schema creation
+- **[Data Import & Export](./features/data-import-export.mdx)** - Comprehensive data management
+- **[Schema Management](./features/schema-management.mdx)** - Complete schema lifecycle
+- **[Schema Library](https://docs.infrahub.app/schema-library)** - Community schema collection
 
- Emma uses Infrahub standard environment variables to connect to Infrahub:
+### 📖 Guides
 
- ```console
- export INFRAHUB_ADDRESS="http://localhost:8000"
- export INFRAHUB_API_TOKEN="06438eb2-8019-4776-878c-0941b1f1d1ec"
- ```
+Step-by-step tutorials:
 
-### Running with Docker Compose
+- **[Building Your First Schema](./guides/building-your-first-schema.mdx)** - Complete walkthrough
 
-To run Emma using Docker Compose, follow these steps:
+### 📚 Reference
 
-1. **Clone the Emma repository**
+Complete reference materials:
 
-```console
-git clone https://github.com/opsmill/emma.git
-```
+- **[Configuration Reference](./reference/configuration.mdx)** - All configuration options
+- **[Feature Flags](./reference/feature-flags.mdx)** - Experimental feature management
+- **[Troubleshooting](./reference/troubleshooting.mdx)** - Solutions to common issues
 
-2. **Build and Run the Application:**
+## Common use cases
 
- ```console
- cd emma
- docker compose up --build &
- ```
+### Infrastructure modeling
 
-3. **Connecting to Infrahub Network:**
+Start with Emma's Schema Library to model your infrastructure:
 
-If you run Infrahub as another container in the local network, you need to connect Emma to it. After starting both containers, run the following command:
+1. Browse [pre-built schemas](https://docs.infrahub.app/schema-library) for common components
+2. Use the [AI Schema Builder](./features/schema-builder.mdx) for custom requirements
+3. [Load schemas](./features/schema-management.mdx) into your Infrahub instance
+4. [Visualize relationships](./features/schema-management.mdx) to understand your model
 
-```console
-docker network connect <infrahub-network> emma-emma-1
-```
+### Data migration
+
+Migrate from existing systems using Emma's data tools:
+
+1. Export data from your current systems to CSV
+2. Use Emma's [Data Importer](./features/data-import-export.mdx) to map and load data
+3. Validate and clean data during the import process
+4. Export data for backup and integration with other tools
+
+### Schema development
+
+Develop and iterate on infrastructure schemas:
+
+1. [Plan your schema](./guides/building-your-first-schema.mdx) requirements
+2. Use AI assistance to generate initial schema definitions
+3. Test and refine schemas with sample data
+4. Share schemas with your team through the library
+
+## Getting help
+
+### 📖 Documentation
+
+This documentation covers everything you need to know about Emma. Use the navigation menu to explore topics in detail.
+
+### 🐛 Issues and support
+
+- **Bug Reports**: [GitHub Issues](https://github.com/opsmill/emma/issues)
+- **General Questions**: [OpsMill Discord Community](https://discord.gg/opsmill)
+
+### 🔗 Related resources
+
+- **[Infrahub Documentation](https://docs.infrahub.app)** - Complete Infrahub documentation
+- **[Schema Library Repository](https://docs.infrahub.app/schema-library)** - Community schema collection
+- **[OpsMill Website](https://opsmill.com)** - Learn more about OpsMill
+
+## Next steps
+
+1. **New to Emma?** Start with the [Installation Guide](./getting-started/installation.mdx)
+2. **Ready to build?** Try [Building Your First Schema](./guides/building-your-first-schema.mdx)
+3. **Need schemas?** Explore the [Schema Library](https://docs.infrahub.app/schema-library)
+4. **Have data to import?** Check out [Data Import & Export](./features/data-import-export.mdx)
+
+Emma is designed to make infrastructure management more accessible and efficient. Whether you're modeling a basic network or a complex multi-cloud environment, Emma provides the tools you need to succeed.
+
+Happy infrastructure modeling! 🚀

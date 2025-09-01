@@ -1,88 +1,244 @@
 ---
-title: Installation
-description: Before you can run the demo, you need to install the prerequisites and set up the environment.
+title: How to Install the Service Catalog Demo
+description: Set up the Service Catalog demo environment with Infrahub and Streamlit to enable self-service network provisioning.
 ---
 import ReferenceLink from "../../src/components/Card";
 
-Before you can run the demo, you need to install the prerequisites and set up the environment.
+This guide walks you through installing the Service Catalog demo, which demonstrates how to build a self-service portal on top of Infrahub's source of truth system. By the end of this guide, you'll have a working environment where users can request network services through a web interface.
 
 <ReferenceLink title="Need help or have questions? Join our Discord community for support!" url="https://discord.gg/opsmill" openInNewTab/>
 
+## What you'll achieve
+
+After completing this installation:
+
+- **Infrahub instance** running with network infrastructure data
+- **Service Catalog portal** accessible for requesting services
+- **Demo data** loaded including locations, devices, and network resources
+- **Git integration** configured for infrastructure as code workflows
+
 ## Prerequisites
 
-Before you get started, make sure the following tools are installed:
+Before you get started, make sure you have these tools installed:
 
-- 🐳 **Docker**: Could be [Docker Desktop](https://docs.docker.com/desktop/) on your laptop or any Docker endpoint on a VM.
-- 🐍 **Poetry**: Install Poetry by following the [official installation guide](https://python-poetry.org/docs).
+### Required software
 
-## Steps
+- 🐳 **Docker**: Container runtime for running Infrahub and its dependencies
+    - [Docker Desktop](https://docs.docker.com/desktop/) for local development
+    - Or Docker Engine on a Linux VM for server deployments
+    - Minimum 4GB RAM allocated to Docker
 
-### 1. Clone the repository
+- 🐍 **Poetry**: Python dependency management tool
+    - Install via the [official installation guide](https://python-poetry.org/docs)
+    - Used to manage Python packages and virtual environments
+    - Version 1.2.0 or higher recommended
 
-Clone the GitHub repository.
+### System requirements
+
+- **Operating System**: macOS, Linux, or Windows with WSL2
+- **Memory**: At least 8GB RAM (16GB recommended)
+- **Storage**: 10GB free disk space
+- **Network**: Internet connection for downloading dependencies
+
+## Installation steps
+
+### Step 1: Clone the repository
+
+First, download the demo code from GitHub. This repository contains all the necessary configuration files, schemas, and demo data.
 
 ```shell
 git clone https://github.com/opsmill/infrahub-demo-service-catalog.git
 cd infrahub-demo-service-catalog
 ```
 
-### 2. Set environmental variables
+:::tip What's in the Repository?
+The repository includes:
 
-These environment variables are used to connect to the Infrahub instance and authenticate API requests.
+- **Infrahub schemas** defining the data models for network infrastructure
+- **Demo data** with sample locations, devices, and network resources
+- **Service Catalog application** built with Streamlit
+- **Docker configuration** for running all components
+:::
+
+### Step 2: Configure environment variables
+
+Set up the connection details for Infrahub. These variables tell the Service Catalog application how to communicate with the Infrahub API.
 
 ```shell
 export INFRAHUB_ADDRESS="http://localhost:8000"
 export INFRAHUB_API_TOKEN="06438eb2-8019-4776-878c-0941b1f1d1ec"
 ```
 
-### 3. Install the dependencies
+#### Understanding the variables
 
-Our demos use [Poetry](https://python-poetry.org/) to manage the Python environment.
+- **`INFRAHUB_ADDRESS`**: The URL where Infrahub's API is accessible
+    - Default uses `localhost:8000` for local development
+    - Change this if running Infrahub on a different host or port
+
+- **`INFRAHUB_API_TOKEN`**: Authentication token for API access
+    - The demo uses a pre-configured token for convenience
+    - In production, use secure token generation and storage
+
+### Step 3: Install Python dependencies
+
+Use Poetry to create a virtual environment and install all required Python packages.
 
 ```shell
 poetry install
 ```
 
-### 4. Start Infrahub
+This command:
 
-:::important
+- Creates an isolated Python virtual environment
+- Installs the Infrahub SDK for API interactions
+- Installs Streamlit for the web portal interface
+- Sets up development tools (pytest, ruff, mypy)
 
-Make sure to start Infrahub using the following command to ensure the `service_catalog` module is loaded correctly! This will also start the Streamlit app for the service catalog.
+:::note First Time Using Poetry?
+Poetry automatically manages virtual environments. All subsequent commands should be run with `poetry run` prefix to ensure they use the correct environment.
+:::
+
+### Step 4: Start the application stack
+
+Launch Infrahub and the Service Catalog using Docker Compose. This single command starts multiple services.
 
 ```shell
 poetry run invoke start
 ```
 
+:::important Why Use Invoke?
+The `invoke start` command is a wrapper that:
+
+- Ensures the correct Docker Compose configuration is used
+- Mounts the `service_catalog` module into the Infrahub container
+- Starts both Infrahub and the Streamlit application
+- Sets up networking between containers
 :::
 
-### 5. Load schema and data into Infrahub
+#### What gets started
 
-These commands will load the schema and data into Infrahub.
+This command launches:
+
+- **Infrahub Core**: The main application server (port 8000)
+- **PostgreSQL**: Database for storing infrastructure data
+- **Redis**: Cache and message broker
+- **RabbitMQ**: Task queue for asynchronous operations
+- **Service Catalog**: Streamlit web portal (port 8501)
+
+### Step 5: Initialize Infrahub with demo data
+
+Now we'll load the data models (schemas) and populate Infrahub with demo network infrastructure data.
+
+#### Load the schema definitions
+
+First, load the schema that defines the data models:
 
 ```shell
 poetry run infrahubctl schema load schemas/ --wait 10
+```
+
+This command:
+
+- Loads schema definitions from the `schemas/` directory
+- Defines models for locations, devices, services, and network resources
+- The `--wait 10` flag ensures schemas are fully processed before continuing
+
+#### Import demo data
+
+Next, populate Infrahub with sample infrastructure data:
+
+```shell
 poetry run infrahubctl object load data/
 ```
 
-### 6. Connect read-only repository
+This imports:
 
-:::info
+- **Locations**: Sites like Atlanta, Dallas, Denver, and Seattle
+- **Devices**: Core switches, edge routers, and customer equipment
+- **Network Resources**: VLAN pools, IP prefix pools
+- **Templates**: Device configurations and service definitions
 
-Infrahub can connect to external repositories to fetch scripts, templates, or other resources. Learn more about [git integration](https://docs.infrahub.app/topics/repository) in the Infrahub documentation.
+:::tip Understanding the Data Model
+The demo uses a hierarchical structure:
 
+- Locations contain devices
+- Devices have interfaces and connections
+- Services allocate resources from pools
+- Everything is version-controlled and auditable
 :::
 
-Connect the demo repository as a read-only source with the following command:
+### Step 6: Configure Git integration
+
+Connect the demo repository to Infrahub for infrastructure as code workflows.
 
 ```shell
 poetry run infrahubctl repository add --ref main --read-only infrahub-demo https://github.com/opsmill/infrahub-demo-service-catalog.git
 ```
 
-## Confirmation
+#### Why Git integration?
 
-- 👉 Log in to the [Infrahub UI](http://localhost:8000/login) on port `8000` with username `admin` and password `infrahub`.
-- 👉 Access the [Service Catalog](http://localhost:8501/) on port `8501`.
+This connection enables:
+
+- **Generator Scripts**: Python code that automates service provisioning
+- **Configuration Templates**: Jinja2 templates for device configurations
+- **Schema Evolution**: Track changes to data models over time
+- **GitOps Workflows**: Infrastructure changes through pull requests
+
+:::info About Read-Only Mode
+The `--read-only` flag means:
+
+- Infrahub can fetch and execute code from the repository
+- Changes in Infrahub won't be pushed back to Git
+- Perfect for demo environments and testing
+
+For production, you'd typically use bidirectional sync to enable full GitOps workflows.
+:::
+
+## Verify your installation
+
+Confirm everything is working by accessing both interfaces:
+
+### Infrahub web UI
+
+- **URL**: [http://localhost:8000](http://localhost:8000)
+- **Username**: `admin`
+- **Password**: `infrahub`
+- **What to Check**:
+    - Navigate to the Schema page to see loaded models
+    - Check the Objects page to verify demo data is present
+    - Confirm the repository appears under Repositories
+
+### Service catalog portal
+
+- **URL**: [http://localhost:8501](http://localhost:8501)
+- **What to Check**:
+    - Home page displays available services
+    - Service request forms are accessible
+    - No connection errors appear
+
+## Troubleshooting common issues
+
+### Services won't start
+
+- Ensure Docker is running and has sufficient resources
+- Check for port conflicts (8000, 8501, 5432, 6379)
+- Run `poetry run invoke destroy` then `poetry run invoke start` to reset
+
+### Schema load fails
+
+- Wait for Infrahub to fully start (check logs with `docker compose logs infrahub`)
+- Retry the schema load command after 30 seconds
+
+### Can't access web interfaces
+
+- Verify environment variables are set correctly
+- Check firewall rules if running on a remote server
+- Ensure all containers are running: `docker compose ps`
 
 ## Next steps
 
-With the demo set up, you can now explore the service catalog and its features in the [user walkthrough documentation](user-walkthrough).
+Now that your environment is running:
+
+1. **For Users**: Follow the [user walkthrough](user-walkthrough) to learn how to request services
+2. **For Developers**: Check the [developer walkthrough](developer-walkthrough) to understand the architecture
+3. **Explore Further**: Browse the Infrahub UI to understand the data model and relationships

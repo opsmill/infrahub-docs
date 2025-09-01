@@ -1,0 +1,35 @@
+# Lychee link checker ignore patterns
+# https://github.com/lycheeverse/lychee
+
+# Local development URLs
+http://localhost
+http://127.0.0.1
+https://localhost
+https://127.0.0.1
+
+# Example domains
+http://example.com
+https://example.com
+http://example.org
+https://example.org
+
+# Common placeholder URLs
+https://your-infrahub-instance.com
+https://infrahub.example.com
+
+# GitHub edit/tree/blob links (cause rate limiting)
+https://github.com/.*/edit/.*
+https://github.com/.*/tree/.*
+https://github.com/.*/blob/.*
+https://github.com/opsmill/.*/tree/stable/docs/.*
+
+# Social media that may block bots
+https://twitter.com
+https://x.com
+https://linkedin.com
+
+# URLs that commonly have rate limiting
+https://registry.npmjs.org
+
+# Anchor links that may be dynamically generated
+#.*

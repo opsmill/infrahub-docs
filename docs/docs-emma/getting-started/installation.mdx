@@ -1,0 +1,111 @@
+---
+title: Installation
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Emma is an experimental AI-powered assistant for Infrahub that helps you manage infrastructure schemas and data through an intuitive web interface.
+
+## Prerequisites
+
+Before installing Emma, ensure you have:
+
+- **Infrahub instance**: Emma requires a running Infrahub instance to connect to
+- **Docker** (for containerized deployment) or **Python 3.10+** and **Poetry** (for local development)
+
+## Installation methods
+
+<Tabs>
+<TabItem value="quickstart" label="Quick Start (Recommended)" default>
+
+The easiest way to get started is using the Infrahub quickstart with Emma included:
+
+```bash
+# Download and start Infrahub + Emma with Docker Compose
+curl https://infrahub.opsmill.io/1.3.3-emma | docker compose -f - up -d
+```
+
+This command will:
+
+- Download the latest Infrahub and Emma configuration
+- Start both services with proper networking
+- Make Emma available at http://localhost:8501
+- Make Infrahub available at http://localhost:8000
+
+:::tip
+Update the version number in the URL to the [latest Infrahub release](https://github.com/opsmill/infrahub/tags) for the most recent features.
+:::
+
+</TabItem>
+<TabItem value="docker" label="Docker Compose">
+
+To run Emma alongside your existing Infrahub setup:
+
+1. **Clone the Emma repository:**
+
+```bash
+git clone https://github.com/opsmill/emma.git
+cd emma
+```
+
+2. **Start Emma with Docker Compose:**
+
+```bash
+docker compose up --build -d
+```
+
+3. **Connect to Infrahub network** (if running Infrahub in containers):
+
+```bash
+# Find your Infrahub network name
+docker network ls
+
+# Connect Emma to the Infrahub network
+docker network connect <infrahub-network-name> emma-emma-1
+```
+
+Emma will be available at http://localhost:8501
+
+</TabItem>
+<TabItem value="local" label="Local Development">
+
+For development or custom setups:
+
+1. **Clone the repository:**
+
+```bash
+git clone https://github.com/opsmill/emma.git
+cd emma
+```
+
+2. **Install dependencies with Poetry:**
+
+```bash
+poetry install
+```
+
+3. **Run Emma:**
+
+```bash
+poetry run streamlit run main.py
+```
+
+Emma will start on http://localhost:8501
+
+</TabItem>
+</Tabs>
+
+## Next steps
+
+After installation, proceed to [Configuration](./configuration) to set up your connection to Infrahub.
+
+## Troubleshooting
+
+If you encounter issues during installation:
+
+- **Port conflicts**: Ensure ports 8501 (Emma) and 8000 (Infrahub) are available
+- **Docker issues**: Check Docker is running and you have sufficient resources allocated
+- **Network connectivity**: Verify Emma can reach your Infrahub instance
+
+For more detailed troubleshooting, see the [Troubleshooting Guide](../reference/troubleshooting).

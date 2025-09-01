@@ -209,6 +209,14 @@ const config: Config = {
         sidebarCollapsed: false,
         sidebarPath: './sidebars-exporter.ts',
       },
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-integrations',
+        path: 'docs-integrations',
+        routeBasePath: 'integrations',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-integrations.ts',
+      },
     ],
     [
       '@docusaurus/plugin-google-tag-manager',
@@ -244,6 +252,7 @@ const config: Config = {
         hashed: true,
       }
     ],
+    '@docusaurus/theme-mermaid',
   ],
   themeConfig: {
     navbar: {
@@ -288,6 +297,12 @@ const config: Config = {
           position: 'left',
           label: 'Integrations',
           items: [
+            {
+              type: "docSidebar",
+              sidebarId: "integrationsSidebar",
+              label: "All Integrations",
+              docsPluginId: "docs-integrations",
+            },
             {
               type: "docSidebar",
               sidebarId: "ansibleSidebar",
@@ -368,6 +383,7 @@ const config: Config = {
 
   markdown: {
     format: "mdx",
+    mermaid: true,
     preprocessor: ({ filePath, fileContent }) => {
       console.log(`Processing ${filePath}`);
       const transformedContent = fileContent.replace(/\$\(\s*(\w+)\s*\)/g, (match, variableName) => {
