@@ -133,6 +133,16 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
+        id: 'docs-vscode',
+        path: 'docs-vscode',
+        routeBasePath: 'vscode',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-vscode.ts',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
         id: 'docs-nornir',
         path: 'docs-nornir',
         routeBasePath: 'nornir',
@@ -281,6 +291,12 @@ const config: Config = {
               sidebarId: "emmaSidebar",
               label: "Infrahub Assistant | Emma",
               docsPluginId: "docs-emma",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "vscodeSidebar",
+              label: "VScode Extension for Infrahub",
+              docsPluginId: "docs-vscode",
             },
           ],
         },
