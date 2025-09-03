@@ -223,6 +223,16 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
+        id: 'docs-mcp',
+        path: 'docs-mcp',
+        routeBasePath: 'mcp',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-mcp.ts',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
         id: 'docs-integrations',
         path: 'docs-integrations',
         routeBasePath: 'integrations',
