@@ -203,6 +203,16 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
+        id: 'docs-exporter',
+        path: 'docs-exporter',
+        routeBasePath: 'exporter',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-exporter.ts',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
         id: 'docs-integrations',
         path: 'docs-integrations',
         routeBasePath: 'integrations',
@@ -300,6 +310,12 @@ const config: Config = {
               sidebarId: "ansibleSidebar",
               label: "Ansible",
               docsPluginId: "docs-ansible",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "exporterSidebar",
+              label: "Infrahub Exporter",
+              docsPluginId: "docs-exporter",
             },
             {
               type: "docSidebar",
