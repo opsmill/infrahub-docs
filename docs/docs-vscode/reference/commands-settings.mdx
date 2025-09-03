@@ -1,0 +1,415 @@
+---
+title: Extension Commands and Settings Reference
+description: Complete reference for all commands, settings, and configuration options in the Infrahub VSCode extension
+---
+
+This reference document provides comprehensive information about all available commands, settings, keyboard shortcuts, and configuration options in the Infrahub VSCode extension.
+
+## Commands
+
+### Available Commands
+
+The extension registers the following commands that can be executed via the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+
+| Command ID | Title | Description | Context |
+|------------|-------|-------------|---------|
+| `infrahub.editInfrahubYaml` | Edit file | Opens the selected YAML file at a specific location | Tree view item |
+| `infrahub.editGqlQuery` | Edit GraphQL Query | Opens the GraphQL query file for editing | Query tree item |
+| `infrahub.executeGraphQLQuery` | Execute GraphQL Query | Runs a GraphQL query against selected server/branch | Query tree item |
+| `infrahub.newBranch` | New Branch | Creates a new branch on the selected server | Server tree item |
+| `infrahub.deleteBranch` | Delete Branch | Deletes the selected branch | Branch tree item |
+
+### Command Execution
+
+#### From Command Palette
+
+1. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS)
+2. Type "Infrahub" to filter commands
+3. Select the desired command
+
+#### From Context Menus
+
+Right-click on tree view items to access contextual commands:
+
+- **Server Items**: New Branch
+- **Branch Items**: Delete Branch
+- **Query Items**: Execute Query, Edit Query
+- **YAML Items**: Edit File
+
+#### Programmatic Execution
+
+Commands can be executed programmatically:
+
+```typescript
+// Execute a command from another extension
+vscode.commands.executeCommand('infrahub.executeGraphQLQuery', queryItem);
+```
+
+## Extension Settings
+
+### Configuration Properties
+
+All settings are prefixed with `infrahub-vscode.`:
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `servers` | array | `[]` | List of Infrahub server configurations |
+| `schemaDirectory` | string | `"schemas"` | Path to directory containing schema files |
+
+### Server Configuration Schema
+
+Each server in the `servers` array follows this structure:
+
+```typescript
+interface ServerConfig {
+  name: string;        // Display name for the server
+  address: string;     // Server URL (http/https)
+  api_token?: string;  // Optional API token for authentication
+}
+```
+
+### Example Configuration
+
+```json
+{
+  "infrahub-vscode.servers": [
+    {
+      "name": "Local Development",
+      "address": "http://localhost:8000"
+    },
+    {
+      "name": "Production",
+      "address": "https://infrahub.example.com",
+      "api_token": "inf_1234567890abcdef"
+    }
+  ],
+  "infrahub-vscode.schemaDirectory": "infrastructure/schemas"
+}
+```
+
+### Environment Variable Substitution
+
+Settings support environment variable substitution using `${env:VARIABLE_NAME}`:
+
+```json
+{
+  "infrahub-vscode.servers": [
+    {
+      "name": "Production",
+      "address": "${env:INFRAHUB_SERVER_URL}",
+      "api_token": "${env:INFRAHUB_API_TOKEN}"
+    }
+  ]
+}
+```
+
+## Tree View Components
+
+### Infrahub Servers Tree View
+
+**View ID**: `InfrahubServerTreeView`
+**Location**: Activity Bar → Infrahub Container
+
+#### Tree Structure
+
+```text
+📁 Infrahub Servers
+  └─ 🖥️ [Server Name]
+      ├─ 🌿 main (default)
+      ├─ 🌿 feature-branch-1
+      └─ 🌿 feature-branch-2
+```
+
+#### Item Types
+
+| Item Type | View Item ID | Available Actions |
+|-----------|--------------|-------------------|
+| Server | `infrahubServer` | New Branch |
+| Branch (default) | `infrahubBranch-default` | Delete Branch |
+| Branch (regular) | `infrahubBranch` | Delete Branch |
+
+### Infrahub YAML Tree View
+
+**View ID**: `infrahubYamlTreeView`
+**Location**: Activity Bar → Infrahub Container
+
+#### Tree Structure
+
+```text
+📁 Infrahub YAML
+  └─ 📄 .infrahub.yml
+      ├─ 📁 schemas
+      │   ├─ 📄 network.yml
+      │   └─ 📄 location.yml
+      ├─ 📁 queries
+      │   ├─ 📊 get_devices
+      │   └─ 📊 topology_report
+      └─ 📁 checks
+          └─ 🔍 validate_hostnames
+```
+
+#### Item Types
+
+| Item Type | View Item ID Pattern | Available Actions |
+|-----------|---------------------|-------------------|
+| YAML File | `file` | Edit File |
+| Query | `queries/*` | Execute Query, Edit Query |
+| Schema | `schemas/*` | Edit File |
+| Check | `checks/*` | Edit File |
+
+## Status Bar
+
+### Status Bar Item
+
+**Alignment**: Left
+**Priority**: 100
+
+#### Status States
+
+| State | Display Text | Background Color |
+|-------|--------------|------------------|
+| Connected | `Infrahub: v[version] ([server])` | Default |
+| No Server | `Infrahub: No server set` | No folder background |
+| Unreachable | `Infrahub: Server unreachable` | Error background |
+
+#### Update Interval
+
+- Status updates every 10 seconds
+- Displays first configured server's status
+
+## Activation Events
+
+The extension activates when:
+
+```json
+"activationEvents": [
+  "workspaceContains:.infrahub.yml",
+  "workspaceContains:.infrahub.yaml"
+]
+```
+
+## File Associations
+
+### YAML Validation
+
+Files matching these patterns receive schema validation:
+
+```json
+"yamlValidation": [
+  {
+    "fileMatch": [
+      "models/**/*.yml",
+      "models/**/*.yaml",
+      "schemas/**/*.yml",
+      "schemas/**/*.yaml"
+    ],
+    "url": "https://schema.infrahub.app/infrahub/schema/latest.json"
+  }
+]
+```
+
+## Language Features
+
+### Definition Provider
+
+**Language**: YAML
+**Feature**: Go-to-definition (`F12` or `Ctrl+Click`)
+
+Navigates to:
+
+- Schema definitions
+- Referenced nodes
+- Relationship targets
+
+### Document Symbol Provider
+
+**Language**: YAML
+**Feature**: Document outline
+
+Provides symbols for:
+
+- Nodes
+- Attributes
+- Relationships
+- Queries
+- Checks
+
+## Context Menu Integration
+
+### View Item Context Menus
+
+Commands appear in context menus based on `when` clauses:
+
+```json
+"menus": {
+  "view/item/context": [
+    {
+      "command": "infrahub.newBranch",
+      "when": "view == InfrahubServerTreeView && viewItem == infrahubServer"
+    },
+    {
+      "command": "infrahub.deleteBranch",
+      "when": "view == InfrahubServerTreeView && viewItem =~ /^infrahubBranch/"
+    }
+  ]
+}
+```
+
+## Extension Dependencies
+
+### Required Extensions
+
+```json
+"extensionDependencies": [
+  "redhat.vscode-yaml"  // YAML language support
+]
+```
+
+The Red Hat YAML extension must be installed for schema validation to work.
+
+## API Token Management
+
+### Token Format
+
+Infrahub API tokens typically follow this format:
+
+```text
+inf_[32-character-alphanumeric-string]
+```
+
+### Token Security Best Practices
+
+1. **Never commit tokens**: Use environment variables
+2. **Rotate regularly**: Change tokens periodically
+3. **Minimal permissions**: Use read-only tokens when possible
+4. **Separate environments**: Different tokens per environment
+
+### Token Configuration Methods
+
+#### Method 1: Direct in Settings (Not Recommended)
+
+```json
+{
+  "infrahub-vscode.servers": [
+    {
+      "api_token": "inf_direct_token_not_secure"
+    }
+  ]
+}
+```
+
+#### Method 2: Environment Variables (Recommended)
+
+```json
+{
+  "infrahub-vscode.servers": [
+    {
+      "api_token": "${env:INFRAHUB_TOKEN}"
+    }
+  ]
+}
+```
+
+#### Method 3: VSCode Secrets (Future)
+
+Planned support for VSCode's secret storage API.
+
+## Troubleshooting Reference
+
+### Common Issues and Solutions
+
+| Issue | Possible Cause | Solution |
+|-------|----------------|----------|
+| Extension not activating | No `.infrahub.yml` file | Create `.infrahub.yml` in workspace root |
+| Server unreachable | Invalid URL or network issue | Check server URL and network connection |
+| Commands not appearing | Wrong context | Ensure correct tree view item is selected |
+| Validation not working | Missing YAML extension | Install Red Hat YAML extension |
+| Token not working | Incorrect format or permissions | Verify token format and permissions |
+
+### Debug Output
+
+Enable debug logging:
+
+1. Open VSCode Developer Tools: `Help → Toggle Developer Tools`
+2. Check Console tab for extension logs
+3. Look for messages starting with "Infrahub Extension"
+
+## Keyboard Shortcuts
+
+The extension doesn't define default keyboard shortcuts, but you can add custom ones:
+
+### Adding Custom Shortcuts
+
+1. Open Keyboard Shortcuts: `Ctrl+K Ctrl+S` (Windows/Linux) or `Cmd+K Cmd+S` (macOS)
+2. Search for "Infrahub"
+3. Click the `+` icon to add a keybinding
+
+### Suggested Shortcuts
+
+```json
+{
+  "key": "ctrl+alt+q",
+  "command": "infrahub.executeGraphQLQuery",
+  "when": "view == infrahubYamlTreeView"
+},
+{
+  "key": "ctrl+alt+b",
+  "command": "infrahub.newBranch",
+  "when": "view == InfrahubServerTreeView"
+}
+```
+
+## Performance Settings
+
+### Refresh Intervals
+
+| Component | Interval | Configurable |
+|-----------|----------|--------------|
+| Server Tree View | 10 seconds | No (hardcoded) |
+| Status Bar | 10 seconds | No (hardcoded) |
+
+### Resource Limits
+
+- Maximum servers: No limit (performance may degrade with >10)
+- Query result size: Limited by VSCode webview memory
+- Tree view items: No hard limit
+
+## Version Compatibility
+
+### VSCode Version
+
+- **Minimum**: 1.102.0
+- **Recommended**: Latest stable version
+
+### Infrahub Server Version
+
+- **Minimum**: 0.14.0 (basic functionality)
+- **Recommended**: 0.15.0+ (all features)
+
+### Node.js Runtime
+
+- **Target**: ES2022
+- **Module System**: Node16
+
+## Extension Metadata
+
+### Publisher Information
+
+- **Publisher ID**: OpsMill
+- **Publisher Name**: OpsMill
+- **Homepage**: https://github.com/opsmill/infrahub-vscode
+
+### Gallery Banner
+
+```json
+"galleryBanner": {
+  "color": "#2183F7",
+  "theme": "dark"
+}
+```
+
+## Further Information
+
+- [Getting Started Tutorial](../tutorials/getting-started.mdx)
+- [Understanding the Extension Architecture](../topics/extension-architecture.mdx)
+- [GitHub Repository](https://github.com/opsmill/infrahub-vscode)

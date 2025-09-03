@@ -1,0 +1,431 @@
+---
+title: Schema Validation and YAML Intelligence
+description: Understanding how the extension provides intelligent YAML editing and schema validation for Infrahub
+---
+
+This document explores how the Infrahub VSCode extension provides intelligent YAML editing capabilities, real-time schema validation, and navigation features that enhance the developer experience when working with infrastructure schemas.
+
+## Overview
+
+Schema validation and YAML intelligence are fundamental features that transform VSCode into a powerful Infrahub development environment. These capabilities help catch errors early, provide contextual assistance, and accelerate schema development through intelligent code completion and navigation.
+
+## The Role of Schemas in Infrahub
+
+### Infrastructure as Schema
+
+In Infrahub, schemas define the structure of your infrastructure data:
+
+```yaml
+version: '1.0'
+nodes:
+  - name: Device
+    namespace: Network
+    attributes:
+      - name: hostname
+        kind: Text
+        unique: true
+```
+
+This schema-first approach means:
+
+- **Type Safety**: Data must conform to defined structures
+- **Consistency**: All infrastructure follows the same patterns
+- **Validation**: Invalid data is rejected before it causes issues
+- **Documentation**: Schemas serve as living documentation
+
+### Why Validation Matters
+
+Schema validation prevents several categories of errors:
+
+1. **Syntax Errors**: Malformed YAML that won't parse
+2. **Type Mismatches**: Wrong data types for attributes
+3. **Constraint Violations**: Breaking uniqueness or required fields
+4. **Relationship Errors**: Invalid references between objects
+5. **Version Conflicts**: Incompatible schema versions
+
+## How Schema Validation Works
+
+### Validation Pipeline
+
+The extension implements a multi-stage validation pipeline:
+
+```text
+File Change → YAML Parse → Schema Load → Validation → Diagnostics
+     ↓            ↓            ↓            ↓            ↓
+  Detected    Structure    Reference    Rules      Display
+             Checking     Resolution   Applied     Errors
+```
+
+### Real-Time Validation
+
+Validation occurs at multiple points:
+
+1. **On Type**: Incremental validation as you type (debounced)
+2. **On Save**: Full validation when file is saved
+3. **On Open**: Initial validation when file is opened
+4. **On Focus**: Re-validation when switching between files
+
+### Validation Scope
+
+The extension validates files based on location:
+
+```yaml
+# Automatically validated directories
+models/        # Infrastructure models
+schemas/       # Schema definitions
+```
+
+These directories are configured through:
+
+```json
+{
+  "infrahub-vscode.schemaDirectory": "schemas"
+}
+```
+
+## YAML Intelligence Features
+
+### Syntax Highlighting
+
+The extension provides enhanced syntax highlighting for Infrahub-specific constructs:
+
+- **Keywords**: `version`, `nodes`, `attributes`, `relationships`
+- **Types**: `Text`, `Number`, `Boolean`, `IPHost`, `IPNetwork`
+- **Modifiers**: `unique`, `optional`, `default_value`
+
+### Auto-Completion
+
+Context-aware suggestions appear as you type:
+
+```yaml
+nodes:
+  - name: Router
+    attributes:
+      - name: hostname
+        kind: |  # Cursor here triggers type suggestions
+              # Text, Number, Boolean, IPHost, etc.
+```
+
+### Go-to-Definition
+
+Navigate between related schemas with `F12` or `Ctrl+Click`:
+
+```yaml
+relationships:
+  - name: interfaces
+    peer: NetworkInterface  # Ctrl+Click jumps to NetworkInterface definition
+    kind: Component
+```
+
+### Document Symbols
+
+The outline view shows schema structure:
+
+```text
+📄 network.yml
+  └─ nodes
+      └─ Device
+          ├─ attributes
+          │   ├─ hostname
+          │   └─ model
+          └─ relationships
+              └─ interfaces
+```
+
+## Schema Validation Rules
+
+### Structural Validation
+
+The extension enforces schema structure:
+
+```yaml
+# Valid structure
+version: '1.0'
+nodes:
+  - name: Device
+    namespace: Network
+
+# Invalid - missing version
+nodes:  # ❌ Error: Schema must include version
+  - name: Device
+```
+
+### Attribute Validation
+
+Attributes must follow specific rules:
+
+```yaml
+attributes:
+  - name: hostname
+    kind: Text        # ✅ Valid kind
+    unique: true      # ✅ Valid modifier
+    
+  - name: port
+    kind: String      # ❌ Error: Invalid kind 'String', use 'Text'
+    
+  - name: ip_address
+    kind: IPHost
+    mandatory: true   # ❌ Error: Use 'optional: false' instead
+```
+
+### Relationship Validation
+
+Relationships are validated for consistency:
+
+```yaml
+relationships:
+  - name: location
+    peer: LocationSite    # Must reference existing node
+    kind: Parent         # Must be valid relationship kind
+    cardinality: one     # Must be valid cardinality
+    
+  - name: interfaces
+    peer: NonExistent    # ❌ Error: Node 'NonExistent' not found
+    kind: Invalid        # ❌ Error: Invalid relationship kind
+```
+
+## Understanding Validation Messages
+
+### Error Categories
+
+Validation produces different message types:
+
+1. **Errors** (Red): Must be fixed before schema works
+   - Missing required fields
+   - Invalid types
+   - Syntax errors
+
+2. **Warnings** (Yellow): Should be addressed but won't break functionality
+   - Deprecated patterns
+   - Performance concerns
+   - Best practice violations
+
+3. **Information** (Blue): Helpful suggestions
+   - Optimization opportunities
+   - Alternative approaches
+   - Documentation hints
+
+### Message Structure
+
+Each validation message contains:
+
+```text
+[Severity] [Location] Message
+Example: Error at line 15: Attribute kind 'String' is not valid
+```
+
+### Common Validation Errors
+
+#### Missing Required Fields
+
+```yaml
+nodes:
+  - namespace: Network  # ❌ Error: Missing required field 'name'
+```
+
+**Solution**: Add the missing field:
+
+```yaml
+nodes:
+  - name: Device
+    namespace: Network
+```
+
+#### Invalid Attribute Kind
+
+```yaml
+attributes:
+  - name: count
+    kind: Integer  # ❌ Error: Use 'Number' instead of 'Integer'
+```
+
+**Solution**: Use correct type:
+
+```yaml
+attributes:
+  - name: count
+    kind: Number
+```
+
+#### Circular Dependencies
+
+```yaml
+nodes:
+  - name: A
+    relationships:
+      - peer: B
+        kind: Parent
+  - name: B
+    relationships:
+      - peer: A
+        kind: Parent  # ❌ Error: Circular dependency detected
+```
+
+**Solution**: Redesign relationship hierarchy
+
+## Advanced Validation Concepts
+
+### Schema Inheritance
+
+Understanding how schemas inherit from base definitions:
+
+```yaml
+nodes:
+  - name: Device
+    namespace: Network
+    inherit_from:
+      - BuiltinDevice  # Inherits attributes and relationships
+    attributes:
+      - name: custom_field  # Adds to inherited attributes
+        kind: Text
+```
+
+The validator checks:
+
+- Base schema exists
+- No attribute conflicts
+- Relationship compatibility
+
+### Cross-File Validation
+
+The extension validates references across files:
+
+```yaml
+# File: schemas/network.yml
+nodes:
+  - name: Device
+    namespace: Network
+
+# File: schemas/interface.yml
+nodes:
+  - name: Interface
+    namespace: Network
+    relationships:
+      - name: device
+        peer: NetworkDevice  # Validated across files
+```
+
+### Version Compatibility
+
+Schema versions affect validation rules:
+
+```yaml
+version: '1.0'  # Original schema format
+
+version: '1.1'  # Supports additional features
+generics:       # New in 1.1
+  - name: GenericDevice
+```
+
+## Performance Considerations
+
+### Incremental Validation
+
+The extension uses incremental validation for performance:
+
+1. **Parse Caching**: YAML AST cached between edits
+2. **Partial Updates**: Only changed sections re-validated
+3. **Debouncing**: Validation delayed during rapid typing
+4. **Background Processing**: Validation doesn't block UI
+
+### Large File Handling
+
+For large schema files:
+
+- **Lazy Loading**: Schemas loaded on-demand
+- **Chunked Processing**: Large files processed in segments
+- **Priority Validation**: Visible content validated first
+- **Throttling**: Rate-limited validation for huge files
+
+## Customizing Validation
+
+### Validation Settings
+
+Configure validation behavior:
+
+```json
+{
+  "yaml.schemas": {
+    "https://schema.infrahub.app/infrahub/schema/latest.json": [
+      "schemas/**/*.yml",
+      "models/**/*.yaml"
+    ]
+  },
+  "yaml.validate": true,
+  "yaml.customTags": [
+    "!include",
+    "!secret"
+  ]
+}
+```
+
+### Disabling Validation
+
+To temporarily disable validation:
+
+1. **Per File**: Add comment at top
+
+   ```yaml
+   # yaml-language-server: $schema=none
+   ```
+
+2. **Per Workspace**: Modify settings
+
+   ```json
+   {
+     "yaml.validate": false
+   }
+   ```
+
+## Integration with Other Tools
+
+### YAML Language Server
+
+The extension leverages the Red Hat YAML extension:
+
+- **Schema Association**: Links files to Infrahub schemas
+- **JSON Schema**: Uses JSON Schema for validation
+- **Custom Tags**: Supports Infrahub-specific tags
+
+### Linting Integration
+
+Works alongside linting tools:
+
+- **yamllint**: Style and formatting checks
+- **Prettier**: Code formatting
+- **Vale**: Documentation linting
+
+## Troubleshooting Validation Issues
+
+### Validation Not Working
+
+If validation isn't functioning:
+
+1. **Check File Location**: Ensure file is in configured directory
+2. **Verify Extension**: Confirm YAML extension is installed
+3. **Schema Association**: Check schema URL is correct
+4. **Reload Window**: Try reloading VSCode
+
+### False Positives
+
+If seeing incorrect errors:
+
+1. **Update Extension**: Ensure latest version
+2. **Check Schema Version**: Verify schema compatibility
+3. **Clear Cache**: Reload VSCode window
+4. **Report Issue**: File bug report if persistent
+
+### Performance Issues
+
+If validation is slow:
+
+1. **File Size**: Consider splitting large files
+2. **Disable Real-time**: Turn off on-type validation
+3. **Increase Debounce**: Adjust validation delay
+4. **Check Extensions**: Disable conflicting extensions
+
+## Further Reading
+
+- [Understanding the Extension Architecture](./extension-architecture.mdx)
+- [How to Execute GraphQL Queries](../guides/execute-graphql-queries.mdx)
+- [Extension Commands Reference](../reference/commands-settings.mdx)
