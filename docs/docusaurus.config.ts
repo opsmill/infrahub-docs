@@ -209,6 +209,8 @@ const config: Config = {
         sidebarCollapsed: false,
         sidebarPath: './sidebars-exporter.ts',
       },
+    ],
+    [
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-integrations',
