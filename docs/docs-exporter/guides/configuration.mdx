@@ -1,0 +1,119 @@
+---
+title: Configure Infrahub Exporter
+---
+
+## Configuration
+
+Create a `config.yml` file with the following structure:
+
+```yaml
+# Infrahub connection settings
+infrahub:
+  address: "http://localhost:8000"        # Infrahub server address
+  token: "your-api-token"                 # Infrahub SDK API key
+  branch: main                            # Which branch to fetch
+
+# Poll interval in seconds (default is XXX)
+poll_interval_seconds: 30
+
+# HTTP server configuration
+listen_address: "0.0.0.0"
+listen_port: 8001
+
+# Log level (default level is INFO)
+log_level: "INFO"
+```
+
+## Exporter configuration
+
+Infrahub Exporter separates what metrics to collect from how to send them. You define metrics (resources and fields) once, and then enable one or more exporters to deliver those metrics:
+
+### Defining metrics
+
+```yaml
+metrics:
+  # Define which resource types and fields to include
+  kind:
+    - kind: InfraDevice
+      include:
+        - name
+        - description
+        - platform
+        - role
+        - status
+
+      # You can apply filters to this `kind`
+      filters:
+        - site__name__value: "dc1"
+        - role__value: "edge"
+```
+
+These metrics will be available to all configured exporters.
+You can choose one or more exporters:
+
+- Pull-based (Exporter): Exposes a `/metrics` HTTP endpoint for Prometheus or other scrapers.
+- Push-based (OTLP): Sends metrics to an OpenTelemetry collector.
+
+### Prometheus integration
+
+Configure the Prometheus exporter in your `config.yml` :
+
+```yaml
+exporters:
+  exporter:
+    enabled: true   # Pull-based endpoint at /metrics
+```
+
+And in your Prometheus :
+
+```yaml
+scrape_configs:
+  - job_name: 'infrahub'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['infrahub-exporter:8001']
+```
+
+### Opentelemetry integration
+
+Configure the OTLP exporter in your `config.yml` :
+
+```yaml
+exporters:
+  otlp:
+    enabled: true
+    endpoint: "http://otel-collector:4317"
+    timeout_seconds: 10
+```
+
+## Service discovery configuration
+
+The exporter can provide HTTP-based service-discovery for Prometheus.
+Define your queries and how to map fields into target labels:
+
+```yaml
+service_discovery:
+  enabled: true
+  queries:
+    - name: "devices"
+      file_path: "./queries/devices.gql"
+      endpoint_path: "devices"
+      refresh_interval_seconds: 60
+      target_field: "primary_address.node.address.ip"
+      label_mappings:
+        "device_name": "name.value"
+        "location": "site.node.name.value"
+        "role": "role.value"
+        "platform": "platform.node.name.value"
+```
+
+This section ensures Prometheus can automatically discover and scrape dynamic targets managed by Infrahub.
+To integrate it with your monitoring stack, add this section in your Prometheus configuration:
+
+```yaml
+scrape_configs:
+  - job_name: 'infrahub-sd'
+    http_sd_configs:
+      - url: http://infrahub-exporter:8001/sd/devices
+        refresh_interval: 60s
+```
