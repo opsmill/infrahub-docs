@@ -318,6 +318,12 @@ const config: Config = {
               label: "VScode Extension for Infrahub",
               docsPluginId: "docs-vscode",
             },
+            {
+              type: "docSidebar",
+              sidebarId: "mcpSidebar",
+              label: "MCP Server for Infrahub",
+              docsPluginId: "docs-mcp",
+            },
           ],
         },
         {
