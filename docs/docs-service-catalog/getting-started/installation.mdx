@@ -125,49 +125,7 @@ This command launches:
 - **RabbitMQ**: Task queue for asynchronous operations
 - **Service Catalog**: Streamlit web portal (port 8501)
 
-### Step 5: Initialize Infrahub with demo data
-
-Now we'll load the data models (schemas) and populate Infrahub with demo network infrastructure data.
-
-#### Load the schema definitions
-
-First, load the schema that defines the data models:
-
-```shell
-poetry run infrahubctl schema load schemas/ --wait 10
-```
-
-This command:
-
-- Loads schema definitions from the `schemas/` directory
-- Defines models for locations, devices, services, and network resources
-- The `--wait 10` flag ensures schemas are fully processed before continuing
-
-#### Import demo data
-
-Next, populate Infrahub with sample infrastructure data:
-
-```shell
-poetry run infrahubctl object load data/
-```
-
-This imports:
-
-- **Locations**: Sites like Atlanta, Dallas, Denver, and Seattle
-- **Devices**: Core switches, edge routers, and customer equipment
-- **Network Resources**: VLAN pools, IP prefix pools
-- **Templates**: Device configurations and service definitions
-
-:::tip Understanding the Data Model
-The demo uses a hierarchical structure:
-
-- Locations contain devices
-- Devices have interfaces and connections
-- Services allocate resources from pools
-- Everything is version-controlled and auditable
-:::
-
-### Step 6: Configure Git integration
+### Step 5: Configure Git integration
 
 Connect the demo repository to Infrahub for infrastructure as code workflows.
 
@@ -181,8 +139,8 @@ This connection enables:
 
 - **Generator Scripts**: Python code that automates service provisioning
 - **Configuration Templates**: Jinja2 templates for device configurations
-- **Schema Evolution**: Track changes to data models over time
-- **GitOps Workflows**: Infrastructure changes through pull requests
+- **Schema**: Track changes to data models over time
+- **Objects and data**: Infrastructure changes through pull requests
 
 :::info About Read-Only Mode
 The `--read-only` flag means:
@@ -192,6 +150,22 @@ The `--read-only` flag means:
 - Perfect for demo environments and testing
 
 For production, you'd typically use bidirectional sync to enable full GitOps workflows.
+:::
+
+:::tip Understanding the Data Model
+This imports:
+
+- **Locations**: Sites like Atlanta, Dallas, Denver, and Seattle
+- **Devices**: Core switches, edge routers, and customer equipment
+- **Network Resources**: VLAN pools, IP prefix pools
+- **Templates**: Device configurations and service definitions
+
+The schema uses a hierarchical structure:
+
+- Locations contain devices
+- Devices have interfaces and connections
+- Services allocate resources from pools
+- Everything is version-controlled and auditable
 :::
 
 ## Verify your installation
