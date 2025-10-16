@@ -25,6 +25,9 @@ https://github.com/opsmill/.*/tree/stable/docs/.*
 # Nautobot API docs requires auth
 https://demo.nautobot.com/api/docs
 
+# Google APIs
+https://.*.googleapis.com/.*
+
 # Social media that may block bots
 https://twitter.com
 https://x.com
