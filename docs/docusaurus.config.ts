@@ -34,7 +34,6 @@ const config: Config = {
 
   onBrokenLinks: "throw",
   onBrokenAnchors: "throw",
-  onBrokenMarkdownLinks: "throw",
   onDuplicateRoutes: "throw",
   noIndex: false,
   trailingSlash: false,
@@ -418,6 +417,9 @@ const config: Config = {
   markdown: {
     format: "mdx",
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: "throw",
+    },
     preprocessor: ({ filePath, fileContent }) => {
       console.log(`Processing ${filePath}`);
       const transformedContent = fileContent.replace(/\$\(\s*(\w+)\s*\)/g, (match, variableName) => {

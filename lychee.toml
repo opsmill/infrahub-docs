@@ -45,7 +45,10 @@ exclude = [
   
   # GitHub API endpoints
   "api\\.github\\.com",
-  
+
+  # Google OAuth and API endpoints (require authentication)
+  "googleapis\\.com",
+
   # Social media that blocks bots
   "twitter\\.com",
   "x\\.com",
