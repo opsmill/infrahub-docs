@@ -1,0 +1,828 @@
+---
+title: Developer guide
+---
+
+This guide explains how the Infrahub DC fabric demo works under the hood. Use this to understand the implementation, extend functionality, or troubleshoot issues.
+
+## Architecture overview
+
+The demo follows a layered architecture:
+
+```
+Schema (schemas/)
+    ↓
+Bootstrap Scripts (bootstrap/)
+    ↓
+Data Objects in Infrahub
+    ↓
+Generators (generators/) → Derived Objects
+    ↓
+Transforms (transforms/) + Templates (templates/)
+    ↓
+Artifacts (configurations)
+```
+
+Each layer builds on the previous one, with clear separation of concerns.
+
+## Schema layer
+
+### Schema structure
+
+The schema defines the data model using YAML files in `schemas/`:
+
+- `dcim.yml` - Devices, interfaces, platforms, and physical infrastructure
+- `ipam.yml` - IP addresses, prefixes, VLANs, VRFs, and resource pools
+- `locations.yml` - Sites, regions, and geographical organization
+- `organizations.yml` - Tenants, providers, manufacturers
+- `routing.yml` - BGP sessions, autonomous systems, routing configuration
+- `security.yml` - Firewall policies, rules, zones, address objects
+- `topology.yml` - Network topologies and topology elements
+- `circuit.yml` - Circuits and connectivity
+
+### Key schema patterns
+
+**Generics for inheritance:**
+
+```yaml
+generics:
+  - name: GenericDevice
+    namespace: Infra
+    attributes:
+      - name: name
+      - name: status
+    relationships:
+      - name: location
+      - name: interfaces
+```
+
+Generics define reusable object templates. Specific device types inherit from `GenericDevice`.
+
+**Relationships with cardinality:**
+
+```yaml
+relationships:
+  - name: interfaces
+    peer: InfraInterface
+    cardinality: many  # One device has many interfaces
+    kind: Component    # Lifecycle-bound to parent
+```
+
+Relationships connect objects. `kind: Component` means interfaces are deleted when the device is deleted.
+
+**Dropdown attributes with choices:**
+
+```yaml
+attributes:
+  - name: status
+    kind: Dropdown
+    choices:
+      - name: active
+        color: "#7fbf7f"
+      - name: provisioning
+        color: "#ffff7f"
+```
+
+Dropdowns provide constrained values with UI representations.
+
+### Loading schemas
+
+Schemas are loaded with:
+
+```bash
+infrahubctl schema load schemas/*.yml --wait 30
+```
+
+Infrahub validates the schema, creates database structures, and makes object types available via GraphQL and the UI.
+
+## Bootstrap layer
+
+### Bootstrap execution order
+
+Scripts in `bootstrap/` run in a specific sequence:
+
+```python
+DATA_GENERATORS = [
+    "create_basic.py",      # Foundation: accounts, orgs, device types
+    "create_location.py",   # Locations and IP supernets
+    "create_topology.py",   # Topology definitions
+    "create_security_nodes.py",  # Security policies
+]
+```
+
+This order ensures dependencies are satisfied (for example, device types exist before creating topology elements that reference them).
+
+### Batch operations pattern
+
+Bootstrap scripts use batch operations for efficiency:
+
+```python
+from infrahub_sdk.batch import InfrahubBatch
+
+batch = await client.create_batch()
+
+# Queue multiple operations
+await batch.add(
+    task=client.create,
+    kind="InfraDeviceType",
+    data={"name": "Arista DCS-7280R", ...}
+)
+
+# Execute all at once
+async for result in batch.execute():
+    if result.error:
+        print(f"Error: {result.error}")
+```
+
+Batching reduces API round trips from hundreds to just a few.
+
+### Helper utilities
+
+`bootstrap/utils.py` provides common functions:
+
+- `create_and_add_to_batch()` - Convenience wrapper for batch operations
+- `create_ipam_pool()` - Creates IP prefix pools for resource allocation
+- `execute_batch()` - Executes batches with error handling
+
+These utilities keep bootstrap scripts clean and focused.
+
+## Generator layer
+
+### How generators work
+
+Generators are Python classes that create derived data. The `network_services.py` generator:
+
+```python
+from infrahub_sdk.generator import InfrahubGenerator
+
+class NetworkServicesGenerator(InfrahubGenerator):
+    async def generate(self, data):
+        # 1. Extract input data from GraphQL query
+        network_service = data["TopologyNetworkService"]["edges"][0]["node"]
+
+        # 2. Make decisions based on service type
+        if network_service["type"]["value"] == "Layer2":
+            await self.create_l2_vlan(network_service)
+        else:
+            await self.create_l3_vlan(network_service)
+            await self.allocate_prefix(network_service)
+
+        # 3. Create objects using Infrahub client
+        vlan = await self.client.create(
+            kind="InfraVLAN",
+            data={...}
+        )
+        await vlan.save()
+```
+
+### Generator configuration
+
+Generators are registered in `.infrahub.yml`:
+
+```yaml
+generator_definitions:
+  - name: generate_network_services
+    file_path: "generators/network_services.py"
+    class_name: NetworkServicesGenerator
+    query: generate_network_services  # GraphQL query to fetch input
+    targets: network_services  # Group that triggers the generator
+    parameters:
+      network_service_name: "name__value"
+```
+
+When a network service is added to the `network_services` group and a proposed change is created, the generator runs.
+
+### Resource allocation
+
+Generators can allocate resources from pools:
+
+```python
+# Get the resource pool
+resource_pool = await self.client.get(
+    kind="CoreIPPrefixPool",
+    name__value=f"supernet-{location_shortname}"
+)
+
+# Allocate a /24 prefix
+allocated = await resource_pool.allocate(
+    identifier=network_service_name,
+    prefix_length=24,
+)
+
+# Use the allocated prefix
+prefix = await self.client.create(
+    kind="InfraPrefix",
+    data={
+        "prefix": allocated.resource.value,
+        "network_service": network_service["id"],
+        ...
+    }
+)
+```
+
+Infrahub ensures no conflicts and tracks which service owns each allocation.
+
+## Transform layer
+
+### Python transforms
+
+Python transforms convert Infrahub data to specific output formats. The `openconfig.py` transform:
+
+```python
+from infrahub_sdk.transforms import InfrahubTransform
+
+class OCInterfaces(InfrahubTransform):
+    query = "oc_interfaces"  # GraphQL query for input data
+
+    async def transform(self, data):
+        response_payload = {
+            "openconfig-interfaces:interface": []
+        }
+
+        # Transform each interface
+        for intf in data["InfraDevice"]["edges"][0]["node"]["interfaces"]["edges"]:
+            intf_config = {
+                "name": intf["node"]["name"]["value"],
+                "config": {
+                    "enabled": intf["node"]["enabled"]["value"]
+                }
+            }
+
+            # Add IP addresses if present
+            if intf["node"].get("ip_addresses"):
+                intf_config["subinterfaces"] = self.build_subinterfaces(intf)
+
+            response_payload["openconfig-interfaces:interface"].append(intf_config)
+
+        return response_payload
+```
+
+Transforms have access to the full Infrahub client and can make additional queries if needed.
+
+### Jinja2 templates
+
+Jinja2 templates generate text-based configurations. Example from `device_arista_config.tpl.j2`:
+
+```jinja2
+{# Query data is available in template context #}
+hostname {{ device.name.value }}
+
+{% for interface in device.interfaces.edges %}
+interface {{ interface.node.name.value }}
+   description {{ interface.node.description.value }}
+   {% if interface.node.enabled.value %}
+   no shutdown
+   {% else %}
+   shutdown
+   {% endif %}
+{% endfor %}
+
+{% for bgp_session in device.bgp_sessions.edges %}
+router bgp {{ device.asn.asn.value }}
+   neighbor {{ bgp_session.node.peer_ip.value }} remote-as {{ bgp_session.node.remote_asn.value }}
+{% endfor %}
+```
+
+Templates have access to all data returned by their associated GraphQL query.
+
+### Template configuration
+
+Templates are registered in `.infrahub.yml`:
+
+```yaml
+jinja2_transforms:
+  - name: "device_arista"
+    description: "Startup configuration for Arista devices"
+    query: "device_info"  # GraphQL query
+    template_path: "templates/device_arista_config.tpl.j2"
+
+artifact_definitions:
+  - name: "Startup Config for Arista devices"
+    artifact_name: "startup-config"
+    parameters:
+      device: "name__value"  # Parameterize by device name
+    content_type: "text/plain"
+    targets: "arista_devices"  # Group of devices this applies to
+    transformation: "device_arista"  # Use this template
+```
+
+Infrahub generates one artifact per device in the `arista_devices` group.
+
+## Check layer
+
+### Check implementation
+
+Checks validate data consistency. The `check_device_topology.py` check:
+
+```python
+from infrahub_sdk.checks import InfrahubCheck
+
+class InfrahubCheckDeviceTopology(InfrahubCheck):
+    query = "check_device_topology"  # GraphQL query for validation data
+
+    def validate(self, data):
+        # Extract data from query results
+        topologies = data["TopologyTopology"]["edges"]
+        groups = data["CoreStandardGroup"]["edges"]
+        devices = data["InfraDevice"]["edges"]
+
+        # Build lookup structures
+        group_devices = self.build_group_map(groups)
+        device_map = self.build_device_map(devices)
+
+        # Validate each topology
+        for topology in topologies:
+            topology_name = topology["node"]["name"]["value"]
+            group_name = f"{topology_name}_topology"
+
+            # Check group exists
+            if group_name not in group_devices:
+                self.log_error(
+                    message=f"No group found for topology {topology_name}"
+                )
+                continue
+
+            # Validate device counts per role
+            expected_counts = self.extract_expected_counts(topology)
+            actual_counts = self.count_actual_devices(group_devices[group_name], device_map)
+
+            if expected_counts != actual_counts:
+                self.log_error(
+                    message=f"Device count mismatch in {topology_name}",
+                    expected=expected_counts,
+                    actual=actual_counts
+                )
+```
+
+### Check execution
+
+Checks run automatically:
+
+- During proposed change creation
+- When explicitly triggered via API
+- On a schedule (if configured)
+
+Failed checks block merging by default, preventing invalid data from reaching the main branch.
+
+## GraphQL query patterns
+
+### Query organization
+
+GraphQL queries are stored separately from code in `.gql` files and referenced by name. Example `device_info.gql`:
+
+```graphql
+query DeviceInfo($device_name: String!) {
+  InfraDevice(name__value: $device_name) {
+    edges {
+      node {
+        id
+        name { value }
+        platform {
+          node {
+            name { value }
+            vendor { node { name { value } } }
+          }
+        }
+        interfaces {
+          edges {
+            node {
+              name { value }
+              description { value }
+              enabled { value }
+              connected_endpoint {
+                node {
+                  ... on InfraInterface {
+                    name { value }
+                    device { node { name { value } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+This pattern:
+
+- Keeps queries testable independently
+- Allows reuse across multiple artifacts
+- Enables query optimization without code changes
+
+### Parameterized queries
+
+Queries accept variables for dynamic filtering:
+
+```graphql
+query GenerateNetworkServices($network_service_name: String!) {
+  TopologyNetworkService(name__value: $network_service_name) {
+    edges {
+      node {
+        id
+        name { value }
+        type { value }
+        topology {
+          node {
+            name { value }
+            location {
+              node {
+                shortname { value }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Infrahub passes parameters automatically based on artifact or generator configuration.
+
+## Testing patterns
+
+### Integration tests
+
+Integration tests use `infrahub-testcontainers` to spin up ephemeral Infrahub instances:
+
+```python
+from infrahub_sdk.testing.repository import GitRepo
+from .conftest import TestInfrahubDockerWithClient, PROJECT_DIRECTORY
+
+class TestDemoflow(TestInfrahubDockerWithClient):
+    @pytest.fixture(scope="class")
+    def default_branch(self) -> str:
+        return "test-demo"
+
+    def test_schema_load(self, client_main):
+        # Load schema
+        result = self.execute_command(
+            "infrahubctl schema load models --wait 60",
+            address=client_main.config.address,
+        )
+        assert result.returncode == 0
+
+    def test_load_data(self, client_main):
+        # Run bootstrap scripts
+        for generator in DATA_GENERATORS:
+            result = self.execute_command(
+                f"infrahubctl run bootstrap/{generator}",
+                address=client_main.config.address,
+            )
+            assert result.returncode == 0
+```
+
+These tests validate the full workflow without mocking.
+
+### Running tests locally
+
+```bash
+# All tests
+pytest
+
+# Integration tests only (slower, requires Docker)
+pytest tests/integration/
+
+# Specific test
+pytest tests/integration/test_workflow.py::TestDemoflow::test_schema_load -v
+```
+
+### Test structure
+
+Tests inherit from `TestInfrahubDockerWithClient` which provides:
+
+- `client_main` - Infrahub client for the main branch
+- `execute_command()` - Helper to run `infrahubctl` commands
+- Automatic container lifecycle management
+
+## Development workflow
+
+### Making schema changes
+
+1. Modify schema files in `schemas/`
+2. Reload schema: `poetry run invoke load-schema`
+3. Infrahub applies migrations automatically
+4. Update bootstrap scripts if needed
+5. Test with: `pytest tests/`
+
+### Adding a new generator
+
+1. Create Python file in `generators/`
+2. Inherit from `InfrahubGenerator`
+3. Implement `async def generate(self, data)`
+4. Create GraphQL query in `generators/*.gql`
+5. Register in `.infrahub.yml` under `generator_definitions`
+6. Add target group or create a new one
+7. Test by adding objects to the group
+
+### Creating a new template
+
+1. Create Jinja2 template in `templates/`
+2. Create GraphQL query in `templates/*.gql`
+3. Register both in `.infrahub.yml`:
+   - Add to `jinja2_transforms`
+   - Add to `artifact_definitions`
+4. Specify target group
+5. Test artifact generation via UI or API
+
+### Adding a new check
+
+1. Create Python file in `checks/`
+2. Inherit from `InfrahubCheck`
+3. Implement `def validate(self, data)`
+4. Use `self.log_error()` for failures
+5. Create GraphQL query in `checks/*.gql`
+6. Register in `.infrahub.yml` under `check_definitions`
+7. Test in a proposed change
+
+## Common debugging techniques
+
+### Viewing generator logs
+
+When a generator runs during a proposed change:
+
+1. Navigate to the proposed change
+2. Click the **Generators** tab
+3. Click on the generator name
+4. View stdout/stderr logs
+
+Look for exceptions, GraphQL errors, or print statements.
+
+### Inspecting GraphQL queries
+
+Test queries independently:
+
+1. Navigate to [http://localhost:8000/graphql](http://localhost:8000/graphql)
+2. Paste your query
+3. Add variables in the Variables pane
+4. Execute and inspect results
+
+This helps debug query syntax and verify data is present.
+
+### Checking artifact output
+
+View generated artifacts:
+
+1. Navigate to **Unified Storage** > **Artifacts**
+2. Filter by artifact type or target
+3. Click to view the generated content
+4. Check for unexpected values or missing data
+
+Artifacts reflect the final output of templates/transforms.
+
+### Reviewing database state
+
+Use GraphQL to inspect object state:
+
+```graphql
+query {
+  InfraVLAN {
+    edges {
+      node {
+        id
+        name { value }
+        vlan_id { value }
+        network_service {
+          node {
+            name { value }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+This reveals what objects exist, their attributes, and relationships.
+
+### Enabling debug logging
+
+Set environment variables for verbose logging:
+
+```bash
+export INFRAHUB_LOG_LEVEL=DEBUG
+export INFRAHUB_SDK_LOG_LEVEL=DEBUG
+```
+
+Then check Docker logs:
+
+```bash
+docker compose logs -f infrahub-server
+```
+
+## Code organization best practices
+
+### Reusable utilities
+
+Common logic belongs in utility modules like `bootstrap/utils.py`. Examples:
+
+- Object creation helpers
+- Batch execution wrappers
+- Naming convention functions
+- Validation helpers
+
+### Constants at the top
+
+Define constants for maintainability:
+
+```python
+ACTIVE_STATUS = "active"
+SERVER_ROLE = "server"
+L2_VLAN_NAME_PREFIX = "l2"
+L3_VLAN_NAME_PREFIX = "l3"
+VRF_SERVER = "Production"
+```
+
+This allows you to adjust values without hunting through code.
+
+### Type hints
+
+Use type hints for clarity:
+
+```python
+async def allocate_prefix(
+    client: InfrahubClient,
+    network_service: dict,
+    location: dict,
+) -> None:
+    """Allocate a prefix from a resource pool."""
+```
+
+### Docstrings
+
+Document complex functions:
+
+```python
+def validate(self, data):
+    """
+    Validate that devices in topology groups match topology definitions.
+
+    Checks that:
+    - Each topology has a corresponding group
+    - Device counts per role match topology element quantities
+    - Device types match topology element specifications
+
+    Args:
+        data: GraphQL query results with topologies, groups, and devices
+    """
+```
+
+## Performance considerations
+
+### Batch operations
+
+Always use batch operations when creating multiple objects:
+
+```python
+# Good - batch operation
+batch = await client.create_batch()
+for device in devices:
+    await batch.add(task=client.create, kind="InfraDevice", data=device)
+async for result in batch.execute():
+    pass
+
+# Bad - individual operations
+for device in devices:
+    obj = await client.create(kind="InfraDevice", data=device)
+    await obj.save()
+```
+
+Batching can reduce execution time from minutes to seconds.
+
+### Query optimization
+
+Request only needed fields in GraphQL:
+
+```graphql
+# Good - minimal fields
+query {
+  InfraDevice {
+    edges {
+      node {
+        id
+        name { value }
+      }
+    }
+  }
+}
+
+# Bad - unnecessary depth
+query {
+  InfraDevice {
+    edges {
+      node {
+        # ... dozens of fields and relationships
+      }
+    }
+  }
+}
+```
+
+Smaller queries return faster and use less memory.
+
+### Resource pool sizing
+
+Ensure resource pools have sufficient address space:
+
+```python
+# Create pool with adequate space
+pool = await create_ipam_pool(
+    client=client,
+    pool_name="supernet-fra05",
+    prefix="10.0.0.0/16",  # Enough for many /24 allocations
+)
+```
+
+Exhausted pools cause generator failures.
+
+## Extending the demo
+
+### Adding a new location
+
+1. Update `bootstrap/create_location.py` with new location data
+2. Create IP supernet for the location
+3. Create resource pool for the location
+4. Add location-specific VLANs if needed
+5. Run the bootstrap script
+
+### Supporting a new device vendor
+
+1. Add device types in `bootstrap/create_basic.py`
+2. Create Jinja2 template for the vendor's syntax
+3. Create GraphQL query for device info
+4. Register template and artifact definition in `.infrahub.yml`
+5. Create device group (for example, `juniper_devices`)
+6. Add devices to the group
+
+### Implementing new network service types
+
+1. Extend `TopologyNetworkService` schema if needed
+2. Update `network_services.py` generator with new logic
+3. Handle the new service type in `generate()` method
+4. Allocate appropriate resources (VLANs, prefixes, etc.)
+5. Update templates to render new service configurations
+
+### Creating custom checks
+
+1. Identify validation rule (for example, "all spine switches must have same ASN")
+2. Create check class inheriting `InfrahubCheck`
+3. Write GraphQL query to fetch validation data
+4. Implement validation logic in `validate()`
+5. Use `self.log_error()` for violations
+6. Register in `.infrahub.yml`
+
+## Troubleshooting common issues
+
+### Generator not running
+
+**Symptoms:** Network service added but no VLANs created
+
+**Solutions:**
+
+- Verify service is in `network_services` group
+- Check repository is added to Infrahub
+- Ensure you created a proposed change (generators run during PC creation)
+- Review generator logs in the proposed change UI
+
+### Template rendering errors
+
+**Symptoms:** Artifact shows error instead of configuration
+
+**Solutions:**
+
+- Test GraphQL query independently
+- Verify all referenced fields exist in query results
+- Check for missing null checks in template
+- Review template syntax for Jinja2 errors
+
+### Check failures
+
+**Symptoms:** Check blocks proposed change merge
+
+**Solutions:**
+
+- Read check error message carefully
+- Query database to verify expected vs. actual state
+- Update data to satisfy check constraints
+- If check is wrong, fix the check logic
+
+### Resource exhaustion
+
+**Symptoms:** Generator fails with "no available resources"
+
+**Solutions:**
+
+- Verify resource pools exist
+- Check pool size is adequate
+- Look for leaked allocations from deleted objects
+- Increase pool size or create additional pools
+
+## Further resources
+
+- [Infrahub SDK documentation](https://docs.infrahub.app/python-sdk/introduction)
+- [Schema reference](https://docs.infrahub.app/reference/schema)
+- [Generator guide](https://docs.infrahub.app/guides/generator)
+- [Transformation guides](https://docs.infrahub.app/category/artifact--transform)
+- [Check guide](https://docs.infrahub.app/guides/check)

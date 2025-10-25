@@ -1,0 +1,238 @@
+---
+title: Understanding the DC fabric demo
+---
+
+This explanation covers the key concepts behind the Infrahub DC fabric demo, how it demonstrates Infrahub's capabilities, and the architectural patterns it employs.
+
+## What this demo demonstrates
+
+The Infrahub DC fabric demo showcases a realistic data center network infrastructure running VxLAN/EVPN with security policies. It illustrates how Infrahub serves as a central source of truth for infrastructure data, managing everything from physical topology to network services and configuration generation.
+
+This demo is designed to show:
+
+- How Infrahub's schema system models complex network infrastructure
+- Version control for infrastructure data using branches and proposed changes
+- Automated configuration generation from structured data
+- Integration with industry-standard tools (Arista AVD, Containerlab)
+- Data validation through custom checks
+- Dynamic resource allocation using generators
+
+## Core Infrahub concepts in action
+
+### Schema-driven data modeling
+
+Infrahub uses a flexible, extensible schema to define infrastructure objects and their relationships. In this demo, the schema models:
+
+- **Physical infrastructure** (devices, interfaces, locations)
+- **Logical infrastructure** (VLANs, VRFs, IP prefixes)
+- **Network services** (Layer 2 and Layer 3 services)
+- **Security policies** (firewall rules, security zones, address objects)
+- **Topology definitions** (abstract topology templates with quantities of devices)
+
+The schema files in `schemas/` define these object types, their attributes, and how they relate to each other. For example, a device has interfaces, belongs to a location, runs a specific platform, and participates in a topology.
+
+This schema-first approach ensures data consistency and enables powerful features like validation, type checking, and relationship traversal.
+
+### Version control for infrastructure
+
+Unlike traditional databases, Infrahub provides native version control through branches. This demo leverages branching to:
+
+- Create isolated environments for testing changes
+- Propose modifications without affecting production data
+- Review differences before merging changes
+- Track the history of infrastructure evolution
+
+When you create a network service in a branch, Infrahub tracks every change, shows diffs compared to the main branch, and validates the changes through checks before allowing them to merge.
+
+### Topology abstraction
+
+The demo introduces a powerful concept: topology definitions as templates. Rather than manually creating hundreds of devices, you define:
+
+- **Topology elements** - Abstract descriptions of device roles (for example, "4 spine switches of type X")
+- **Topology generator** - A script that creates concrete devices, interfaces, and connections based on the abstract definition
+
+This approach enables:
+
+- Rapid deployment of standardized network fabrics
+- Consistent device configurations across pods
+- Scaling by modifying quantities in topology elements
+- Validation that deployed devices match the intended topology
+
+### Data generators
+
+Generators are Python modules that create derived data based on existing objects. The `network_services.py` generator demonstrates this by:
+
+1. Detecting when a network service is added to the `network_services` group
+2. Automatically allocating IP prefixes from resource pools
+3. Creating VLANs with appropriate IDs and names
+4. Assigning IP addresses to device interfaces
+5. Generating all necessary IPAM objects for the service
+
+This automation reduces manual work and ensures consistency across network services.
+
+### Artifact generation
+
+Infrahub transforms structured data into usable configuration artifacts. The demo includes:
+
+- **Jinja2 templates** - For Arista and Cisco device configurations
+- **Python transforms** - For OpenConfig JSON format
+- **GraphQL queries** - To fetch exactly the data needed for each artifact
+
+When you create a proposed change, Infrahub automatically generates:
+
+- Startup configurations for each device
+- OpenConfig interface configurations
+- Firewall configurations for security devices
+- Containerlab topology files for lab deployment
+
+### Data validation checks
+
+The demo includes a custom check (`check_device_topology`) that validates infrastructure consistency. This check ensures:
+
+- Each topology has a corresponding device group
+- The number of devices matches the topology definition
+- Device types and roles align with topology elements
+
+Checks run automatically during proposed changes, preventing invalid configurations from being merged.
+
+## Architecture patterns
+
+### Bootstrap and seeding
+
+The demo follows a layered bootstrap approach:
+
+1. **Foundation layer** (`create_basic.py`) - Organizations, accounts, device types
+2. **Location layer** (`create_location.py`) - Sites, racks, IP supernets
+3. **Topology layer** (`create_topology.py`) - Abstract topology definitions
+4. **Security layer** (`create_security_nodes.py`) - Policies and rules
+
+Each layer builds on the previous one, establishing dependencies in the correct order.
+
+### Batch operations for performance
+
+Bootstrap scripts use Infrahub's batch API to efficiently create multiple objects. Instead of making individual API calls for each object, batch operations:
+
+- Queue multiple create operations
+- Execute them in parallel where possible
+- Reduce network round trips
+- Improve overall performance
+
+This pattern is critical when creating hundreds of devices or interfaces.
+
+### Query-driven templates
+
+Templates don't directly embed data; instead, they reference GraphQL queries defined in `.infrahub.yml`. This separation:
+
+- Keeps templates focused on formatting
+- Allows query optimization without changing templates
+- Enables query reuse across multiple artifacts
+- Makes it easier to test queries independently
+
+### Resource pools
+
+The demo uses IP prefix pools for dynamic allocation. When a generator needs a prefix for a network service, it:
+
+- Queries the appropriate pool based on location
+- Requests an allocation of the required size
+- Receives a unique, non-overlapping prefix
+- Associates that prefix with the network service
+
+This prevents IP conflicts and automates subnet planning.
+
+## Integration points
+
+### Arista AVD
+
+Arista Validated Designs (AVD) is a collection of Ansible roles for deploying data center networks on Arista devices. While Infrahub generates the startup configurations, AVD can:
+
+- Deploy configurations to physical or virtual devices
+- Manage state and perform validation
+- Handle configuration rollbacks
+
+The integration demonstrates how Infrahub complements existing automation tools rather than replacing them.
+
+### Containerlab
+
+Containerlab creates virtual network topologies using Docker containers. The demo:
+
+- Generates Containerlab topology YAML files as Infrahub artifacts
+- Includes startup configurations for each virtual device
+- Enables testing configurations before deploying to production hardware
+
+This provides a complete dev/test workflow: define in Infrahub, generate configs, test in Containerlab, deploy with AVD.
+
+## Mental model: from abstract to concrete
+
+Think of the demo as a pipeline that transforms abstract intent into concrete configuration:
+
+1. **Intent** - "I need 4 spine switches and 8 leaf switches in Frankfurt pod 1"
+2. **Abstract model** - Topology definition with elements
+3. **Concrete objects** - Generator creates specific devices and interfaces
+4. **Relationships** - Interfaces connect to each other, devices join topology groups
+5. **Services** - Network services span devices, requiring VLANs and IP addressing
+6. **Resources** - Generators allocate VLANs and prefixes from pools
+7. **Artifacts** - Templates render device configurations from the data model
+8. **Deployment** - Configurations deploy to virtual or physical devices
+
+At each layer, Infrahub validates consistency, tracks changes, and enables collaboration through branching and proposed changes.
+
+## Design decisions and rationale
+
+### Why separate topology definitions from devices?
+
+By decoupling the abstract topology (what you want) from concrete devices (what exists), the demo enables:
+
+- Template-based fabric deployment
+- Validation that reality matches intent
+- Modifications to topology scale
+- Reuse of topology patterns across multiple locations
+
+### Why use generators instead of static data?
+
+Generators reduce manual work and human error. When creating a network service, a generator can:
+
+- Allocate resources from the correct pools
+- Follow naming conventions consistently
+- Create all required supporting objects
+- Enforce business rules programmatically
+
+This approach scales better than manual data entry.
+
+### Why GraphQL for querying?
+
+GraphQL allows precise data fetching. Templates can request exactly the data they need, including nested relationships, in a single query. This:
+
+- Reduces over-fetching and under-fetching
+- Enables efficient pagination
+- Provides strong typing
+- Allows flexible filtering
+
+### Why combine Jinja2 and Python transforms?
+
+Different output formats have different needs:
+
+- Jinja2 excels at text-based configs with conditionals and loops
+- Python transforms work better for complex JSON structures
+- Each can be tested independently
+- Teams can use their preferred approach
+
+## Connection to broader Infrahub concepts
+
+This demo is a microcosm of Infrahub's vision: managing infrastructure as code with the rigor of software development.
+
+The patterns demonstrated here—schema modeling, version control, automation, validation—apply to:
+
+- Multi-cloud infrastructure
+- Service provider networks
+- Enterprise IT systems
+- IoT device management
+- Any domain requiring structured data with relationships
+
+By understanding this demo, you're learning principles that transfer to larger, more complex Infrahub deployments.
+
+## Further reading
+
+- [Infrahub schema documentation](https://docs.infrahub.app/topics/schema)
+- [Generators guide](https://docs.infrahub.app/guides/generator)
+- [Artifact definitions](https://docs.infrahub.app/topics/artifact)
+- [Proposed changes workflow](https://docs.infrahub.app/topics/proposed-change)
