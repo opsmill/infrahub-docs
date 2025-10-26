@@ -12,6 +12,13 @@ interface AlgoliaConfig {
   contextualSearch?: boolean;
   externalUrlRegex?: string;
   searchParameters?: Record<string, any>;
+  insights?: boolean;
+  askAi?: {
+    assistantId: string;
+    indexName: string;
+    appId: string;
+    apiKey: string;
+  };
 }
 
 export default function SearchBar(): ReactElement {
@@ -23,6 +30,8 @@ export default function SearchBar(): ReactElement {
       appId={algolia.appId}
       apiKey={algolia.apiKey}
       indexName={algolia.indexName}
+      insights={algolia.insights}
+      askAi={algolia.askAi}
       transformItems={(items: DocSearchHit[]) => {
         return items.map((item) => {
           // Extract the pathname from the URL
