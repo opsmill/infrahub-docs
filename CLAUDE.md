@@ -4,9 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a **documentation aggregation repository** that combines documentation from multiple Infrahub-related projects into a single documentation website using Docusaurus. The content here is mostly read-only and automatically synced from source repositories.
+This is a **documentation aggregation repository** that combines documentation from multiple Infrahub-related projects into a single documentation website using Docusaurus. The content here is mostly read-only and automatically synced from source repositories via git submodules and GitHub Actions workflows.
 
-**Important**: Most documentation changes should be made in the source repositories, not here:
+**Important**: Most documentation changes should be made in the source repositories, not here. Direct edits to synced content in this repository will be overwritten during the next sync cycle.
+
+### Source Repositories
+
+Documentation is synced from these upstream repositories:
 
 - Core Infrahub docs: `opsmill/infrahub`
 - Python SDK docs: `opsmill/infrahub-sdk-python`
@@ -17,279 +21,317 @@ This is a **documentation aggregation repository** that combines documentation f
 - Infrahub Sync docs: `opsmill/infrahub-sync`
 - Emma docs: `opsmill/emma`
 
+### Git Submodules
+
+The repository uses a git submodule at `infrahub/` that tracks the `stable` branch from `opsmill/infrahub`. Update submodules with:
+
+```bash
+git submodule update --recursive --remote
+```
+
 ## Development Commands
 
-Run all commands from the `docs/` directory:
+### Quick Start
+
+All Docusaurus commands run from the `docs/` directory:
 
 ```bash
 cd docs
-```
-
-### Setup
-
-```bash
-npm install
-```
-
-### Development
-
-```bash
-npm start          # Start local development server with hot reload
+npm install        # Install dependencies (first time or after package.json changes)
+npm start          # Start local development server with hot reload (http://localhost:3000)
 npm run build      # Build static site for production
 npm run serve      # Serve built site locally
 npm run typecheck  # Run TypeScript type checking
+npm run clear      # Clear Docusaurus build cache
 ```
 
-### Docusaurus Commands
+### Python Task Runner (Invoke)
+
+From the repository root, use Python invoke tasks:
 
 ```bash
-npm run docusaurus -- <command>  # Run any Docusaurus command
-npm run clear                     # Clear build cache
+invoke docs        # Build documentation (runs npm run build in docs/)
+invoke lint        # Run all linters (ruff + yamllint)
+invoke format      # Format Python files with ruff
+invoke lint-yaml   # Check YAML files
+invoke lint-ruff   # Check Python files with ruff
 ```
+
+**Note**: Requires Poetry installation. Run `poetry install` to set up Python dependencies.
 
 ### Linting and Quality Checks
 
-Run these commands from the repository root:
+Run from the repository root:
 
 ```bash
-# Markdown linting (using repository config)
+# Markdown linting
 markdownlint --config .markdownlint.yaml docs/**/*.mdx docs/**/*.md
 
 # Documentation style validation (requires Vale installation)
 vale --glob='!{docs/docs-schema-library/reference/*}' $(find ./docs -type f \( -name "*.mdx" -o -name "*.md" \) )
 
-# Python linting (if applicable)
+# Python linting and formatting
 ruff check .
-ruff format --check --diff
+ruff format .                    # Auto-format Python files
+ruff format --check --diff       # Check formatting without changes
 
-# YAML linting (if applicable) 
+# YAML linting
 yamllint -s .
 ```
 
-**Linting Configuration Files:**
-- `.markdownlint.yaml`: Markdown linting rules (disables line length, allows HTML, etc.)
-- `.vale.ini`: Documentation style rules and vocabulary
+### Linting Configuration Files
+
+- `.markdownlint.yaml`: Markdown linting rules (repository root)
+  - Disables line length limits (MD013)
+  - Allows inline HTML (MD033)
+  - Permits duplicate headings for tabs (MD024)
+- `.vale.ini`: Documentation style rules and vocabulary (in submodules)
 - `.yamllint.yml`: YAML formatting and style rules
+- `pyproject.toml`: Ruff configuration (line-length: 120)
 
 ## Architecture
 
 ### Multi-Plugin Documentation Structure
 
-This site uses multiple Docusaurus plugin instances to combine documentation from different sources:
+This site uses multiple Docusaurus plugin instances to combine documentation from different sources. Each plugin creates an independent documentation section with its own URL path and sidebar.
 
-- **Main docs** (`docs/`): Core Infrahub documentation at root path `/`
-- **Python SDK** (`docs-python-sdk/python-sdk/`): Python SDK docs at `/python-sdk`
-- **Infrahubctl** (`docs-python-sdk/infrahubctl/`): CLI tool docs at `/infrahubctl`
-- **Integrations**: Ansible (`/ansible`), Sync (`/sync`), Nornir (`/nornir`)
-- **Demos**: DC Fabric (`/demo`), Service Catalog (`/demo-service-catalog`)
-- **Schema Library** (`/schema-library`): Reusable schema documentation
-- **Emma** (`/emma`): AI Assistant documentation
+**Plugin Architecture**:
 
-### Configuration Files
+- Each documentation section is defined as a plugin in `docs/docusaurus.config.ts`
+- Each plugin has its own `docs-<name>/` directory and `sidebars-<name>.ts` file
+- Plugins are configured with unique IDs, route paths, and edit URLs pointing to source repositories
 
-- `docusaurus.config.ts`: Main Docusaurus configuration with all plugin definitions
-- `sidebars-*.ts`: Individual sidebar configurations for each documentation section
-- `globalVars.js`: Global variables used across documentation
-- `package.json`: Dependencies and npm scripts
+**Documentation Sections**:
+
+| Section | Directory | Route | Source Repo |
+|---------|-----------|-------|-------------|
+| Core Infrahub | `docs/docs/` | `/` | `opsmill/infrahub` |
+| Python SDK | `docs/docs-python-sdk/python-sdk/` | `/python-sdk` | `opsmill/infrahub-sdk-python` |
+| Infrahubctl | `docs/docs-python-sdk/infrahubctl/` | `/infrahubctl` | `opsmill/infrahub-sdk-python` |
+| Ansible | `docs/docs-ansible/` | `/ansible` | `opsmill/infrahub-ansible` |
+| Infrahub Sync | `docs/docs-sync/` | `/sync` | `opsmill/infrahub-sync` |
+| Nornir | `docs/docs-nornir/` | `/nornir` | `opsmill/nornir-infrahub` |
+| DC Fabric Demo | `docs/docs-demo/` | `/demo` | Demo content |
+| Service Catalog | `docs/docs-service-catalog/` | `/demo-service-catalog` | `opsmill/infrahub-demo-service-catalog` |
+| Schema Library | `docs/docs-schema-library/` | `/schema-library` | `opsmill/schema-library` |
+| Emma | `docs/docs-emma/` | `/emma` | `opsmill/emma` |
+| VS Code Extension | `docs/docs-vscode/` | `/vscode` | VS Code extension docs |
+| MCP Server | `docs/docs-mcp/` | `/mcp` | MCP integration docs |
+| Integrations | `docs/docs-integrations/` | `/integrations` | Integration guides |
+| Exporter | `docs/docs-exporter/` | `/exporter` | Exporter documentation |
+
+### Key Configuration Files
+
+- `docs/docusaurus.config.ts`: Main configuration with all plugin definitions, navbar, theme, redirects, and analytics
+- `docs/sidebars-*.ts`: Individual sidebar configurations for each documentation section (auto-generated or manually defined)
+- `docs/globalVars.js`: Global variables used across documentation (`base_url: 'RELATIVE'`)
+- `docs/package.json`: Node.js dependencies (Docusaurus 3.9.2, React 18, theme packages)
+- `docs/src/css/custom.css`: Custom theme styling
 
 ### Content Organization
 
-- Each documentation section has its own `docs-<name>/` directory
-- Sidebar configuration is managed separately for each section
-- Cross-references between sections use absolute paths
+- Each documentation section has its own `docs-<name>/` directory within `docs/`
+- Sidebar configuration is managed separately for each section in `sidebars-<name>.ts`
+- Cross-references between sections use absolute paths (e.g., `/python-sdk/introduction`)
 - Media files are stored in section-specific directories
+- MDX format is used for documentation files (supports React components)
 
 ### Key Features
 
-- **Multi-section navigation**: Dropdown menus organize different documentation types
-- **Search integration**: Local search across all documentation sections
-- **Redirects**: Handles URL changes from previous documentation structure
-- **Variable substitution**: Global variables can be used in Markdown content
+- **Multi-section navigation**: Dropdown menus in navbar organize different documentation types
+- **Search integration**: Algolia search across all documentation sections (configured with site verification)
+- **Redirects**: Plugin handles URL changes from previous documentation structure (see `@docusaurus/plugin-client-redirects`)
+- **Variable substitution**: Global variables from `globalVars.js` can be used in Markdown
 - **Analytics**: Plausible analytics integration when `ANALYTICS` env var is set
+- **Mermaid diagrams**: Theme support for Mermaid diagrams via `@docusaurus/theme-mermaid`
+- **LLMs.txt**: Plugin for LLM-friendly documentation format via `@signalwire/docusaurus-plugin-llms-txt`
 
 ## Working with Documentation
 
 ### Adding New Documentation Sections
 
-1. Create new `docs-<name>/` directory
-2. Add plugin configuration to `docusaurus.config.ts`
-3. Create corresponding `sidebars-<name>.ts` file
-4. Add navigation entry to navbar configuration
+When adding a new documentation section to this aggregation site:
+
+1. **In the source repository** (e.g., `opsmill/new-project`):
+   - Copy these files/directories from an existing repo (like `emma`):
+     - `docs/` directory structure
+     - `.vale/`, `.vale.ini`, `.markdownlint.yml`, `.yamllint.yml`
+     - `tasks.py`
+     - `.github/build-docs.sh` (make executable: `chmod 755`)
+     - `.github/workflows/sync-docs.yml` (update paths)
+     - `.github/workflows/ci.yml` (add docs build section)
+     - `.github/file-filters.yml`, `labeler.yml`, `labels.yml`
+   - Modify `docs/docusaurus.config.ts` and `docs/sidebars.ts` in source repo
+   - Place documentation content in `docs/docs/`
+
+2. **In this repository** (`infrahub-docs`):
+   - Create placeholder: `touch docs/docs-<projectname>/readme.mdx`
+   - Create sidebar: `touch docs/sidebars-<projectname>.ts`
+   - Edit `docs/docusaurus.config.ts`:
+     - Add new plugin configuration
+     - Add navbar entry
+   - Optionally add as git submodule or configure sync workflow
+
+3. **Infrastructure setup**:
+   - Configure Cloudflare Pages integration
+   - Create PRs and test sync workflow
 
 ### Local Development
 
-- Use `npm start` for live development with hot reload
+- Use `npm start` (from `docs/` directory) for live development with hot reload
 - The site runs on `http://localhost:3000` by default
-- Changes to most files trigger automatic browser refresh
-- Configuration changes require server restart
+- Changes to MDX files trigger automatic browser refresh
+- Configuration changes (`.ts` files) require server restart
+- Environment variables:
+  - `ANALYTICS`: Enable Plausible analytics
+  - `DOCS_IN_APP`: Adjust base URL for embedded docs
 
 ### Content Synchronization
 
-Documentation content is automatically synced from source repositories. Manual changes to synced content will be overwritten during the next sync cycle.
+Documentation content is automatically synced from source repositories via:
+
+- **Git submodules**: Main `infrahub` repository is tracked as submodule
+- **GitHub Actions**: CI workflows sync documentation on push to source repos
+- **Update submodules**: Run `git submodule update --recursive --remote` to pull latest
+
+**Warning**: Manual changes to synced content in `docs/docs-*/` directories will be overwritten during the next sync cycle. Always edit in the source repository.
 
 ### Documentation Writing Guidelines
 
-**Applies to:** All MDX files (`**/*.mdx`)
+**Applies to:** All MDX files in source repositories (changes should not be made directly in this aggregation repo)
 
-**Role:** Expert Technical Writer and MDX Generator with:
+**Framework**: All documentation follows the [Diataxis framework](https://diataxis.fr/):
 
-- Deep understanding of Infrahub and its capabilities
-- Expertise in network automation and infrastructure management
-- Proficiency in writing structured MDX documents
-- Awareness of developer ergonomics
+- **Tutorials**: Learning-oriented, step-by-step guidance for beginners
+- **How-to guides**: Task-oriented, practical solutions to specific problems
+- **Explanation**: Understanding-oriented, conceptual knowledge and background
+- **Reference**: Information-oriented, technical descriptions and specifications
 
-**Documentation Purpose:**
+**Writing Style**:
 
-- Guide users through installing, configuring, and using Infrahub in real-world workflows
-- Explain concepts and system architecture clearly, including new paradigms introduced by Infrahub
-- Support troubleshooting and advanced use cases with actionable, well-organized content
-- Enable adoption by offering approachable examples and hands-on guides that lower the learning curve
+- Professional but approachable: plain language with technical precision
+- Concise and direct: short, active sentences without filler
+- Informative over promotional: explain how and why, not marketing
+- Consistent structure: predictable patterns across documents
 
-**Structure:** Follows [Diataxis framework](https://diataxis.fr/)
+**For How-to Guides**:
 
-- **Tutorials** (learning-oriented)
-- **How-to guides** (task-oriented)
-- **Explanation** (understanding-oriented)
-- **Reference** (information-oriented)
+- Use imperative verbs: "Configure...", "Create...", "Deploy..."
+- Focus on the goal and steps to achieve it
+- Include Prerequisites, Step-by-Step Instructions, and Validation sections
+- Support multiple approaches with Tabs (Web UI, GraphQL, Shell/cURL)
 
-**Tone and Style:**
+**For Topics/Explanations**:
 
-- Professional but approachable: Avoid jargon unless well defined. Use plain language with technical precision
-- Concise and direct: Prefer short, active sentences. Reduce fluff
-- Informative over promotional: Focus on explaining how and why, not on marketing
-- Consistent and structured: Follow a predictable pattern across sections and documents
+- Provide context, background, and rationale for design decisions
+- Connect concepts to users' existing knowledge
+- Include architecture diagrams where helpful
+- Answer "why" questions, not just "what" or "how"
 
-**For Guides:**
+**Terminology**:
 
-- Use conditional imperatives: "If you want X, do Y. To achieve W, do Z."
-- Focus on practical tasks and problems, not the tools themselves
-- Address the user directly using imperative verbs: "Configure...", "Create...", "Deploy..."
-- Maintain focus on the specific goal without digressing into explanations
-- Use clear titles that state exactly what the guide shows how to accomplish
+- Define new terms when first used
+- Follow Infrahub's established naming conventions (branches, schemas, commits, etc.)
+- Use domain-relevant language from the user's perspective
 
-**For Topics:**
+**Components Available in MDX**:
 
-- Use a more discursive, reflective tone that invites understanding
-- Include context, background, and rationale behind design decisions
-- Make connections between concepts and to users' existing knowledge
-- Present alternative perspectives and approaches where appropriate
-- Use illustrative analogies and examples to deepen understanding
+- `Tabs` and `TabItem`: Multiple implementation methods
+- `CodeBlock`: Syntax-highlighted code examples
+- `VideoPlayer`: Embedded video tutorials
+- Callouts (notes, tips, warnings)
+- Mermaid diagrams for visualizations
 
-**Terminology and Naming:**
+**Reference Files**:
 
-- Always define new terms when first used. Use callouts or glossary links if possible
-- Prefer domain-relevant language that reflects the user's perspective (e.g., playbooks, branches, schemas, commits)
-- Be consistent: follow naming conventions established by Infrahub's data model and UI
+- Documentation best practices: `docs/docs/development/docs.mdx` (in source repos)
+- Vale style guide: `.vale/styles/` (in source repos)
+- Markdown config: `.markdownlint.yaml` (repository root)
 
-**Reference Files:**
+### Document Structure Patterns
 
-- Documentation guidelines: `docs/docs/development/docs.mdx`
-- Vale styles: `.vale/styles/`
-- Markdown linting: `.markdownlint.yaml`
+**How-to Guides** (task-oriented):
 
-### Document Structure Patterns (Following Diataxis)
+1. Title and metadata (YAML frontmatter, "How to..." format)
+2. Introduction (problem statement, what user will achieve)
+3. Prerequisites (environment, prior knowledge)
+4. Step-by-step instructions (with code snippets, screenshots, Tabs for alternatives)
+5. Validation (how to verify success, troubleshooting)
+6. Optional: Advanced usage and variations
+7. Related resources
 
-**How-to Guides Structure (Task-oriented, practical steps):**
+**Topics/Explanations** (understanding-oriented):
 
-```markdown
-- Title and Metadata
-    - Title should clearly state what problem is being solved (YAML frontmatter)
-    - Begin with "How to..." to signal the guide's purpose
-    - Optional: Imports for components (e.g., Tabs, TabItem, CodeBlock, VideoPlayer)
-- Introduction
-    - Brief statement of the specific problem or goal this guide addresses
-    - Context or real-world use case that frames the guide
-    - Clearly indicate what the user will achieve by following this guide
-    - Optional: Links to related topics or more detailed documentation
-- Prerequisites / Assumptions
-    - What the user should have or know before starting
-    - Environment setup or requirements
-    - What prior knowledge is assumed
-- Step-by-Step Instructions
-    - Step 1: [Action/Goal]
-        - Clear, actionable instructions focused on the task
-        - Code snippets (YAML, GraphQL, shell commands, etc.)
-        - Screenshots or images for visual guidance
-        - Tabs for alternative methods (e.g., Web UI, GraphQL, Shell/cURL)
-        - Notes, tips, or warnings as callouts
-    - Step 2: [Action/Goal]
-        - Repeat structure as above for each step
-    - Step N: [Action/Goal]
-        - Continue as needed
-- Validation / Verification
-    - How to check that the solution worked as expected
-    - Example outputs or screenshots
-    - Potential failure points and how to address them
-- Advanced Usage / Variations
-    - Optional: Alternative approaches for different circumstances
-    - Optional: How to adapt the solution for related problems
-    - Optional: Ways to extend or optimize the solution
-- Related Resources
-    - Links to related guides, reference materials, or explanation topics
-    - Optional: Embedded videos or labs for further learning
-```
+1. Title and metadata (consider "About..." or "Understanding..." format)
+2. Introduction (overview, why it matters, questions to answer)
+3. Main content:
+   - Concepts and definitions
+   - Background and context
+   - Architecture and design (with diagrams)
+   - Mental models and analogies
+   - Connections to other concepts
+   - Alternative approaches
+4. Further reading
 
-**Topics Structure (Understanding-oriented, theoretical knowledge):**
+**Reference Documentation**:
 
-```markdown
-- Title and Metadata
-    - Title should clearly indicate the topic being explained (YAML frontmatter)
-    - Consider using "About..." or "Understanding..." in the title
-    - Optional: Imports for components (e.g., Tabs, TabItem, CodeBlock, VideoPlayer)
-- Introduction
-    - Brief overview of what this explanation covers
-    - Why this topic matters in the context of Infrahub
-    - Questions this explanation will answer
-- Main Content Sections
-    - Concepts & Definitions
-        - Clear explanations of key terms and concepts
-        - How these concepts fit into the broader system
-    - Background & Context
-        - Historical context or evolution of the concept/feature
-        - Design decisions and rationale behind implementations
-        - Technical constraints or considerations
-    - Architecture & Design (if applicable)
-        - Diagrams, images, or explanations of structure
-        - How components interact or relate to each other
-    - Mental Models
-        - Analogies and comparisons to help understanding
-        - Different ways to think about the topic
-    - Connection to Other Concepts
-        - How this topic relates to other parts of Infrahub
-        - Integration points and relationships
-    - Alternative Approaches
-        - Different perspectives or methodologies
-        - Pros and cons of different approaches
-- Further Reading
-    - Links to related topics, guides, or reference materials
-    - External resources for deeper understanding
-```
+- Structured, information-dense format
+- Complete API/CLI documentation
+- Technical specifications
+- Code examples
 
-### Quality and Clarity Checklist
+See `docs/docs/development/docs.mdx` in source repositories for complete guidelines.
 
-**General Documentation:**
+## CI/CD and Deployment
 
-- Content is accurate and reflects the latest version of Infrahub
-- Instructions are clear, with step-by-step guidance where needed
-- Markdown formatting is correct and compliant with Infrahub's style
-- Spelling and grammar are checked
+### GitHub Actions Workflows
 
-**For Guides:**
+The repository uses GitHub Actions for CI/CD:
 
-- The guide addresses a specific, practical problem or task
-- The title clearly indicates what will be accomplished
-- Steps follow a logical sequence that maintains flow
-- Each step focuses on actions, not explanations
-- The guide omits unnecessary details that don't serve the goal
-- Validation steps help users confirm their success
-- The guide addresses real-world complexity rather than oversimplified scenarios
+- **`.github/workflows/ci.yml`**: Main CI pipeline
+  - Detects file changes (documentation, Python, YAML)
+  - Runs appropriate linters (ruff, yamllint, markdownlint)
+  - Builds documentation with Node.js 20
+  - Updates submodules before build
+  - Link checking (currently disabled)
 
-**For Topics:**
+**Key CI Steps**:
 
-- The explanation is bounded to a specific topic area
-- Content provides genuine understanding, not just facts
-- Background and context are included to deepen understanding
-- Connections are made to related concepts and the bigger picture
-- Different perspectives or approaches are acknowledged where relevant
-- The content remains focused on explanation without drifting into tutorial or reference material
-- The explanation answers "why" questions, not just "what" or "how"
+1. File change detection via `opsmill/paths-filter`
+2. Parallel linting jobs for Python and YAML (if files changed)
+3. Documentation build job (depends on lint jobs passing)
+4. Link checking with Lychee (disabled, can be re-enabled)
+
+### Deployment
+
+- Hosted on Cloudflare Pages
+- Production URL: `https://docs.infrahub.app`
+- Deployment triggered by pushes to `main` branch
+- Build command: `invoke docs` (runs `npm run build` in `docs/`)
+- Build output directory: `docs/build/`
+
+## Troubleshooting
+
+### Common Issues
+
+**Build failures**:
+
+- Clear cache: `cd docs && npm run clear`
+- Reinstall dependencies: `rm -rf node_modules package-lock.json && npm install`
+- Update submodules: `git submodule update --recursive --remote`
+
+**Broken links**:
+
+- Use absolute paths for cross-section references (e.g., `/python-sdk/introduction`)
+- Check redirect configuration in `docusaurus.config.ts`
+
+**Markdown linting errors**:
+
+- Review `.markdownlint.yaml` for disabled rules
+- Line length (MD013) is disabled
+- Inline HTML (MD033) is allowed for MDX components
+
+**TypeScript errors**:
+
+- Run `npm run typecheck` in `docs/` directory
+- Check sidebar configuration in `sidebars-*.ts` files
