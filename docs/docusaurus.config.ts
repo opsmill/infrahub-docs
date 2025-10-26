@@ -422,7 +422,7 @@ const config: Config = {
       // Ask AI configuration
       askAi: {
         assistantId: 'hh3YkWRV6fxH',
-        indexName: 'Docs-markdown',
+        indexName: 'Docs',  // Changed from 'Docs-markdown' to use same index
         appId: 'MKBNCZRNI3',
         apiKey: 'f12e2a9c8472d0f5287cc34715a24518',
       },
