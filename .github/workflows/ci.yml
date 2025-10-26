@@ -88,7 +88,7 @@ jobs:
       - name: Update submodules
         run: git submodule update --recursive --remote
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: 'npm'
@@ -125,7 +125,7 @@ jobs:
       - name: Update submodules
         run: git submodule update --recursive --remote
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: 'npm'
