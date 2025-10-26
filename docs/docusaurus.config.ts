@@ -27,6 +27,16 @@ const config: Config = {
     }
   ] : [],
 
+  headTags: [
+    {
+      tagName: 'meta',
+      attributes: {
+        name: 'algolia-site-verification',
+        content: '3BD5875DCE009A8F',
+      },
+    },
+  ],
+
   url: process.env.DOCS_IN_APP ? "http://localhost:8000" : "https://docs.infrahub.app",
   baseUrl: process.env.DOCS_IN_APP ? "/docs/" : "/",
   organizationName: "opsmill",
@@ -264,15 +274,6 @@ const config: Config = {
     ],
   ],
   themes: [
-    [
-      "@easyops-cn/docusaurus-search-local",
-      {
-        indexBlog: false,
-        indexDocs: true,
-        docsRouteBasePath: "/",
-        hashed: true,
-      }
-    ],
     '@docusaurus/theme-mermaid',
   ],
   themeConfig: {
@@ -411,6 +412,36 @@ const config: Config = {
     prism: {
       theme: prismThemes.oneDark,
       additionalLanguages: ["bash", "python", "markup-templating", "django", "json", "toml", "yaml"],
+    },
+    algolia: {
+      // The application ID provided by Algolia
+      appId: 'MKBNCZRNI3',
+      // Public API key: it is safe to commit it
+      apiKey: 'f12e2a9c8472d0f5287cc34715a24518',
+      indexName: 'Docs',
+      // Ask AI configuration
+      askAi: {
+        assistantId: 'hh3YkWRV6fxH',
+        indexName: 'Docs-markdown',
+        appId: 'MKBNCZRNI3',
+        apiKey: 'f12e2a9c8472d0f5287cc34715a24518',
+      },
+      // Optional: Enable contextual search (default: true)
+      // This ensures search results match the current version and language
+      contextualSearch: true,
+      // Optional: Specify domains for external navigation
+      // externalUrlRegex: 'external\\.com|domain\\.com',
+      // Optional: Path replacements for different deployments
+      replaceSearchResultPathname: {
+        from: '/docs/', // or as RegExp: /\/docs\//
+        to: '/',
+      },
+      // Optional: Algolia search parameters
+      searchParameters: {},
+      // Optional: Path for search page (default: 'search', false to disable)
+      searchPagePath: 'search',
+      // Optional: Enable insights feature (default: false)
+      insights: false,
     },
   } satisfies Preset.ThemeConfig,
 
