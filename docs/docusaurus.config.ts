@@ -250,6 +250,16 @@ const config: Config = {
       },
     ],
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-backup',
+        path: 'docs-backup',
+        routeBasePath: 'backup',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-backup.ts',
+      },
+    ],
+    [
       '@docusaurus/plugin-google-tag-manager',
       {
         containerId: 'GTM-MQ2RZ3SP',
@@ -323,6 +333,12 @@ const config: Config = {
               sidebarId: "mcpSidebar",
               label: "MCP Server for Infrahub",
               docsPluginId: "docs-mcp",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "infrahubOpsSidebar",
+              label: "Infrahub Backup",
+              docsPluginId: "docs-backup",
             },
           ],
         },
