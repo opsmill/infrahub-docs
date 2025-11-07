@@ -95,6 +95,27 @@ If your server requires authentication, add an API token:
 > "api_token": "${env:INFRAHUB_API_TOKEN}"
 > ```
 
+### TLS Configuration for HTTPS Servers
+
+If you're connecting to an HTTPS server with a self-signed certificate (common in development environments), you may need to disable certificate verification:
+
+```json
+{
+  "infrahub-vscode.servers": [
+    {
+      "name": "Development (Self-Signed)",
+      "address": "https://dev.infrahub.local:8000",
+      "api_token": "${env:INFRAHUB_DEV_TOKEN}",
+      "tls_insecure": true
+    }
+  ]
+}
+```
+
+:::warning
+The `tls_insecure` option disables TLS certificate verification and should **only be used in development environments** with self-signed certificates. Never use this option for production servers as it makes connections vulnerable to security attacks.
+:::
+
 ## Step 3: Verify your connection
 
 After configuring your server:
@@ -254,6 +275,8 @@ If you encounter issues:
 - **Server connection fails**: Verify the server URL and check if the server is running
 - **Schema validation errors**: Check the Problems panel for specific error messages
 - **GraphQL queries fail**: Ensure the schema is loaded in Infrahub and you're querying the correct branch
+- **TLS certificate errors**: If connecting to a server with self-signed certificates, add `"tls_insecure": true` to your server configuration
+- **"Server unreachable" status**: Check network connectivity, firewall settings, and ensure the Infrahub server is accessible
 
 ## Further resources
 

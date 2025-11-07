@@ -29,6 +29,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'topics/extension-architecture',
         'topics/schema-validation',
+        'topics/security-configuration',
       ],
     },
     {

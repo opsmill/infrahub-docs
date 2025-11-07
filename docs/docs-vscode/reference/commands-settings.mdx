@@ -69,6 +69,22 @@ interface ServerConfig {
 }
 ```
 
+#### TLS Configuration Details
+
+The `tls_insecure` property controls TLS certificate verification behavior:
+
+- **Default value**: `false` (secure, certificates are verified)
+- **When `true`**: Disables certificate verification for development environments
+- **Scope**: Affects all HTTPS connections when any server has this enabled
+- **Security impact**: Makes connections vulnerable to man-in-the-middle attacks
+
+**Use cases for `tls_insecure: true`**:
+- Development servers with self-signed certificates
+- Internal testing environments with custom CA certificates
+- Docker containers with self-signed certificates
+
+**Never use in production** as it compromises security.
+
 ### Example Configuration
 
 ```json
@@ -336,6 +352,19 @@ Planned support for VSCode's secret storage API.
 | Commands not appearing | Wrong context | Ensure correct tree view item is selected |
 | Validation not working | Missing YAML extension | Install Red Hat YAML extension |
 | Token not working | Incorrect format or permissions | Verify token format and permissions |
+| TLS certificate errors | Self-signed or invalid certificates | Add `"tls_insecure": true` for development servers |
+| CERT_HAS_EXPIRED | Expired SSL certificate | Renew certificate or use `tls_insecure` for dev |
+| SELF_SIGNED_CERT_IN_CHAIN | Self-signed certificate | Use `"tls_insecure": true` for development |
+
+### TLS Error Messages
+
+The extension provides specific error messages for common TLS issues:
+
+- **"TLS Certificate expired - check tls_insecure setting"**: The server's certificate has expired
+- **"Self-signed certificate - check tls_insecure setting"**: The server uses a self-signed certificate
+- **"TLS Verification failed - check tls_insecure setting"**: General certificate verification failure
+
+These messages appear in the server tree view when connection attempts fail due to certificate issues.
 
 ### Debug Output
 
