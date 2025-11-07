@@ -62,9 +62,10 @@ Each server in the `servers` array follows this structure:
 
 ```typescript
 interface ServerConfig {
-  name: string;        // Display name for the server
-  address: string;     // Server URL (http/https)
-  api_token?: string;  // Optional API token for authentication
+  name: string;           // Display name for the server
+  address: string;        // Server URL (http/https)
+  api_token?: string;     // Optional API token for authentication
+  tls_insecure?: boolean; // Optional: Disable TLS certificate verification (default: false)
 }
 ```
 
@@ -81,11 +82,21 @@ interface ServerConfig {
       "name": "Production",
       "address": "https://infrahub.example.com",
       "api_token": "inf_1234567890abcdef"
+    },
+    {
+      "name": "Development (Self-Signed)",
+      "address": "https://dev.infrahub.local",
+      "api_token": "inf_dev_token",
+      "tls_insecure": true
     }
   ],
   "infrahub-vscode.schemaDirectory": "infrastructure/schemas"
 }
 ```
+
+:::warning
+Setting `tls_insecure: true` disables certificate verification and is **not recommended for production environments**. Only use this option in development/testing environments with self-signed certificates.
+:::
 
 ### Environment Variable Substitution
 

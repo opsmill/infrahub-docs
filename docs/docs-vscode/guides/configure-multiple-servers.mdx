@@ -45,6 +45,10 @@ Add your server configurations to the settings file:
 }
 ```
 
+:::tip
+If you're using a development server with a self-signed certificate, you can disable certificate verification by adding `"tls_insecure": true` to the server configuration. **This should only be used in development environments.**
+:::
+
 ## Step 3: Set up environment variables
 
 For security, use environment variables for API tokens:
@@ -143,6 +147,27 @@ Use clear naming conventions to organize servers:
 }
 ```
 
+### Working with self-signed certificates
+
+For development or testing environments using self-signed SSL certificates, you can disable certificate verification:
+
+```json
+{
+  "infrahub-vscode.servers": [
+    {
+      "name": "Development (Self-Signed)",
+      "address": "https://dev.infrahub.local",
+      "api_token": "${env:INFRAHUB_DEV_TOKEN}",
+      "tls_insecure": true
+    }
+  ]
+}
+```
+
+:::warning
+The `tls_insecure` option disables TLS certificate verification, which makes connections vulnerable to man-in-the-middle attacks. **Never use this option for production servers.** Only use it in controlled development environments with self-signed certificates.
+:::
+
 ## Validation
 
 To verify your configuration is working correctly:
@@ -177,6 +202,14 @@ To verify your configuration is working correctly:
 - Verify server URLs are accessible from your network
 - Check for proxy/firewall restrictions
 - Ensure VPN connection if required
+
+### Certificate verification errors
+
+If you encounter certificate errors with development servers:
+
+- For self-signed certificates, add `"tls_insecure": true` to the server configuration
+- For production servers with certificate issues, fix the certificate rather than disabling verification
+- Check that your system's CA certificate store is up to date
 
 ## Related resources
 
