@@ -1,5 +1,5 @@
 ---
-title: Infrahub Backup & Restore Tool
+title: Infrahub Backup
 ---
 
 ## Overview
@@ -10,7 +10,7 @@ Infrahub stores critical state for your infrastructure in multiple systems: the 
 
 ### How the tool keeps environments recoverable
 
-The Infrahub Backup & Restore Tool orchestrates backup and restore workflows across deployment targets. It coordinates quiescing and snapshotting services, pulls data out with the right credentials, and packages everything so restores are deterministic. During restore, the tool brings services back in dependency order, reapplies data, and captures logs so you can prove the operation succeeded. Whether you install with Docker Compose, Kubernetes, or a bespoke stack, the CLI abstracts away provider-specific commands and ensures each step runs in a supported sequence.
+Infrahub Backup orchestrates backup and restore workflows across deployment targets. It coordinates quiescing and snapshotting services, pulls data out with the right credentials, and packages everything so restores are deterministic. During restore, the tool brings services back in dependency order, reapplies data, and captures logs so you can prove the operation succeeded. Whether you install with Docker Compose, Kubernetes, or a bespoke stack, the CLI abstracts away provider-specific commands and ensures each step runs in a supported sequence.
 
 ### Best Practices
 
