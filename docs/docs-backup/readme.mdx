@@ -1,0 +1,56 @@
+---
+title: Infrahub Backup & Restore Tool
+---
+
+## Overview
+
+### Why reliable backups matter
+
+Infrahub stores critical state for your infrastructure in multiple systems: the Neo4j graph database, the PostgreSQL database that powers the task manager, and external artifact storage. If any piece is lost or corrupted, you can end up with drifted configurations, orphaned tasks, or a completely unusable deployment. Regulatory requirements and business continuity plans often demand auditable recovery procedures, so "having some dumps around" is rarely enough—you need consistent, verifiable recovery points.
+
+### How the tool keeps environments recoverable
+
+The Infrahub Backup & Restore Tool orchestrates backup and restore workflows across deployment targets. It coordinates quiescing and snapshotting services, pulls data out with the right credentials, and packages everything so restores are deterministic. During restore, the tool brings services back in dependency order, reapplies data, and captures logs so you can prove the operation succeeded. Whether you install with Docker Compose, Kubernetes, or a bespoke stack, the CLI abstracts away provider-specific commands and ensures each step runs in a supported sequence.
+
+### Best Practices
+
+#### Schedule regular backups
+
+- Automate backups via cron, CI workflows, or your preferred scheduler; daily is a good baseline, with more frequent snapshots for high-change environments.
+- Rotate backup artifacts with a retention policy that matches your recovery point objectives, and replicate critical backups to an off-site location.
+- Monitor backup jobs and alert on failures—silent Backup gaps often surface only when it is too late.
+
+#### Run regular restore tests
+
+- Practice restores in a disposable environment at least monthly to confirm that credentials, network access, and storage quotas are still correct.
+- Track the time required to restore and compare it to your recovery time objectives; tune the schedule or resource sizing if the gap widens.
+- Document each drill, including any manual steps uncovered, and fold the lessons back into your runbooks so production incidents are predictable.
+
+#### Validate backups after major Infrahub upgrades
+
+- Every time you perform a major Infrahub version upgrade, capture a fresh backup immediately afterward and run a full restore rehearsal.
+- Watch for schema migrations or new services introduced by the upgrade that might require additional credentials, storage buckets, or hooks in your automation.
+- Keep the validation artifacts—logs, checksums, and timelines—so you can prove post-upgrade recoverability during audits.
+
+## Getting Started
+
+### Tutorials
+
+Learn the fundamentals through hands-on exercises:
+
+- [Getting started with the tool](./tutorials/getting-started.mdx) - Your first backup and restore operation
+
+### How-to Guides
+
+Accomplish specific tasks:
+
+- [How to install](./guides/install.mdx) - Install the tool on your system
+- [How to backup your Infrahub instance](./guides/backup-instance.mdx) - Create comprehensive backups
+- [How to restore from backup](./guides/restore-backup.mdx) - Restore your instance from a backup file
+
+### Reference
+
+Technical specifications and command details:
+
+- [CLI command reference](./reference/commands.mdx) - Complete list of commands and options
+- [Configuration reference](./reference/configuration.mdx) - Environment variables and settings

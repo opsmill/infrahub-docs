@@ -1,0 +1,231 @@
+---
+title: How to install Infrahub Backup & Restore Tool
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This guide shows you how to install the Infrahub Backup & Restore Tool on your system.
+
+## Prerequisites
+
+Before installing the Infrahub Backup & Restore Tool, ensure you have:
+
+- Administrative or sudo access on your system
+- One of the following deployment environments:
+  - Docker with Docker Compose (for Docker deployments)
+  - kubectl configured with required permissions (for Kubernetes deployments)
+  
+If building from source:
+  
+- Git and network access to clone the repository
+- Go 1.21 or later installed
+
+## Installation methods
+
+<Tabs>
+<TabItem value="direct" label="Direct Download" default>
+
+### Download the pre-built binary
+
+If you want the fastest installation, download the pre-built binary directly:
+
+```bash
+# Download the appropriate binary for your system
+curl https://infrahub.opsmill.io/ops/$(uname -s)/$(uname -m)/infrahub-backup -o infrahub-backup
+
+# Make it executable
+chmod +x infrahub-backup
+
+# Move to a directory in your PATH (optional)
+sudo mv infrahub-backup /usr/local/bin/
+```
+
+</TabItem>
+<TabItem value="manual" label="Manual Selection">
+
+### Select and download a specific version
+
+If you need a specific version or architecture, manually select the appropriate binary:
+
+1. Identify your system architecture:
+
+   ```bash
+   uname -s  # Operating system (Linux/Darwin)
+   uname -m  # Architecture (x86_64/aarch64)
+   ```
+
+2. Download the matching binary:
+   - **Linux AMD64**: `curl -L https://infrahub.opsmill.io/ops/Linux/x86_64/infrahub-backup -o infrahub-backup`
+   - **Linux ARM64**: `curl -L https://infrahub.opsmill.io/ops/Linux/aarch64/infrahub-backup -o infrahub-backup`
+   - **macOS AMD64**: `curl -L https://infrahub.opsmill.io/ops/Darwin/x86_64/infrahub-backup -o infrahub-backup`
+   - **macOS ARM64**: `curl -L https://infrahub.opsmill.io/ops/Darwin/arm64/infrahub-backup -o infrahub-backup`
+
+3. Make executable and optionally install system-wide:
+
+   ```bash
+   chmod +x infrahub-backup
+   sudo mv infrahub-backup /usr/local/bin/  # Optional
+
+</TabItem>
+<TabItem value="source" label="Build from Source">
+
+### Build from source code
+
+To install the Infrahub Backup & Restore Tool, build from source:
+
+1. Install Go 1.21 or later:
+
+   ```bash
+   # Check if Go is installed
+   go version
+   ```
+
+2. Clone the repository:
+
+   ```bash
+   git clone https://github.com/opsmill/infrahub-ops-cli.git
+   cd infrahub-ops-cli
+   ```
+
+3. Build the binaries:
+
+   ```bash
+   make build
+   ```
+
+4. Install to your PATH:
+
+   ```bash
+   sudo cp bin/infrahub-backup /usr/local/bin/
+   ```
+</TabItem>
+</Tabs>
+
+## Verify installation
+
+After installation, verify the tools are working correctly:
+
+```bash
+# Check versions
+infrahub-backup version
+
+# Verify environment detection
+infrahub-backup environment detect
+
+# Display help
+infrahub-backup --help
+```
+
+Expected output:
+
+```bash
+Version: [git ref]
+```
+
+## Configure environment
+
+The Infrahub Backup & Restore Tool use environment variables for configuration. Set these based on your deployment:
+
+### Docker Compose deployments
+
+```bash
+# Optional: Target a specific project
+export INFRAHUB_COMPOSE_PROJECT=infrahub-production
+
+# Optional: Custom backup location
+export BACKUP_DIR=/data/backups/infrahub
+```
+
+### Kubernetes deployments
+
+```bash
+# Set the namespace
+export INFRAHUB_K8S_NAMESPACE=infrahub
+
+# Set kubeconfig if not default
+export KUBECONFIG=/path/to/kubeconfig
+```
+
+### Database credentials
+
+If your deployment uses non-default credentials and the tools cannot fetch them automatically:
+
+```bash
+# Neo4j settings
+export INFRAHUB_DB_USERNAME=neo4j
+export INFRAHUB_DB_PASSWORD=your-password
+export INFRAHUB_DB_DATABASE=neo4j
+
+# PostgreSQL settings (for task manager)
+export PREFECT_API_DATABASE_CONNECTION_URL=postgresql://user:pass@localhost/prefect
+```
+
+## Validation
+
+Confirm the tools can connect to your Infrahub instance:
+
+```bash
+# List available projects (Docker)
+infrahub-backup environment list
+
+# Test environment detection
+infrahub-backup environment detect
+```
+
+If these commands succeed, installation is complete.
+
+## Advanced usage
+
+### System service installation
+
+To run scheduled backups, install as a systemd service:
+
+1. Create service file:
+
+   ```bash
+   sudo tee /etc/systemd/system/infrahub-backup.service > /dev/null <<EOF
+   [Unit]
+   Description=Infrahub Backup Service
+   After=docker.service
+   Requires=docker.service
+
+   [Service]
+   Type=oneshot
+   ExecStart=/usr/local/bin/infrahub-backup create
+   User=infrahub
+   Group=docker
+
+   [Install]
+   WantedBy=multi-user.target
+   EOF
+   ```
+
+2. Create timer for daily backups:
+
+   ```bash
+   sudo tee /etc/systemd/system/infrahub-backup.timer > /dev/null <<EOF
+   [Unit]
+   Description=Daily Infrahub Backup
+
+   [Timer]
+   OnCalendar=daily
+   Persistent=true
+
+   [Install]
+   WantedBy=timers.target
+   EOF
+   ```
+
+3. Enable and start:
+
+   ```bash
+   sudo systemctl enable infrahub-backup.timer
+   sudo systemctl start infrahub-backup.timer
+   ```
+
+## Related resources
+
+- [Getting started tutorial](../tutorials/getting-started.mdx)
+- [Configuration reference](../reference/configuration.mdx)
+- [How to backup your instance](./backup-instance.mdx)

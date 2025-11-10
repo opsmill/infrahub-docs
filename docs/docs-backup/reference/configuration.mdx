@@ -1,0 +1,162 @@
+---
+title: Configuration reference
+---
+
+Complete reference for configuring the Infrahub Backup & Restore Tool through environment variables and runtime flags.
+
+## Configuration methods
+
+Tools can be configured through these methods, applied in precedence order:
+
+1. **Command-line flags** (highest priority)
+2. **Environment variables**
+3. **Default values** (lowest priority)
+
+## Environment variables
+
+### Core configuration
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `INFRAHUB_BACKUP_DIR` | Directory for storing backup files | `./infrahub_backups` | `/data/backups` |
+| `INFRAHUB_LOG_FORMAT` | Output format for logs | `text` | `json` |
+
+### Docker Compose configuration
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `INFRAHUB_PROJECT` | Docker Compose project name | Auto-detect | `infrahub-prod` |
+
+### Database configuration
+
+#### Neo4j
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `INFRAHUB_DB_DATABASE` | Neo4j database name | `neo4j` | `infrahub` |
+| `INFRAHUB_DB_USERNAME` | Neo4j username | `neo4j` | `admin` |
+| `INFRAHUB_DB_PASSWORD` | Neo4j password | `admin` | `SecurePass123` |
+
+#### PostgreSQL (Task Manager)
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `PREFECT_API_DATABASE_CONNECTION_URL` | PostgreSQL connection string | Auto-detect | `postgresql://user:pass@localhost/prefect` |
+
+## Command-line flag reference
+
+### Global flags
+
+| Flag | Environment Override | Description |
+|------|---------------------|-------------|
+| `--backup-dir` | `INFRAHUB_BACKUP_DIR` | Set backup directory |
+| `--project` | `INFRAHUB_PROJECT` | Target specific Docker Compose project |
+| `--log-format` | `INFRAHUB_LOG_FORMAT` | Set log output format |
+
+### Backup command flags
+
+| Flag | Description |
+|------|-------------|
+| `--force` | Force backup creation even if tasks are running |
+| `--neo4jmetadata` | Neo4j metadata to include (all, none, users, roles) |
+
+## Auto-detection behavior
+
+### Docker Compose project detection
+
+Order of detection:
+
+1. `--project` flag
+2. `INFRAHUB_PROJECT` environment variable
+3. Search for running Infrahub containers
+
+Detection command:
+
+```bash
+docker compose ls --filter "name=*infrahub*"
+```
+
+### Database credential detection
+
+For Docker Compose deployments:
+
+```bash
+# Neo4j credentials from environment
+docker compose exec database printenv NEO4J_AUTH
+
+# PostgreSQL credentials from environment
+docker compose exec task-manager-db printenv POSTGRES_PASSWORD
+```
+
+## Troubleshooting configuration
+
+### Debug configuration loading
+
+View effective configuration:
+
+```bash
+infrahub-backup --help
+```
+
+### Test configuration
+
+Validate configuration without running operations:
+
+```bash
+infrahub-backup environment detect
+```
+
+### Common issues
+
+**Issue: Cannot detect environment**
+
+```bash
+# Check Docker
+docker compose ls
+docker ps
+
+# Check for Infrahub containers
+docker ps --filter "name=infrahub"
+```
+
+**Issue: Authentication failures**
+
+```bash
+# Verify credentials are set
+env | grep INFRAHUB
+env | grep PREFECT
+
+# Test database connectivity
+docker compose exec database cypher-shell -u neo4j
+```
+
+## Examples
+
+### Minimal configuration
+
+For basic Docker Compose setup:
+
+```bash
+export INFRAHUB_BACKUP_DIR=/backups
+infrahub-backup create
+```
+
+### Production configuration
+
+```bash
+#!/bin/bash
+# production-backup.sh
+
+export INFRAHUB_LOG_FORMAT=json
+export INFRAHUB_PROJECT=infrahub-production
+export INFRAHUB_BACKUP_DIR=/data/backups/infrahub
+export INFRAHUB_DB_PASSWORD="${NEO4J_PASSWORD}"
+
+infrahub-backup create --neo4jmetadata=all
+```
+
+
+## Related documentation
+
+- [CLI command reference](./commands.mdx)
+- [How to install](../guides/install.mdx)

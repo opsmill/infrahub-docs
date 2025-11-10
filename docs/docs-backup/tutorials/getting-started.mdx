@@ -1,0 +1,221 @@
+---
+title: Getting Started with the Infrahub Backup & Restore Tool
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This tutorial walks you through your first experience with the Infrahub Backup & Restore Tool, teaching you the fundamentals by creating a backup of your Infrahub instance and then restoring it. By the end of this tutorial, you'll understand the basic workflow and be confident in using `infrahub-backup` for essential maintenance tasks.
+
+## What you'll learn
+
+In this tutorial, you'll:
+
+- Install infrahub-backup on your system
+- Detect your Infrahub deployment environment
+- Create your first backup
+- Verify the backup was successful
+- Capture a snapshot of artifact storage alongside database backups
+- Restore from the backup you created
+
+## Prerequisites
+
+Before starting this tutorial, ensure you have:
+
+- A running Infrahub instance (using Docker Compose)
+- Docker installed and running on your system
+- Terminal access with sudo privileges
+- At least 1GB of free disk space for backups
+
+## Step 1: Install infrahub-backup
+
+First, install the infrahub-backup tool. The recommended method is to download binaries:
+
+```bash
+curl https://infrahub.opsmill.io/ops/$(uname -s)/$(uname -m)/infrahub-backup -o infrahub-backup
+
+chmod +x infrahub-backup
+
+# Verify installation
+./infrahub-backup version
+```
+
+You should see output similar to:
+
+```bash
+Version: 1.0.0
+```
+
+## Step 2: Detect your environment
+
+Before performing any operations, verify that infrahub-backup can detect your Infrahub deployment:
+
+```bash
+./infrahub-backup environment detect
+```
+
+Expected output:
+
+```bash
+INFO[0000] Detecting deployment environment...
+INFO[0000] Docker environment detected
+INFO[0000] Found Docker Compose project: infrahub
+```
+
+If you have multiple Infrahub projects, list them all:
+
+```bash
+./infrahub-backup environment list
+```
+
+This shows all available Docker Compose projects running Infrahub.
+
+## Step 3: Create your first backup
+
+Now, let's create a backup of your Infrahub instance. This operation will:
+
+1. Check for running tasks
+2. Backup the Neo4j database
+3. Backup the PostgreSQL task manager database
+4. Create a compressed archive
+
+Run the backup command:
+
+```bash
+./infrahub-backup create
+```
+
+You'll see detailed progress output:
+
+```bash
+INFO[0000] Starting backup process...
+INFO[0000] Checking for running tasks...
+INFO[0001] No running tasks found
+INFO[0004] Backing up Neo4j database...
+INFO[0010] Neo4j backup completed
+INFO[0010] Backing up PostgreSQL database...
+INFO[0012] PostgreSQL backup completed
+INFO[0012] Creating backup archive...
+INFO[0015] Backup created successfully: infrahub_backups/infrahub_backup_20250929_143022.tar.gz
+INFO[0015] Starting application containers...
+INFO[0020] Backup process completed
+```
+
+:::note
+The backup file is stored in the `infrahub_backups` directory by default. Note the filename for the restore step.
+:::
+
+## Step 4: Verify your backup
+
+Check that your backup was created successfully:
+
+```bash
+# List backup files
+ls -lh infrahub_backups/
+
+# View backup contents (without extracting)
+tar -tzf infrahub_backups/infrahub_backup_*.tar.gz | head -10
+```
+
+You should see:
+
+- A `.tar.gz` file with today's timestamp
+- Inside the archive: `backup_information.json`, database files, and other components
+
+## Step 5: Capture artifact storage
+
+If your Infrahub workflows produce artifacts stored outside the databases, take a moment to snapshot that storage so the backup remains consistent. Identify the bucket, container, or volume where artifacts live and copy the contents into a dated folder or version. Use your provider’s native tooling (for example, `aws s3 sync`, `az storage blob download`, or `rsync` for shared volumes) and note where you stored the snapshot so you can pair it with the database backup when restoring.
+
+If using standard docker compose deployment:
+
+```bash
+# Copy artifacts directory to backup location
+docker compose cp -r infrahub-server:/opt/infrahub/storage /backup/artifacts/
+```
+
+## Step 6: Restore from backup
+
+To complete the learning cycle, let's restore from the backup you just created. This simulates recovering from a disaster or rolling back changes.
+
+:::warning
+Restoring will replace all current data in your Infrahub instance. In a production environment, always verify you have a current backup before restoring an older one.
+:::
+
+```bash
+# Replace with your actual backup filename
+./infrahub-backup restore infrahub_backups/infrahub_backup_20250929_143022.tar.gz
+```
+
+The restore process will:
+
+1. Validate the backup file
+2. Stop all containers
+3. Restore the Neo4j database
+4. Restore the PostgreSQL database
+5. Restart all services
+
+Expected output:
+
+```bash
+INFO[0000] Starting restore process...
+INFO[0000] Validating backup file...
+INFO[0001] Backup validation successful
+INFO[0001] Stopping all containers...
+INFO[0005] Restoring Neo4j database...
+INFO[0015] Neo4j restore completed
+INFO[0015] Restoring PostgreSQL database...
+INFO[0018] PostgreSQL restore completed
+INFO[0018] Starting all containers...
+INFO[0025] Restore completed successfully
+```
+
+## Step 7: Verify the restore
+
+Confirm your Infrahub instance is running correctly:
+
+```bash
+# Check container status
+docker compose ps
+
+# Test Infrahub connectivity (adjust URL as needed)
+curl -I http://localhost:8080
+```
+
+All containers should be in the "Up" state, and the HTTP request should return a successful response.
+
+## What you've learned
+
+Congratulations! You've completed your first backup and restore cycle with the Infrahub Backup & Restore Tool. You now know how to:
+
+- Install and verify infrahub-backup
+- Detect your deployment environment
+- Create comprehensive backups of your Infrahub instance
+- Capture artifact storage snapshots to keep backups complete
+- Restore from a backup file
+- Verify successful operations
+
+## Next steps
+
+Now that you understand the basics, explore:
+
+- [How to backup your Infrahub instance](../guides/backup-instance.mdx)
+- [How to restore from backup](../guides/restore-backup.mdx)
+
+## Troubleshooting
+
+If you encounter issues:
+
+**Permission denied when running commands:**
+
+- Ensure your user has Docker permissions: `sudo usermod -aG docker $USER`
+- Log out and back in for changes to take effect
+
+**Cannot detect environment:**
+
+- Verify Docker is running: `docker ps`
+- Check Docker Compose is installed: `docker compose version`
+
+**Backup fails with "running tasks detected":**
+
+- Wait for tasks to complete, or use `--force` flag to proceed anyway
+- Check task status in Infrahub UI

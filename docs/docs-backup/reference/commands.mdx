@@ -1,0 +1,164 @@
+---
+title: CLI command reference
+---
+
+Complete reference for the Infrahub Backup & Restore Tool commands, flags, and options.
+
+## infrahub-backup
+
+### Command structure
+
+```bash
+infrahub-backup [global-flags] <command> [flags] [arguments]
+```
+
+### Global flags
+
+These flags apply to all infrahub-backup commands:
+
+| Flag | Description | Default | Environment Variable |
+|------|-------------|---------|---------------------|
+| `--project <name>` | Target specific Docker Compose project | Auto-detect | `INFRAHUB_PROJECT` |
+| `--backup-dir <path>` | Directory for backup files | `./infrahub_backups` | `INFRAHUB_BACKUP_DIR` |
+| `--log-format <text\|json>` | Output format for logs | `text` | `INFRAHUB_LOG_FORMAT` |
+| `--help, -h` | Show help for any command | - | - |
+
+### Backup commands
+
+#### create
+
+Creates a comprehensive backup of the Infrahub instance.
+
+**Syntax:**
+
+```bash
+infrahub-backup create [flags]
+```
+
+**Flags:**
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--force` | Force backup even if tasks are running | `false` |
+| `--neo4jmetadata <type>` | Neo4j metadata to include | `all` |
+| `--exclude-taskmanager`  | Exclude the task manager (Prefect) database from the backup archive | `false` |
+
+**Neo4j metadata options:**
+
+- `all` - Include all user and role metadata
+- `users` - Include only user accounts
+- `roles` - Include only role definitions
+- `none` - Exclude all metadata
+
+**Examples:**
+
+```bash
+# Basic backup
+infrahub-backup create
+
+# Force backup with running tasks
+infrahub-backup create --force
+
+# Backup without user metadata
+infrahub-backup create --neo4jmetadata=none
+```
+
+#### restore
+
+Restores Infrahub from a backup file.
+
+**Syntax:**
+
+```bash
+infrahub-backup restore <backup-file>
+```
+
+**Arguments:**
+
+- `<backup-file>` - Path to backup archive (required)
+
+**Flags:**
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--exclude-taskmanager` | Skip restoring the task manager database even if the dump is present | `false` |
+
+**Examples:**
+
+```bash
+# Basic restore
+infrahub-backup restore infrahub_backup_20250929_143022.tar.gz
+
+# Restore when the task manager database was excluded from the backup
+infrahub-backup restore infrahub_backup_20251022_120000.tar.gz --exclude-taskmanager-db
+```
+
+### Environment commands
+
+#### environment detect
+
+Detects and displays the current deployment environment.
+
+**Syntax:**
+
+```bash
+infrahub-backup environment detect
+```
+
+**Example output:**
+
+```shell
+INFO[0000] Detecting deployment environment...
+INFO[0000] Docker environment detected
+INFO[0000] Found Docker Compose project: infrahub-demo
+```
+
+#### environment list
+
+Lists all available Infrahub Docker Compose projects.
+
+**Syntax:**
+
+```bash
+infrahub-backup environment list
+```
+
+**Example output:**
+
+```bash
+infrahub-production  Running   7/7
+infrahub-staging     Running   7/7
+infrahub-dev         Stopped   0/7
+```
+
+### Utility commands
+
+#### version
+
+Displays version information.
+
+**Syntax:**
+
+```bash
+infrahub-backup version
+```
+
+**Example output:**
+
+```bash
+Version: 1.0.0
+```
+
+## Configuration precedence
+
+Configuration values are resolved in this order:
+
+1. Command-line flags (highest priority)
+2. Environment variables
+3. Default values (lowest priority)
+
+## Related documentation
+
+- [Getting started tutorial](../tutorials/getting-started.mdx)
+- [Configuration reference](./configuration.mdx)
+- [How to backup your instance](../guides/backup-instance.mdx)

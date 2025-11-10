@@ -1,0 +1,242 @@
+---
+title: How to backup your Infrahub instance
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This guide walks you through creating a comprehensive backup of your Infrahub instance. If you need to protect your data, prepare for upgrades, or establish disaster recovery procedures, follow these steps to create reliable backups.
+
+## Prerequisites
+
+Before creating a backup:
+
+- Ensure infrahub-backup is installed and configured
+- Verify you have sufficient disk space (at least 2x your database size)
+- Have write permissions to the backup directory
+- Confirm your Infrahub instance is accessible
+
+## Step 1: Check for running tasks
+
+Before initiating a backup, check if there are active tasks that might be interrupted by checking the Infrahub web interface or waiting for natural completion.
+
+If tasks are running, you have two options:
+
+<Tabs>
+<TabItem value="wait" label="Wait for Completion" default>
+
+Wait for tasks to complete naturally by monitoring the Infrahub UI, then proceed with backup:
+
+```bash
+infrahub-backup create
+```
+
+</TabItem>
+<TabItem value="force" label="Force Backup">
+
+Force backup despite running tasks:
+
+```bash
+# Force backup (running tasks will be ignored)
+infrahub-backup create --force
+```
+
+</TabItem>
+</Tabs>
+
+## Step 2: Create the backup
+
+Execute the backup command with your desired options:
+
+### Basic backup
+
+For a standard backup with all components:
+
+```bash
+infrahub-backup create
+```
+
+### Selective metadata backup
+
+Control which Neo4j metadata to include:
+
+```bash
+# Backup without metadata (smallest size)
+infrahub-backup create --neo4jmetadata=none
+
+# Backup with only user accounts
+infrahub-backup create --neo4jmetadata=users
+
+# Backup with only roles
+infrahub-backup create --neo4jmetadata=roles
+
+# Backup with everything (default)
+infrahub-backup create --neo4jmetadata=all
+```
+
+### Custom backup location
+
+Specify an alternative backup directory:
+
+```bash
+infrahub-backup create --backup-dir=/mnt/backups/infrahub
+```
+
+### Target specific project
+
+If running multiple Infrahub instances:
+
+```bash
+infrahub-backup create --project=infrahub-production
+```
+
+## Step 3: Monitor backup progress
+
+The backup process provides detailed progress information:
+
+```bash
+INFO[0000] Starting backup process...
+INFO[0000] Checking for running tasks...
+INFO[0001] No running tasks found
+INFO[0001] Creating backup ID: 20250929_143022
+INFO[0002] Stopping Infrahub application containers...
+INFO[0005] Application containers stopped
+INFO[0005] Backing up Neo4j database...
+INFO[0015] Neo4j backup completed (1.2GB)
+INFO[0015] Backing up PostgreSQL database...
+INFO[0018] PostgreSQL backup completed (256MB)
+INFO[0020] Creating compressed archive...
+INFO[0025] Archive created: infrahub_backup_20250929_143022.tar.gz
+INFO[0025] Starting application containers...
+INFO[0030] All containers started successfully
+INFO[0030] Backup completed successfully
+```
+
+## Step 4: Verify backup integrity
+
+After backup completion, verify the backup file:
+
+### Check backup file
+
+```bash
+# List backup files with sizes
+ls -lh infrahub_backups/
+
+# Verify archive integrity
+tar -tzf infrahub_backups/infrahub_backup_20250929_143022.tar.gz > /dev/null && echo "Archive is valid"
+
+# View backup metadata
+tar -xzOf infrahub_backups/infrahub_backup_20250929_143022.tar.gz backup_information.json | jq '.'
+```
+
+### Validate backup contents
+
+The backup should contain:
+
+- `backup_information.json` - Backup information and checksums
+- `database/` - Neo4j database files
+- `prefect.dump` - PostgreSQL dump
+
+Example metadata structure:
+
+```json
+{
+  "metadata_version": 2025092500,
+  "backup_id": "20250929_143022",
+  "created_at": "2025-09-29T14:30:22Z",
+  "tool_version": "1.0.0",
+  "infrahub_version": "0.15.0",
+  "components": ["database", "task-manager-db"],
+  "checksums": {
+    "database": "sha256:abc123...",
+    "prefect.dump": "sha256:def456..."
+  }
+}
+```
+
+## Step 5: Backup artifact storage
+
+Capture any artifact storage (object stores, shared volumes, artifact registries) that Infrahub references during task execution. Align the snapshot timing with the database backup so the two stay consistent.
+
+- Identify the storage location configured for your task manager (bucket, container, or filesystem path).
+- Copy or synchronize the artifacts into a dated folder or snapshot using the native tooling for your storage provider.
+- Record the snapshot path or version ID alongside your database backup metadata so operators can retrieve the artifacts during a restore.
+
+If your storage tier already offers automatic versioning or replication, confirm the retention window meets your recovery objectives and document how to retrieve the relevant versions during a disaster scenario.
+
+## Step 6: Test restore capability
+
+Periodically test restoration to ensure backups are valid:
+
+```bash
+# Review what would be restored
+infrahub-backup restore infrahub_backups/infrahub_backup_20250929_143022.tar.gz
+```
+
+## Advanced usage
+
+### Automated backups with cron
+
+Create a cron job for regular backups:
+
+```bash
+# Edit crontab
+crontab -e
+
+# Add daily backup at 2 AM
+0 2 * * * /usr/local/bin/infrahub-backup create >> /var/log/infrahub-backup.log 2>&1
+
+# With retention management (keep 7 days)
+0 2 * * * /usr/local/bin/infrahub-backup create && find /path/to/backups -name "*.tar.gz" -mtime +7 -delete
+```
+
+### Backup with notification
+
+Create a wrapper script for notifications:
+
+```bash
+#!/bin/bash
+BACKUP_RESULT=$(infrahub-backup create 2>&1)
+if [ $? -eq 0 ]; then
+    echo "Backup successful" | mail -s "Infrahub Backup Success" ops@example.com
+else
+    echo "$BACKUP_RESULT" | mail -s "Infrahub Backup Failed" ops@example.com
+    exit 1
+fi
+```
+
+### Remote backup storage
+
+After local backup, transfer to remote storage:
+
+```bash
+# Backup locally first
+infrahub-backup create
+
+# Transfer to remote storage
+LATEST_BACKUP=$(ls -t infrahub_backups/*.tar.gz | head -1)
+
+# S3 example
+aws s3 cp "$LATEST_BACKUP" s3://my-bucket/infrahub-backups/
+
+# SCP example
+scp "$LATEST_BACKUP" backup-server:/backups/infrahub/
+
+# Rsync example
+rsync -avz "$LATEST_BACKUP" backup-server:/backups/infrahub/
+```
+
+## Validation
+
+Confirm your backup strategy works:
+
+- ✓ Backup completes without errors
+- ✓ Archive passes integrity check
+- ✓ Metadata contains expected components
+- ✓ File size is reasonable for your data volume
+- ✓ Test restore succeeds in non-production environment
+
+## Related resources
+
+- [How to restore from backup](./restore-backup.mdx)
+- [CLI command reference](../reference/commands.mdx)
