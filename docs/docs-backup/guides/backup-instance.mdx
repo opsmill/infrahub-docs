@@ -7,6 +7,16 @@ import TabItem from '@theme/TabItem';
 
 This guide walks you through creating a comprehensive backup of your Infrahub instance. If you need to protect your data, prepare for upgrades, or establish disaster recovery procedures, follow these steps to create reliable backups.
 
+## Community Edition support
+
+Infrahub Community Edition deployments are fully supported by `infrahub-backup`, but there are a few operational differences to plan for compared to Enterprise environments.
+
+:::warning
+Backing up Community Edition stops the Infrahub application container while the snapshot is taken. Schedule the command during a maintenance window to avoid user-facing downtime.
+:::
+
+Restoring a backup that was taken from an Enterprise cluster to a Community Edition instance is not supported. Create and maintain backups from the same edition you intend to restore to.
+
 ## Prerequisites
 
 Before creating a backup:

@@ -7,6 +7,14 @@ import TabItem from '@theme/TabItem';
 
 This guide shows you how to restore your Infrahub instance from a backup file. If you need to recover from data loss, roll back changes, or migrate to new infrastructure, follow these steps to safely restore your system.
 
+## Community Edition compatibility
+
+Restores are supported for Infrahub Community Edition when the backup was created from the same edition. Enterprise backups include components that are not available in Community Edition and cannot be restored.
+
+:::danger
+Restoring an Enterprise backup to a Community Edition deployment is not supported. Always use backups that were captured from the same edition you plan to restore.
+:::
+
 ## Prerequisites
 
 Before restoring from backup:
