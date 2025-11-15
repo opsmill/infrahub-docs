@@ -132,6 +132,16 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
+        id: 'docs-bundle-dc',
+        path: 'docs-bundle-dc',
+        routeBasePath: 'bundle-dc',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-bundle-dc.ts',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
         id: 'docs-emma',
         path: 'docs-emma',
         routeBasePath: 'emma',
@@ -386,9 +396,9 @@ const config: Config = {
           items: [
             {
               type: "docSidebar",
-              sidebarId: "demoSidebar",
-              label: "demo-dc-fabric",
-              docsPluginId: "docs-demo",
+              sidebarId: "BundleDcSidebar",
+              label: "DC Bundle",
+              docsPluginId: "docs-bundle-dc",
             },
             {
               type: "docSidebar",
@@ -401,6 +411,12 @@ const config: Config = {
               sidebarId: "schemaSidebar",
               label: "Schema Library",
               docsPluginId: "docs-schema-library",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "demoSidebar",
+              label: "demo-dc-fabric (depreciated)",
+              docsPluginId: "docs-demo",
             },
           ],
         },
