@@ -1,0 +1,765 @@
+---
+title: Developer guide
+---
+
+This guide provides a technical deep-dive into how the Infrahub demo works under the hood. Use this when you want to extend functionality, troubleshoot issues, customize the demo, or understand implementation details.
+
+## Project architecture
+
+The demo follows Infrahub's SDK pattern with five core component types working together:
+
+```text
+Schemas → Data → Generators → Transforms → Configurations
+                      ↓
+                  Checks (Validation)
+```
+
+### Component types
+
+1. **Schemas** (`schemas/`) - Define data models, relationships, and constraints
+2. **Generators** (`generators/`) - Create infrastructure topology programmatically
+3. **Transforms** (`transforms/`) - Convert Infrahub data to device configurations
+4. **Checks** (`checks/`) - Validate configurations and connectivity
+5. **Templates** (`templates/`) - Jinja2 templates for device configurations
+
+All components are registered in `.infrahub.yml`, which acts as the configuration hub.
+
+## Project structure
+
+```text
+infrahub-bundle-dc/
+├── .infrahub.yml              # Component registration
+├── checks/                    # Validation checks
+│   ├── spine.py
+│   ├── leaf.py
+│   ├── edge.py
+│   └── loadbalancer.py
+├── objects/                   # Demo data
+│   ├── bootstrap/             # Initial data (19 files: groups, locations, platforms, roles, devices, etc.)
+│   ├── cloud_security/        # Cloud security examples (services, devices, gateways)
+│   ├── dc/                    # Data center design files
+│   │   ├── dc-arista-s.yml    # DC-3 design data (Arista)
+│   │   ├── dc-cisco-s.yml     # DC-2 design data (Cisco)
+│   │   ├── dc-cisco-s-border-leafs.yml  # Cisco DC with border leafs
+│   │   ├── dc-juniper-s.yml   # DC-5 design data (Juniper)
+│   │   └── dc-sonic-border-leafs.yml    # DC-4 design data (SONiC with border leafs)
+│   ├── events/                # Event action definitions
+│   ├── lb/                    # Load balancer configurations
+│   ├── pop/                   # Point of presence design files
+│   │   ├── pop-1.yml          # POP-1 design data
+│   │   └── pop-2.yml          # POP-2 design data
+│   └── security/              # Security zones, policies, rules (15 files)
+├── generators/                # Topology generators
+│   ├── generate_dc.py         # Data center generator
+│   ├── generate_pop.py        # POP generator
+│   ├── generate_segment.py    # Network segment generator
+│   ├── common.py              # Shared utilities
+│   └── schema_protocols.py    # Type protocols
+├── menus/                     # UI menu definitions
+│   └── menu-full.yml          # Complete menu
+├── queries/                   # GraphQL queries
+│   ├── config/                # Configuration queries
+│   ├── topology/              # Topology queries
+│   └── validation/            # Validation queries
+├── schemas/                  # Data model definitions
+│   ├── base/                # Core models
+│   │   ├── dcim.yml
+│   │   ├── ipam.yml
+│   │   ├── location.yml
+│   │   └── topology.yml
+│   └── extensions/          # Extended models
+│       ├── console/
+│       ├── routing/
+│       ├── security/
+│       ├── service/
+│       └── topology/
+├── docs/                     # Documentation (Docusaurus)
+│   ├── docs/                # Documentation content (.mdx files)
+│   ├── static/              # Static assets
+│   ├── docusaurus.config.ts # Docusaurus configuration
+│   └── package.json         # Node.js dependencies
+├── scripts/                 # Automation scripts
+│   ├── bootstrap.py         # Complete setup script
+│   ├── populate_security_relationships.py  # Security data relationships
+│   ├── create_proposed_change.py  # Create proposed changes
+│   └── get_configs.py       # Retrieve device configurations
+├── service_catalog/         # Streamlit Service Catalog application
+│   ├── pages/               # Streamlit pages
+│   │   └── 1_Create_DC.py  # DC creation UI
+│   ├── utils/               # Utility modules
+│   │   ├── api.py           # Infrahub API client
+│   │   ├── config.py        # Configuration
+│   │   └── ui.py            # UI helpers
+│   ├── Home.py              # Main application page
+│   └── Dockerfile           # Container definition
+├── templates/               # Jinja2 config templates
+├── tests/                   # Test suite
+│   ├── integration/         # Integration tests
+│   ├── smoke/               # Smoke tests
+│   └── unit/                # Unit tests
+├── transforms/              # Config transforms
+│   ├── edge.py
+│   ├── leaf.py
+│   ├── loadbalancer.py
+│   └── spine.py
+└── tasks.py                 # Invoke task definitions
+```
+
+## Schemas
+
+Schemas define the data model using YAML. They specify nodes (object types), attributes, relationships, and constraints.
+
+### Schema naming conventions
+
+- **Nodes**: PascalCase (for example, `DcimGenericDevice`)
+- **Attributes**: snake_case (for example, `device_type`)
+- **Relationships**: snake_case (for example, `parent_location`)
+- **Namespaces**: PascalCase (for example, `Dcim`, `Ipam`, `Service`)
+
+### Schema example
+
+```yaml
+nodes:
+  - name: GenericDevice
+    namespace: Dcim
+    description: "A network device"
+    inherit_from:
+      - DcimDevice
+    attributes:
+      - name: hostname
+        kind: Text
+        optional: false
+        unique: true
+      - name: device_type
+        kind: Text
+        optional: true
+    relationships:
+      - name: location
+        peer: LocationBuilding
+        cardinality: one
+        optional: false
+      - name: interfaces
+        peer: DcimInterface
+        cardinality: many
+        kind: Component
+```
+
+### Computed attributes
+
+Infrahub supports [computed attributes](https://docs.infrahub.app/topics/computed-attributes) that automatically generate values based on other attributes using Jinja2 templates. The demo uses this feature in the BGP schema for Autonomous System names.
+
+**Example from `schemas/extensions/routing/bgp.yml`:**
+
+```yaml
+attributes:
+  - name: name
+    kind: Text
+    computed_attribute:
+      kind: Jinja2
+      jinja2_template: "AS{{asn__value}}"
+    read_only: true
+    optional: false
+  - name: asn
+    kind: Number
+    description: "Autonomous System Number"
+```
+
+When you create an Autonomous System with ASN 65000, the `name` attribute is automatically computed as "AS65000". This ensures consistency and reduces manual data entry errors.
+
+**Benefits of computed attributes:**
+
+- **Consistency** - Standardized naming conventions enforced automatically
+- **Reduced errors** - No manual entry of derived values
+- **Dynamic updates** - Values recompute when dependencies change
+- **Read-only enforcement** - Prevents manual modification of computed values
+
+### Schema types
+
+The demo includes schemas for:
+
+- **DCIM** (Data Center Infrastructure Management) - Devices, interfaces, racks
+- **IPAM** (IP Address Management) - IP addresses, prefixes, VLANs
+- **Location** - Sites, buildings, rooms
+- **Topology** - Data centers, POPs, deployments
+- **Routing** - BGP, OSPF, routing policies
+- **Security** - Zones, policies, firewall rules
+- **Service** - Load balancers, segments, services
+
+### Loading schemas
+
+```bash
+uv run infrahubctl schema load schemas --branch main
+```
+
+Schemas are loaded into Infrahub and become the foundation for all data.
+
+## Generators
+
+Generators create infrastructure topology programmatically from high-level design inputs. They inherit from `InfrahubGenerator` and implement the `generate()` method.
+
+### Generator pattern
+
+```python
+from infrahub_sdk.generators import InfrahubGenerator
+from typing import Any
+
+class DCTopologyGenerator(InfrahubGenerator):
+    async def generate(self, data: dict[str, Any]) -> None:
+        """Generate data center topology based on design data."""
+        # 1. Query design data
+        # 2. Create devices
+        # 3. Create interfaces
+        # 4. Create IP addresses
+        # 5. Create routing configurations
+        pass
+```
+
+### DC generator workflow
+
+The `create_dc` generator in `generators/generate_dc.py`:
+
+1. **Queries the topology design** - Reads DC-3 parameters like spine count, leaf count, underlay protocol
+2. **Creates resource pools** - Sets up IP prefix pools and VLAN pools
+3. **Creates devices** - Generates spine, leaf, and border-leaf switches with correct roles and platforms
+4. **Creates interfaces** - Adds physical interfaces, loopbacks, and sub-interfaces
+5. **Creates connections** - Establishes fabric peering between spines and leaves
+6. **Configures routing** - Sets up BGP or OSPF underlay and BGP EVPN overlay
+7. **Assigns IP addresses** - Allocates addresses from pools for all interfaces
+
+### Generator registration
+
+Generators are registered in `.infrahub.yml`:
+
+```yaml
+generator_definitions:
+  - name: create_dc
+    file_path: generators/generate_dc.py
+    targets: topologies_dc
+    query: topology_dc
+    class_name: DCTopologyGenerator
+    parameters:
+      name: name__value
+```
+
+- **targets** - GraphQL query that selects which objects trigger the generator
+- **query** - GraphQL query providing input data
+- **parameters** - Parameters passed from triggering object
+
+### Running generators
+
+Generators can be triggered:
+
+1. **Manually** via the web UI (Actions → Generator Definitions)
+2. **Via API** using GraphQL mutations
+3. **Automatically** via event actions (if configured)
+
+## Transforms
+
+Transforms convert Infrahub data into device configurations. They inherit from `InfrahubTransform` and use Jinja2 templates.
+
+### Transform pattern
+
+```python
+from infrahub_sdk.transforms import InfrahubTransform
+from typing import Any
+
+class SpineTransform(InfrahubTransform):
+    query = "spine_config"  # GraphQL query name
+
+    async def transform(self, data: Any) -> Any:
+        """Transform InfrahubHub data to spine configuration."""
+        device = data["DcimGenericDevice"]["edges"][0]["node"]
+
+        # Process data
+        context = self.prepare_context(device)
+
+        # Render template
+        return self.render_template(
+            template="spine.j2",
+            data=context
+        )
+
+    def prepare_context(self, device: Any) -> dict[str, Any]:
+        """Prepare template context from device data."""
+        return {
+            "hostname": device["name"]["value"],
+            "interfaces": self.process_interfaces(device["interfaces"]),
+            "bgp": self.process_bgp(device),
+        }
+```
+
+### Transform workflow
+
+1. **Query data** - Fetch device and related data via GraphQL
+2. **Process data** - Transform into template-friendly structure
+3. **Render template** - Use Jinja2 to generate configuration
+4. **Return artifact** - Provide configuration as string
+
+### Transform registration
+
+Transforms are registered in `.infrahub.yml`:
+
+```yaml
+python_transforms:
+  - name: spine
+    class_name: Spine
+    file_path: transforms/spine.py
+
+artifact_definitions:
+  - name: spine_config
+    artifact_name: spine
+    content_type: text/plain
+    targets: spines           # GraphQL query selecting devices
+    transformation: spine      # Transform name
+    parameters:
+      device: name__value
+```
+
+## Templates
+
+Jinja2 templates generate device configurations from structured data.
+
+### Template example
+
+```jinja2
+hostname {{ hostname }}
+
+{% for interface in interfaces %}
+interface {{ interface.name }}
+  {% if interface.description %}
+  description {{ interface.description }}
+  {% endif %}
+  {% if interface.ip_address %}
+  ip address {{ interface.ip_address }}
+  {% endif %}
+  {% if interface.enabled %}
+  no shutdown
+  {% endif %}
+{% endfor %}
+
+router bgp {{ bgp.asn }}
+  {% for neighbor in bgp.neighbors %}
+  neighbor {{ neighbor.ip }} remote-as {{ neighbor.asn }}
+  {% endfor %}
+```
+
+Templates use standard Jinja2 syntax with filters and control structures.
+
+## Checks
+
+Checks validate configurations and connectivity. They inherit from `InfrahubCheck` and implement the `check()` method.
+
+### Check pattern
+
+```python
+from infrahub_sdk.checks import InfrahubCheck
+from typing import Any
+
+class CheckSpine(InfrahubCheck):
+    query = "spine_validation"
+
+    async def check(self, data: Any) -> None:
+        """Validate spine device configuration."""
+        device = data["DcimGenericDevice"]["edges"][0]["node"]
+
+        # Validation logic
+        if not self.has_required_interfaces(device):
+            self.log_error(
+                "Missing required interfaces",
+                object_id=device["id"],
+                object_type="DcimGenericDevice"
+            )
+
+        if not self.has_bgp_config(device):
+            self.log_warning(
+                "BGP not configured",
+                object_id=device["id"]
+            )
+```
+
+### Check registration
+
+```yaml
+check_definitions:
+  - name: validate_spine
+    class_name: CheckSpine
+    file_path: checks/spine.py
+    targets: spines
+    parameters:
+      device: name__value
+```
+
+## GraphQL queries
+
+Queries are defined in `.gql` files and referenced by name in transforms and checks.
+
+### Query example
+
+```graphql
+query GetSpineConfig($device_name: String!) {
+  DcimGenericDevice(name__value: $device_name) {
+    edges {
+      node {
+        id
+        name { value }
+        role { value }
+        platform { value }
+        interfaces {
+          edges {
+            node {
+              name { value }
+              description { value }
+              ip_addresses {
+                edges {
+                  node {
+                    address { value }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### Query registration
+
+```yaml
+queries:
+  - name: spine_config
+    file_path: queries/config/spine.gql
+```
+
+## Bootstrap data
+
+Bootstrap data provides initial objects like locations, platforms, and device types.
+
+### Bootstrap structure
+
+```tree
+objects/bootstrap/
+├── 01_organizations.yml      # Organizations
+├── 02_asn_pools.yml          # BGP ASN pools
+├── 03_locations.yml          # Sites and buildings
+├── 04_platforms.yml          # Device platforms
+├── 05_roles.yml              # Device roles
+├── 06_device_types.yml       # Device models
+├── 07_device_templates.yml   # Interface templates
+└── ...
+```
+
+Files are numbered to ensure correct loading order due to dependencies.
+
+### Interface range expansion
+
+The bootstrap data uses Infrahub's [interface range expansion feature](https://docs.infrahub.app/python-sdk/reference/templating#netutils-filters) to efficiently define multiple interfaces with compact syntax. This feature automatically expands range notation into individual interfaces.
+
+**Example from `objects/bootstrap/10_physical_device_templates.yml`:**
+
+```yaml
+interfaces:
+  kind: TemplateDcimPhysicalInterface
+  data:
+    - template_name: N9K-C9336C-FX2_SPINE_Ethernet1/[1-30]
+      name: Ethernet1/[1-30]
+      role: leaf
+    - template_name: N9K-C9336C-FX2_SPINE_Ethernet1/[31-36]
+      name: Ethernet1/[31-36]
+      role: uplink
+```
+
+When loaded, `Ethernet1/[1-30]` expands to 30 individual interfaces: `Ethernet1/1`, `Ethernet1/2`, ... `Ethernet1/30`. This dramatically reduces YAML verbosity when defining device templates with many interfaces.
+
+**Benefits of range expansion:**
+
+- **Compact notation** - Define dozens of interfaces in a single line
+- **Reduced errors** - Less repetitive typing means fewer mistakes
+- **Simplified maintenance** - Update interface ranges without editing individual entries
+- **Vendor compatibility** - Supports common interface naming patterns (Ethernet, GigabitEthernet, et-, ge-, etc.)
+
+This feature is used extensively throughout the bootstrap data for device templates, physical devices, and topology definitions.
+
+### Loading bootstrap data
+
+```bash
+uv run infrahubctl object load objects/bootstrap --branch main
+```
+
+## Testing
+
+The demo includes comprehensive tests:
+
+### Unit tests
+
+Located in `tests/unit/`, these test individual functions and classes:
+
+```python
+def test_topology_creator():
+    """Test topology creator utility."""
+    creator = TopologyCreator(client, data)
+    result = creator.create_devices()
+    assert len(result) == expected_count
+```
+
+Run unit tests:
+
+```bash
+uv run pytest tests/unit/
+```
+
+### Integration tests
+
+Located in `tests/integration/`, these test end-to-end workflows:
+
+```python
+async def test_dc_workflow(async_client_main):
+    """Test complete DC-3 workflow."""
+    # Load schemas
+    # Load data
+    # Run generator
+    # Validate results
+    assert devices_created
+```
+
+Run integration tests:
+
+```bash
+uv run pytest tests/integration/
+```
+
+### Code quality
+
+The project enforces code quality with:
+
+```bash
+# Type checking
+uv run mypy .
+
+# Linting
+uv run ruff check .
+
+# Formatting
+uv run ruff format .
+
+# All checks
+uv run invoke validate
+```
+
+## Development workflow
+
+### Setting up for development
+
+```bash
+# Clone repository
+git clone https://github.com/opsmill/infrahub-bundle-dc.git
+cd infrahub-bundle-dc
+
+# Install dependencies
+uv sync
+
+# Start Infrahub
+uv run invoke start
+
+# Optional: Enable Service Catalog in .env
+echo "INFRAHUB_SERVICE_CATALOG=true" >> .env
+uv run invoke restart
+
+# Load bootstrap data
+uv run invoke bootstrap
+```
+
+### Making changes
+
+1. **Create a feature branch** in Git
+2. **Modify code** (generators, transforms, checks, schemas, Service Catalog)
+3. **Add tests** for new functionality
+4. **Run quality checks** (`uv run invoke validate`)
+5. **Test locally** in Infrahub
+   - For Service Catalog changes: use `uv run invoke start --rebuild`
+6. **Commit changes** with descriptive messages
+7. **Create pull request** for review
+
+### Adding a new generator
+
+1. Create Python file in `generators/`
+2. Implement `InfrahubGenerator` class
+3. Register in `.infrahub.yml` under `generator_definitions`
+4. Create associated GraphQL query in `queries/`
+5. Add unit tests
+6. Test manually in Infrahub
+
+### Adding a new transform
+
+1. Create Python file in `transforms/`
+2. Implement `InfrahubTransform` class
+3. Create Jinja2 template in `templates/`
+4. Register in `.infrahub.yml` under `python_transforms` and `artifact_definitions`
+5. Create GraphQL query in `queries/`
+6. Add unit tests
+7. Test artifact generation
+
+### Adding a new check
+
+1. Create Python file in `checks/`
+2. Implement `InfrahubCheck` class
+3. Register in `.infrahub.yml` under `check_definitions`
+4. Create GraphQL query in `queries/`
+5. Add unit tests
+6. Test in proposed change workflow
+
+### Service catalog development
+
+The Service Catalog is a Streamlit application that runs in a Docker container. When making changes to the Service Catalog code, you need to rebuild the container image.
+
+#### Making changes to the service catalog
+
+1. **Edit Service Catalog code** in `service_catalog/`:
+   - `Home.py` - Main landing page
+   - `pages/1_Create_DC.py` - DC creation form
+   - `utils/` - Utility modules (api.py, config.py, ui.py)
+2. **Rebuild and restart** the Service Catalog container:
+
+```bash
+uv run invoke start --rebuild
+```
+
+The `--rebuild` flag forces Docker to rebuild the Service Catalog image with your code changes before starting the containers.
+
+#### When to use --rebuild
+
+Use the `--rebuild` flag when you modify:
+
+- Streamlit page files (`Home.py`, `pages/*.py`)
+- Service Catalog utilities (`service_catalog/utils/`)
+- Service Catalog dependencies (if you modify `service_catalog/requirements.txt`)
+- Service Catalog Dockerfile
+
+#### Testing service catalog changes
+
+1. Make your code changes in `service_catalog/`
+2. Rebuild and start with `uv run invoke start --rebuild`
+3. Access the Service Catalog at `http://localhost:8501`
+4. Test your changes in the web interface
+5. Check logs for errors:
+
+```bash
+docker logs infrahub-bundle-dc-service-catalog-1
+```
+
+#### Service catalog environment variables
+
+Configure the Service Catalog behavior via `.env`:
+
+```bash
+INFRAHUB_SERVICE_CATALOG=true     # Enable the service catalog
+DEFAULT_BRANCH=main               # Default branch to show
+GENERATOR_WAIT_TIME=60            # Seconds to wait for generator
+API_TIMEOUT=30                    # API request timeout
+API_RETRY_COUNT=3                 # Number of API retries
+```
+
+Changes to environment variables do not require `--rebuild`, just restart:
+
+```bash
+uv run invoke restart
+```
+
+## Extending schemas
+
+### Adding new attributes
+
+```yaml
+nodes:
+  - name: GenericDevice
+    namespace: Dcim
+    attributes:
+      - name: serial_number        # New attribute
+        kind: Text
+        optional: true
+        unique: true
+```
+
+### Adding new relationships
+
+```yaml
+relationships:
+  - name: backup_device          # New relationship
+    peer: DcimGenericDevice
+    cardinality: one
+    optional: true
+    description: "Backup device for redundancy"
+```
+
+### Creating new node types
+
+```yaml
+nodes:
+  - name: Router                 # New node type
+    namespace: Dcim
+    inherit_from:
+      - DcimGenericDevice
+    attributes:
+      - name: routing_instance
+        kind: Text
+        optional: false
+```
+
+After modifying schemas, reload them:
+
+```bash
+uv run infrahubctl schema load schemas --branch main
+```
+
+## Common development tasks
+
+### Debugging generators
+
+Add logging to see execution flow:
+
+```python
+import logging
+
+logger = logging.getLogger(__name__)
+
+class MyGenerator(InfrahubGenerator):
+    async def generate(self, data: dict) -> None:
+        logger.info(f"Processing topology: {data}")
+        # ... generator logic
+```
+
+### Testing transforms locally
+
+```python
+# Create test data
+test_data = {
+    "DcimGenericDevice": {
+        "edges": [{"node": {"name": {"value": "spine1"}}}]
+    }
+}
+
+# Initialize transform
+transform = SpineTransform(client=client)
+
+# Run transform
+result = await transform.transform(test_data)
+print(result)
+```
+
+### Validating templates
+
+Use Jinja2 directly to test templates:
+
+```python
+from jinja2 import Template
+
+template = Template(open("templates/spine.j2").read())
+config = template.render(hostname="spine1", interfaces=[...])
+print(config)
+```
+
+## Additional resources
+
+- **Infrahub documentation**: [docs.infrahub.app/](https://docs.infrahub.app/)

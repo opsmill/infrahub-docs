@@ -1,0 +1,391 @@
+---
+title: Installation guide
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This guide walks you through setting up the Infrahub demo environment on your local system. By the end, you'll have a fully functional Infrahub instance with pre-loaded schemas, data, and generators ready to explore.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+### Required software
+
+- **Python 3.11 or 3.12** - The demo requires a recent Python version
+- **[uv](https://github.com/astral-sh/uv)** - Fast Python package manager for dependency management
+- **Docker** - For running Infrahub containers and optionally Containerlab (or equivalent, e.g. OrbStack)
+- **Git** - For cloning the repository
+
+### System requirements
+
+- **Operating system**: macOS, Linux, or Windows (with WSL2)
+- **Memory**: At least 12GB RAM (16GB recommended)
+- **Disk space**: At least 10GB free space
+- **Network**: Internet connection for downloading dependencies and Docker images
+
+## Step 1: install uv
+
+If you don't have `uv` installed, follow the installation instructions for your operating system:
+
+```bash
+# macOS and Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows (PowerShell)
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Verify the installation:
+
+```bash
+uv --version
+```
+
+## Step 2: clone the repository
+
+Clone the demo repository to your local machine:
+
+```bash
+git clone https://github.com/opsmill/infrahub-bundle-dc.git
+cd infrahub-bundle-dc
+```
+
+## Step 3: install Python dependencies
+
+Use `uv` to install all required Python packages:
+
+```bash
+uv sync
+```
+
+This creates a virtual environment and installs all necessary packages including the Infrahub SDK.
+
+## Step 4: set up environment variables
+
+Configure environment variables for connecting to Infrahub and customizing the demo environment. Copy the example file and customize as needed:
+
+```bash
+cp .env.example .env
+```
+
+Then edit the `.env` file or export the variables directly in your shell.
+
+### Core Infrahub variables
+
+These variables configure connectivity to the Infrahub API:
+
+```bash
+# Infrahub API server address
+# Used by CLI tools and local scripts to connect to Infrahub
+# Default: http://localhost:8000
+INFRAHUB_ADDRESS=http://localhost:8000
+
+# Infrahub API authentication token
+# Generate a token in the Infrahub UI under Settings > API Tokens
+# For demo purposes, use the provided token below
+INFRAHUB_API_TOKEN=06438eb2-8019-4776-878c-0941b1f1d1ec
+
+# Infrahub UI URL for browser links
+# Used by the Service Catalog to generate clickable links to Infrahub UI pages
+# Should be the URL accessible from your browser
+# Default: http://localhost:8000
+INFRAHUB_UI_URL=http://localhost:8000
+```
+
+:::info
+The API token `06438eb2-8019-4776-878c-0941b1f1d1ec` is a demo token for local development only. Do not use this in production environments. Generate a new token in the Infrahub UI under Settings > API Tokens for production use.
+:::
+
+### Infrahub version and features
+
+Control which version of Infrahub to run and which features to enable:
+
+```bash
+# Infrahub version to use
+# Specify the version of Infrahub to run (for example, 1.5.1, stable, latest)
+# Default: 1.5.1
+INFRAHUB_VERSION=1.5.1
+
+# Enable Infrahub Enterprise features
+# Set to "true" to enable enterprise features, "false" for community edition
+# Default: false
+INFRAHUB_ENTERPRISE=false
+```
+
+### Service catalog configuration
+
+Enable and configure the optional Service Catalog Streamlit application:
+
+```bash
+# Enable the Service Catalog Streamlit application
+# Set to "true" to start the service catalog container with 'uv run invoke start'
+# Set to "false" (default) to run only the core Infrahub services
+# The service catalog provides a web UI for managing data center deployments
+INFRAHUB_SERVICE_CATALOG=false
+
+# Default branch to use when the service catalog application starts
+# Default: main
+DEFAULT_BRANCH=main
+
+# Time to wait (in seconds) for the Infrahub generator to complete after creating a DC
+# Increase this value if your generators take longer to complete
+# Default: 60
+GENERATOR_WAIT_TIME=60
+
+# API request timeout in seconds
+# Maximum time to wait for API requests to complete
+# Default: 30
+API_TIMEOUT=30
+
+# Number of retry attempts for failed API requests
+# Default: 3
+API_RETRY_COUNT=3
+```
+
+### Managing environment variables with direnv
+
+[direnv](https://direnv.net/) is a helpful tool for automatically loading environment variables from `.env` files when you enter the project directory. While not required, it streamlines the development workflow.
+
+To use direnv:
+
+1. Install direnv following the instructions at [direnv.net](https://direnv.net/docs/installation.html)
+2. Create a `.envrc` file in the project root:
+
+   ```bash
+   dotenv
+   ```
+
+3. Allow direnv to load the file:
+
+   ```bash
+   direnv allow
+   ```
+
+Now your environment variables will load automatically when you `cd` into the project directory.
+
+:::tip
+Other alternatives for managing environment variables include:
+
+- Using your shell's profile file (`.bashrc`, `.zshrc`)
+- Docker Compose environment files (`docker-compose.override.yml`)
+- Shell scripts that source the `.env` file
+- IDE/editor plugins for environment variable management
+
+:::
+
+## Step 5: start Infrahub
+
+Start the Infrahub containers using the included invoke task:
+
+```bash
+uv run invoke start
+```
+
+This command downloads and starts all required Docker containers. The first run may take several minutes as Docker images are pulled.
+
+Wait for all containers to be healthy. You can check the status with:
+
+```bash
+docker ps
+```
+
+You should see containers for:
+
+- `infrahub-server` - Main Infrahub API server
+- `infrahub-database` - PostgreSQL database
+- `infrahub-cache` - Redis cache
+- `infrahub-message-queue` - RabbitMQ message broker
+- `infrahub-git` - Git repository server
+
+## Step 6: access the Infrahub web interface
+
+Once the containers are running, open your web browser and navigate to:
+
+```web
+http://localhost:8000
+```
+
+You should see the Infrahub login screen. Use the default credentials:
+
+- **Username**: `admin`
+- **Password**: `infrahub`
+
+### Demo user accounts
+
+After running the bootstrap process (Step 7), additional user accounts are created to demonstrate role-based access control. These accounts provide different levels of access to Infrahub:
+
+#### Emma - read-only user
+
+- **Username**: `emma`
+- **Password**: `emma123`
+- **Access level**: Read-only
+- **Permissions**:
+  - View all objects across all branches
+  - Cannot create, update, or delete any objects
+  - Cannot manage schemas or merge proposed changes
+
+**Use this account to**:
+
+- Demonstrate read-only access for auditors or viewers
+- Show how Infrahub prevents unauthorized modifications
+- Test queries and views without risk of changing data
+
+#### Otto - schema reviewer
+
+- **Username**: `otto`
+- **Password**: `otto123`
+- **Access level**: Schema management and full object access
+- **Permissions**:
+  - Manage schemas (create, update, delete)
+  - Review and approve proposed changes
+  - Full CRUD (create, read, update, delete) operations on all objects
+
+**Use this account to**:
+
+- Demonstrate schema management workflows
+- Show the proposed change review process
+- Test advanced configurations with full object permissions
+
+:::info
+These demo accounts are created automatically when you run `uv run invoke bootstrap` (Step 7). The account creation script is located at `scripts/create_users_roles.py`.
+:::
+
+:::warning Security notice
+The passwords for these demo accounts are intentionally weak for demonstration purposes. In production environments, use strong passwords and integrate with your organization's authentication system (LDAP, SAML, or OIDC).
+:::
+
+## Step 7: bootstrap the demo data
+
+Now that Infrahub is running, load the demo schemas and data. You can use the automated bootstrap script or run the steps manually.
+
+<Tabs>
+  <TabItem value="automated" label="Automated (Recommended)">
+
+Run the bootstrap command to load everything in one step:
+
+```bash
+uv run invoke bootstrap
+```
+
+This command performs all the steps in the Manual tab automatically.
+
+  </TabItem>
+  <TabItem value="manual" label="Manual">
+
+Run each step individually:
+
+```bash
+# 1. Load schemas
+uv run infrahubctl schema load schemas
+
+# 2. Load menu definitions
+uv run infrahubctl menu load menus/menu-full.yml
+
+# 3. Load bootstrap data (locations, device types, platforms)
+uv run infrahubctl object load objects/bootstrap
+
+# 4. Load security data (optional)
+uv run infrahubctl object load objects/security/
+
+# 5. Populate security relationships (optional, required if you loaded security data)
+uv run python scripts/populate_security_relationships.py
+
+# 6. Add the demo repository
+uv run infrahubctl repository add DEMO https://github.com/opsmill/infrahub-bundle-dc.git --read-only --ref main
+
+# 7. Load event actions (optional, enables automatic generator execution)
+uv run infrahubctl object load objects/events/
+```
+
+  </TabItem>
+</Tabs>
+
+:::tip
+Loading schemas and data can take several minutes. Watch the console output to monitor progress.
+:::
+
+## Step 8: verify the installation
+
+To verify that everything is set up correctly:
+
+1. **Check the web interface** - Navigate to `http://localhost:8000` and log in
+2. **Browse the schema** - Go to **Schema** in the left sidebar and verify that you see schemas like `DcimGenericDevice`, `IpamIPPrefix`, `TopologyDataCenter`
+3. **View bootstrap data** - Navigate to **Infrastructure → Locations** and verify you see sample locations
+4. **Check generators** - Go to **Actions → Generator Definitions** and verify you see `create_dc` and `create_pop` generators
+
+## Troubleshooting
+
+### Port conflicts
+
+If port 8000 is already in use, you'll see an error when starting Infrahub. To resolve this:
+
+1. Stop the conflicting service using port 8000
+2. Or modify the port mapping in your Docker Compose configuration
+
+### Dependency issues
+
+If you encounter Python dependency errors:
+
+```bash
+# Clear the virtual environment and reinstall
+rm -rf .venv
+uv sync
+```
+
+### Docker issues
+
+If Docker containers fail to start:
+
+```bash
+# Stop and remove all containers
+uv run invoke destroy
+
+# Restart
+uv run invoke start
+```
+
+### Schema loading fails
+
+If schema loading fails with validation errors, ensure you're using a compatible version of Infrahub. This demo is tested with Infrahub 1.5.1 and later.
+
+## Next steps
+
+Now that you have Infrahub running with the demo data loaded, you're ready to:
+
+- Follow the **[user walkthrough](./user-walkthrough.mdx)** to create your first data center topology
+- Explore the **[concepts](./concepts.mdx)** to understand the architecture
+- Review the **[developer guide](./developer-guide.mdx)** to understand how the demo works under the hood
+
+## Managing your environment
+
+### Stopping Infrahub
+
+To stop the containers without removing data:
+
+```bash
+uv run invoke stop
+```
+
+### Destroying the environment
+
+To completely remove containers and volumes (fresh start):
+
+```bash
+uv run invoke destroy
+```
+
+### Restarting a specific component
+
+To restart a single container:
+
+```bash
+uv run invoke restart <component-name>
+```
+
+For example, to restart the API server:
+
+```bash
+uv run invoke restart infrahub-server
+```

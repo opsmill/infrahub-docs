@@ -1,0 +1,485 @@
+---
+title: Understanding the concepts
+---
+
+This document explains the architectural patterns, design decisions, and core Infrahub concepts demonstrated in this demo. Read this to understand the "why" behind design-driven automation, composable topologies, generators, and the overall approach to infrastructure management.
+
+## Design-driven automation
+
+Traditional infrastructure automation often works at the device configuration level. You define configurations for individual devices, then deploy them. This approach has limitations when managing large-scale infrastructure.
+
+### The traditional approach
+
+In traditional automation:
+
+1. You manually define each device and its configuration
+2. Configurations are tightly coupled to specific devices
+3. Scaling requires duplicating configuration patterns
+4. Changing architecture means updating many individual configs
+5. It's difficult to maintain consistency across the infrastructure
+
+### The design-driven approach
+
+Design-driven automation flips this model. Instead of defining devices, you define **intent** at a higher abstraction level:
+
+1. You specify **what** you want (for example, "a 4-spine, 8-leaf data center")
+2. Generators translate high-level designs into concrete infrastructure
+3. Templates produce device-specific configurations from structured data
+4. Scaling means adjusting design parameters, not editing configs
+5. Architectural changes propagate automatically
+
+The demo implements this pattern. When you load `objects/dc/dc-arista-s.yml`, you're not defining 20 devices. You're defining a **design specification** that a generator transforms into complete infrastructure.
+
+### Benefits
+
+- **Abstraction** - Work at the topology level, not device level
+- **Consistency** - Generators enforce best practices and standards
+- **Scalability** - Grow from 10 to 1000 devices by adjusting parameters
+- **Maintainability** - Change design templates, not individual configs
+- **Reusability** - Same generator can create DC-2, DC-3, DC-4 with different inputs
+
+## Composable topologies
+
+The demo uses composable building blocks to construct complex network architectures.
+
+### Composition model
+
+```tree
+Topology Design
+    ├─ Device Templates (spine, leaf, border-leaf)
+    ├─ Connectivity Patterns (fabric peering)
+    ├─ Address Pools (management, loopback, fabric)
+    ├─ Routing Design (eBGP, OSPF)
+    └─ Service Overlays (EVPN, L2VPN, L3VPN)
+```
+
+Each layer builds on the previous one:
+
+1. **Device templates** define interface layouts for each device role
+2. **Connectivity patterns** define how devices interconnect
+3. **Address pools** provide IP address and VLAN allocation
+4. **Routing design** specifies underlay and overlay protocols
+5. **Service overlays** enable tenant networks and services
+
+### Example: DC-3 composition
+
+When you create DC-3, the generator:
+
+1. Selects spine, leaf, and border-leaf **templates**
+2. Applies fabric **connectivity pattern** (full mesh spine-to-leaf)
+3. Allocates addresses from **pools** (loopback /32s, fabric /31s)
+4. Configures **routing** (eBGP underlay, iBGP EVPN overlay)
+5. Enables **EVPN service** framework
+
+This composition allows you to:
+
+- Swap eBGP for OSPF underlay by changing one parameter
+- Scale from 2 spines to 4 spines by updating device count
+- Change addressing scheme by modifying pool definitions
+- Add new device roles without rewriting generators
+
+### Reusability across topologies
+
+The same composable patterns work for different topology types:
+
+- **Data centers** use spine-leaf composition with EVPN overlay
+- **POPs** use edge router composition with BGP peering
+- **Segments** use service endpoint composition with load balancers
+
+This reusability reduces code duplication and makes patterns portable.
+
+## Generators as transformation engines
+
+Generators transform abstract designs into concrete infrastructure. They embody business rules, network design patterns, and operational best practices.
+
+### Generator responsibility
+
+A generator's job is to:
+
+1. **Read design input** - Parse high-level topology specifications
+2. **Apply business rules** - Enforce naming conventions, numbering schemes
+3. **Create infrastructure** - Generate devices, interfaces, IP addresses
+4. **Establish relationships** - Connect devices, assign addresses, configure protocols
+5. **Allocate resources** - Draw from IP pools, VLAN pools, ASN pools
+
+### Example: create_dc generator
+
+The DC generator implements a spine-leaf fabric pattern:
+
+```python
+async def generate(self, data: dict) -> None:
+    # Read design parameters
+    spine_count = data["spine_count"]
+    leaf_count = data["leaf_count"]
+    underlay_protocol = data["underlay_protocol"]
+
+    # Create resource pools
+    await self.create_address_pools()
+
+    # Create devices from templates
+    await self.create_devices()
+
+    # Full mesh fabric peering
+    await self.create_fabric_peering()
+
+    # Configure underlay routing
+    if underlay_protocol == "ospf":
+        await self.create_ospf_underlay()
+    else:
+        await self.create_ebgp_underlay()
+
+    # Configure overlay routing
+    await self.create_ibgp_overlay()
+```
+
+### Benefits of generators
+
+- **Encapsulation** - Complex logic in one place
+- **Testability** - Unit test generator logic separately
+- **Consistency** - Same generator always produces same output for same input
+- **Evolvability** - Update generator to change all future topologies
+- **Auditability** - Generator code documents design decisions
+
+## Resource pools and allocation
+
+Resource pools provide centralized management of scarce resources like IP addresses, VLANs, and ASNs.
+
+### Pool concept
+
+A resource pool is a defined range of resources that Infrahub allocates from as needed:
+
+```yaml
+- kind: IpamIPPrefix
+  data:
+    - prefix: "10.0.0.0/16"
+      pool_type: "management"
+      description: "Management network pool"
+```
+
+When a generator needs an IP address for a management interface, it allocates from this pool. Infrahub tracks allocations and prevents conflicts.
+
+### Pool types in the demo
+
+- **Management pools** - Out-of-band management addresses
+- **Loopback pools** - Router IDs and VTEP addresses
+- **Fabric pools** - Point-to-point links between switches
+- **Service pools** - Tenant network addressing
+- **VLAN pools** - Layer 2 segment identifiers
+- **ASN pools** - BGP autonomous system numbers
+
+### Benefits
+
+- **Automatic allocation** - No manual IP planning
+- **Conflict prevention** - Infrahub ensures uniqueness
+- **Visibility** - See which addresses are allocated vs available
+- **Reclamation** - Deleting devices returns addresses to pool
+- **Hierarchical allocation** - Pools can allocate from parent pools
+
+## Schema-driven data modeling
+
+Schemas define the structure of your infrastructure data. They specify object types, attributes, relationships, and constraints.
+
+### Why schemas matter
+
+Schemas provide:
+
+1. **Type safety** - Attributes have defined types (text, number, IP address)
+2. **Validation** - Constraints enforce data integrity
+3. **Relationships** - Formalize connections between objects
+4. **Extensibility** - Inheritance allows customization without modification
+5. **API generation** - Infrahub auto-generates GraphQL API from schemas
+6. **Computed attributes** - Automatically derive values from other attributes
+7. **Range expansion** - Define multiple items with compact notation
+
+### Schema evolution
+
+Schemas can evolve over time through:
+
+- **Attribute addition** - Add new fields to existing nodes
+- **Relationship addition** - Create new connections between nodes
+- **Inheritance** - Extend base nodes with specialized types
+- **Constraints** - Add uniqueness or validation rules
+
+When you extend schemas, existing data remains compatible. This allows iterative refinement.
+
+### Schema organization
+
+The demo organizes schemas by domain:
+
+- **Base schemas** - Core models used across all topologies
+- **Extension schemas** - Domain-specific models (routing, security, load balancing)
+- **Namespaces** - Group related nodes (Dcim, Ipam, Service, Security)
+
+This organization supports:
+
+- **Modularity** - Enable/disable domains as needed
+- **Clarity** - Related nodes grouped together
+- **Maintainability** - Domain experts can own their schemas
+
+### Advanced schema features
+
+The demo showcases several advanced Infrahub schema capabilities:
+
+**Computed attributes** automatically generate values based on other attributes. For example, Autonomous System names are computed from ASN values (AS65000 from ASN 65000) using Jinja2 templates. This ensures naming consistency and eliminates manual data entry. [Learn more about computed attributes](https://docs.infrahub.app/topics/computed-attributes).
+
+**Interface range expansion** allows compact definition of multiple interfaces. Instead of defining 30 interfaces individually, you can use `Ethernet1/[1-30]` which automatically expands to `Ethernet1/1` through `Ethernet1/30`. This dramatically reduces YAML verbosity in device templates and topology definitions. [Learn more about range expansion](https://docs.infrahub.app/python-sdk/reference/templating#netutils-filters).
+
+## Branch-based infrastructure changes
+
+Infrahub uses Git-like branching for infrastructure data. This enables safe, reviewable changes with rollback capability.
+
+### Branch workflow
+
+1. **Create branch** - Isolate changes from main branch
+2. **Make modifications** - Add devices, change configs, update relationships
+3. **Validate changes** - Run checks and generate artifacts
+4. **Review changes** - Examine diffs and validation results
+5. **Merge or discard** - Apply changes to main or abandon the branch
+
+### Why branches matter
+
+Without branches, every change immediately affects the production infrastructure. This makes it risky to experiment or test ideas.
+
+Branches provide:
+
+- **Safety** - Test changes without affecting main
+- **Collaboration** - Multiple teams can work on different branches
+- **Review** - Examine changes before they take effect
+- **Rollback** - Discard unsuccessful experiments
+- **History** - Track what changed and when
+
+### Proposed changes
+
+Proposed changes are Infrahub's equivalent of pull requests. They:
+
+1. Show diffs between source and destination branches
+2. Run validation checks automatically
+3. Regenerate affected artifacts
+4. Provide a review interface for approvals
+5. Merge atomically when approved
+
+This workflow brings software development practices (code review, CI/CD, version control) to infrastructure management.
+
+## Artifacts and configuration generation
+
+Artifacts are the final outputs that deploy to devices. The demo generates configurations, topology files, and documentation.
+
+### Artifact generation flow
+
+```text
+GraphQL Query → Transform → Template → Artifact
+```
+
+1. **Query** - Fetch device data from Infrahub
+2. **Transform** - Process data into template-friendly structure
+3. **Template** - Render Jinja2 template with processed data
+4. **Artifact** - Store generated configuration in Infrahub
+
+### Why separate transforms and templates
+
+Separating Python transforms from Jinja2 templates provides:
+
+- **Reusability** - Same template works with different transforms
+- **Testability** - Test transform logic and template rendering independently
+- **Maintainability** - Network engineers can edit templates without Python knowledge
+- **Flexibility** - Swap templates for different vendor platforms
+
+### Artifact regeneration
+
+Artifacts automatically regenerate when:
+
+- Data changes (device attributes, relationships)
+- Templates change (update Jinja2 files)
+- Transforms change (update Python logic)
+- Proposed changes are created (for review)
+
+This ensures artifacts always reflect current state.
+
+## Validation and checks
+
+Checks validate infrastructure before deployment. They catch errors, enforce policies, and ensure consistency.
+
+### Check types
+
+- **Configuration validation** - Verify device configs are valid
+- **Connectivity validation** - Ensure devices are properly connected
+- **Policy enforcement** - Check against organizational standards
+- **Best practice validation** - Verify design patterns are followed
+
+### When checks run
+
+Checks execute:
+
+1. **On proposed change creation** - Before merge
+2. **On branch commits** - During development
+3. **On demand** - Manual execution
+4. **On schedule** - Periodic validation (if configured)
+
+### Check outcomes
+
+Checks produce:
+
+- **Errors** - Must be fixed before merge
+- **Warnings** - Should be reviewed but don't block merge
+- **Info** - Informational messages for context
+
+This tiered approach balances strictness with flexibility.
+
+## Integration patterns
+
+The demo demonstrates integration with external tools and systems.
+
+### Repository integration
+
+Infrahub can sync with Git repositories to:
+
+- Load generators, transforms, and checks from code repos
+- Version control infrastructure-as-code components
+- Enable GitOps workflows
+- Collaborate using standard Git workflows
+
+### CI/CD integration
+
+The demo includes GitHub Actions for:
+
+- Linting and type checking
+- Running unit tests
+- Running integration tests
+- Validating schemas and data
+
+This ensures code quality and catches issues before deployment.
+
+### Containerlab integration
+
+The demo can generate Containerlab topologies for:
+
+- Virtual lab deployment
+- Testing configurations in simulation
+- Training and demonstrations
+- Development and testing
+
+This provides a complete development-to-production workflow.
+
+## Patterns for scale
+
+The demo implements patterns that scale from small to large deployments.
+
+### Batching
+
+Generators use batching to efficiently create many objects:
+
+```python
+batch = await client.create_batch()
+
+for device in devices:
+    batch.add(kind="DcimGenericDevice", data=device)
+
+await batch.execute()
+```
+
+Batching reduces API calls and improves performance.
+
+### Async operations
+
+All SDK operations use async/await for concurrency:
+
+```python
+# Sequential (slow)
+device1 = await create_device("spine1")
+device2 = await create_device("spine2")
+
+# Concurrent (fast)
+results = await asyncio.gather(
+    create_device("spine1"),
+    create_device("spine2")
+)
+```
+
+This allows generators to create infrastructure in parallel.
+
+### Hierarchical allocation
+
+Resource pools support hierarchy for delegation:
+
+```tree
+Root Pool (10.0.0.0/8)
+  ├─ Region 1 (10.0.0.0/16)
+  │   ├─ DC-1 (10.0.0.0/20)
+  │   └─ DC-2 (10.0.16.0/20)
+  └─ Region 2 (10.1.0.0/16)
+```
+
+This supports multi-region deployments with delegated address management.
+
+## Mental models
+
+### Infrastructure as data
+
+Think of infrastructure not as static configurations, but as structured data that can be queried, transformed, and versioned like any other data.
+
+Traditional: "Here are 50 configuration files"
+Design-driven: "Here's data representing 50 devices, query what you need"
+
+### Generators as factories
+
+Generators are factories that produce infrastructure from blueprints. The blueprint (design data) specifies what to build. The factory (generator) knows how to build it.
+
+Blueprint: "4 spines, 8 leaves, eBGP underlay"
+Factory: Creates 12 devices with 200+ interfaces and relationships
+
+### Schemas as contracts
+
+Schemas are contracts between producers (generators, users) and consumers (transforms, checks). They define what data must be provided and what shape it takes.
+
+Contract: "A device must have a name, role, platform, and location"
+Producers: Ensure these fields are populated
+Consumers: Can rely on these fields existing
+
+## Design philosophy
+
+The demo embodies several design principles:
+
+### Declarative over imperative
+
+Describe the desired state (declarative) rather than steps to achieve it (imperative).
+
+Imperative: "Create spine1, create eth1, assign IP 10.0.0.1, enable interface"
+Declarative: "Spine1 exists with eth1 having IP 10.0.0.1 in enabled state"
+
+### Data-driven over code-driven
+
+Use data to drive behavior rather than hard-coding logic.
+
+Code-driven: `if dc == "DC-3": create_4_spines()`
+Data-driven: `for _ in range(design.spine_count): create_spine()`
+
+### Separation of concerns
+
+Separate concerns into focused components:
+
+- Schemas define structure
+- Generators create objects
+- Transforms produce configs
+- Templates format output
+- Checks validate results
+
+Each component has a single responsibility.
+
+### Convention over configuration
+
+Use sensible defaults and conventions to reduce configuration burden.
+
+Default: Spine interfaces are "Ethernet1-32"
+Convention: Spines connect to all leaves
+Configuration: Override when needed
+
+## Next steps
+
+Now that you understand the concepts, you can:
+
+- **Build new topologies** - Apply patterns to different use cases
+- **Extend generators** - Add new topology types or enhance existing ones
+- **Customize schemas** - Add organization-specific attributes
+- **Create custom checks** - Enforce your policies and standards
+
+For implementation details, see the [developer guide](./developer-guide.mdx).

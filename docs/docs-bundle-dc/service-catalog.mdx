@@ -1,0 +1,401 @@
+---
+title: Using the service catalog
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This tutorial walks you through using Infrahub's Service Catalog web interface to manage data center and colocation center deployments. The Service Catalog provides a user-friendly web application built with Streamlit that simplifies infrastructure provisioning by automating branch creation, data loading, and generator execution.
+
+By the end of this tutorial, you'll understand how to enable the Service Catalog, navigate the interface, view existing infrastructure, and create new data centers through a guided form-based workflow.
+
+## What you'll accomplish
+
+In this tutorial, you will:
+
+1. Enable the Service Catalog container
+2. Access the web interface
+3. Switch between Infrahub branches
+4. View existing data centers and colocation centers
+5. Create a new data center using the web form
+6. Understand the automated workflow behind the scenes
+
+## Prerequisites
+
+Before starting this tutorial, ensure you have:
+
+- Completed the [installation guide](./install.mdx) and have Infrahub running
+- Completed the [user walkthrough](./user-walkthrough.mdx) tutorial
+- Docker and Docker Compose installed and configured
+- Access to modify environment variables or Docker Compose configuration
+
+:::tip
+The Service Catalog is an optional component that simplifies infrastructure provisioning. It's particularly useful for teams who want a web-based interface for infrastructure requests.
+:::
+
+## Step 1: enable the service catalog
+
+The Service Catalog runs as a separate Docker container that can be enabled through environment variables or Docker Compose profiles.
+
+<Tabs>
+  <TabItem value="env" label="Environment Variables (Recommended)">
+
+1. Open your `.env` file (or create it from `.env.example`)
+2. Set the Service Catalog variable to true:
+
+```bash
+INFRAHUB_SERVICE_CATALOG=true
+```
+
+3. Restart Infrahub to apply the changes:
+
+```bash
+uv run invoke restart
+```
+
+  </TabItem>
+  <TabItem value="profile" label="Docker Compose Profiles">
+
+Start Infrahub with the Service Catalog profile:
+
+```bash
+docker-compose --profile service-catalog up -d
+```
+
+  </TabItem>
+</Tabs>
+
+### Verify the container is running
+
+Check that the service-catalog container is running:
+
+```bash
+docker ps --filter "name=service-catalog"
+```
+
+You should see a container named `infrahub-bundle-dc-service-catalog-1` or similar in the output.
+
+## Step 2: access the service catalog
+
+Once the container is running, access the Service Catalog web interface:
+
+1. Open your web browser
+2. Navigate to `http://localhost:8501`
+3. The Service Catalog landing page should load
+
+The interface displays:
+
+- **Branch selector** - Dropdown to switch between Infrahub branches
+- **Data centers** - List of existing TopologyDataCenter objects
+- **Colocation centers** - List of existing TopologyColocationCenter objects
+- **Create new data center** - Button to access the DC creation form
+
+:::info
+If the page doesn't load, verify the container is running and check the logs with `docker logs infrahub-bundle-dc-service-catalog-1`.
+:::
+
+## Step 3: switch branches and view infrastructure
+
+The Service Catalog allows you to view infrastructure across different Infrahub branches.
+
+### Switch branches
+
+1. Locate the **branch selector** dropdown at the top of the page
+2. Click the dropdown to see all available branches
+3. Select a branch (for example, main, add-dc3, etc.)
+4. The page will refresh and display infrastructure from the selected branch
+
+### View existing infrastructure
+
+After selecting a branch, you'll see two lists:
+
+#### Data centers
+
+Each data center card displays:
+
+- Data center name (for example, DC-1, DC-2, DC-3)
+- Location information
+- Link to view in Infrahub UI
+
+#### Colocation centers
+
+Each colocation center card displays:
+
+- Colocation center name (for example, PAR-1, LON-1)
+- Location information
+- Link to view in Infrahub UI
+
+:::tip
+The lists automatically update when you switch branches, allowing you to see infrastructure in different states (main, proposed changes, feature branches).
+:::
+
+## Step 4: create a new data center
+
+The Service Catalog provides a guided form for creating new data centers.
+
+### Access the creation form
+
+1. Click the **Create New Data Center** button
+2. The form page will load with several input fields
+
+### Fill in the form
+
+Complete each field in the form:
+
+#### 1. Data center name
+
+- Enter a unique name for your data center (for example, DC-6)
+- This will be used in the branch name and as the DC identifier
+
+#### 2. Location
+
+- Select a location from the dropdown
+- Options include existing LocationBuilding objects (for example, PAR-1, LON-1)
+- The location determines where the data center will be deployed
+
+#### 3. Provider
+
+- Select a provider from the dropdown
+- Options include existing ProviderNetworkProvider objects
+- The provider supplies connectivity and services
+
+#### 4. Design
+
+- Select a design template from the dropdown
+- Options include predefined data center architectures
+- Different designs support different vendors and topologies
+
+#### 5. Management subnet
+
+- Select an IP prefix for management interfaces
+- Used for out-of-band device management
+- Choose an available /24 or appropriate size
+
+#### 6. Underlay subnet
+
+- Select an IP prefix for underlay routing
+- Used for spine-leaf physical connectivity
+- Typically a /24 or /16 depending on DC size
+
+#### 7. Overlay subnet
+
+- Select an IP prefix for overlay services
+- Used for VXLAN and EVPN addressing
+- Usually a /16 or larger for tenant networks
+
+### Submit the request
+
+1. Review all form fields for accuracy
+2. Click the **Submit** button
+3. The Service Catalog will display a progress indicator
+
+## Step 5: understand the behind-the-scenes workflow
+
+When you submit the form, the Service Catalog executes an automated workflow that:
+
+### 1. Creates a branch
+
+The Service Catalog creates a new branch in Infrahub with the naming pattern `add-{dc_name}`:
+
+```text
+Branch name: add-dc6 (if you named your DC "DC-6")
+```
+
+This branch isolates your new infrastructure from the main branch, allowing review before merging.
+
+### 2. Loads data to the branch
+
+The Service Catalog constructs a DesignTopologyDesign YAML object with your form inputs and loads it to the new branch:
+
+```yaml
+nodes:
+  - kind: DesignTopologyDesign
+    data:
+      name: DC-6
+      location: PAR-1
+      provider: provider-1
+      design_template: dc-design-template-1
+      mgmt_prefix: 10.0.6.0/24
+      underlay_prefix: 192.168.6.0/24
+      overlay_prefix: 172.16.0.0/16
+```
+
+### 3. Waits for the generator
+
+After loading data, the Service Catalog waits for Infrahub's generator to execute:
+
+- Default wait time: 60 seconds (configurable via `GENERATOR_WAIT_TIME`)
+- The generator (for example, `create_dc`) processes the design data
+- Devices, interfaces, cables, and IP addresses are automatically created
+
+### 4. Creates a proposed change
+
+Once the generator completes, the Service Catalog creates a Proposed Change in Infrahub:
+
+- Compares the new branch to the main branch
+- Shows all differences (new devices, interfaces, configurations)
+- Allows review before merging to production
+
+### View the results
+
+After the workflow completes:
+
+1. Navigate to **Proposed Changes** in the Infrahub UI (`http://localhost:8000`)
+2. Find the proposed change for your DC (for example, "Add DC-6")
+3. Review the **Data** tab to see new objects
+4. Review the **Artifacts** tab to see generated configurations
+5. Approve and merge when ready
+
+:::tip
+This workflow demonstrates infrastructure-as-code principles: declarative design data is transformed into imperative implementation through automated generators.
+:::
+
+## Troubleshooting
+
+### Service catalog container not starting
+
+If the container fails to start:
+
+1. Check Docker logs:
+
+```bash
+docker logs infrahub-bundle-dc-service-catalog-1
+```
+
+2. Verify environment variables in `.env`:
+
+```bash
+INFRAHUB_SERVICE_CATALOG=true
+INFRAHUB_ADDRESS=http://infrahub-server:8000
+```
+
+3. Ensure Infrahub server is running and accessible:
+
+```bash
+docker ps --filter "name=infrahub-server"
+```
+
+### Cannot access http://localhost:8501
+
+If the web interface doesn't load:
+
+1. Verify port 8501 is not in use by another application
+2. Check container port mapping:
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Ports}}" --filter "name=service-catalog"
+```
+
+3. Try accessing via container IP directly:
+
+```bash
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' infrahub-bundle-dc-service-catalog-1
+```
+
+### Branch selector is empty
+
+If no branches appear in the dropdown:
+
+1. Verify Infrahub server connection from the container:
+
+```bash
+docker exec infrahub-bundle-dc-service-catalog-1 curl http://infrahub-server:8000/api/schema
+```
+
+2. Check that branches exist in Infrahub:
+
+```bash
+uv run infrahubctl branch list
+```
+
+3. Review Service Catalog logs for API errors:
+
+```bash
+docker logs infrahub-bundle-dc-service-catalog-1 | grep -i error
+```
+
+### Generator timeout errors
+
+If DC creation fails with timeout errors:
+
+1. Increase the wait time in `.env`:
+
+```bash
+GENERATOR_WAIT_TIME=120  # Increase to 120 seconds
+```
+
+2. Check generator status in Infrahub UI under **Task Management**
+3. Verify generator definition is registered in `.infrahub.yml`
+
+### Form submission fails
+
+If the submit button doesn't work:
+
+1. Check browser console for JavaScript errors (F12 → Console)
+2. Verify all required fields are filled
+3. Check that selected options (location, provider, design) exist in Infrahub
+4. Review Service Catalog logs during submission:
+
+```bash
+docker logs -f infrahub-bundle-dc-service-catalog-1
+```
+
+## Advanced usage
+
+### Custom default branch
+
+Change the default branch shown in the branch selector:
+
+```bash
+# In .env
+DEFAULT_BRANCH=production
+```
+
+### Adjust timeouts
+
+Tune timeouts for your environment:
+
+```bash
+# In .env
+GENERATOR_WAIT_TIME=90  # Generator execution wait
+API_TIMEOUT=30          # API request timeout
+API_RETRY_COUNT=3       # API retry attempts
+```
+
+### Integration with CI/CD
+
+The Service Catalog workflow can be automated via API:
+
+1. POST form data to Service Catalog endpoint
+2. Wait for branch creation
+3. Run validation checks
+4. Auto-approve proposed changes if checks pass
+
+This enables self-service infrastructure provisioning with approval gates.
+
+## What you've learned
+
+Congratulations! You've explored Infrahub's Service Catalog:
+
+- ✅ Enabled the Service Catalog container
+- ✅ Accessed the web interface at http://localhost:8501
+- ✅ Switched between branches to view different infrastructure states
+- ✅ Viewed existing data centers and colocation centers
+- ✅ Created a new data center using the guided form
+- ✅ Understood the automated workflow (branch → data → generator → proposed change)
+
+## Next steps
+
+Now that you understand the Service Catalog, you can:
+
+- **Customize the form** - Modify `service_catalog/pages/create_dc.py` to add fields
+- **Add validation** - Implement checks before submission
+- **Extend to other infrastructure types** - Create forms for POPs, segments, or services
+- **Integrate with approval workflows** - Connect to ticketing or change management systems
+- **Build custom dashboards** - Add Streamlit pages for monitoring and reporting
+
+For deeper understanding:
+
+- **[Developer guide](./developer-guide.mdx)** - Learn about generators and transforms
+- **[Containerlab deployment](./containerlab-deployment.mdx)** - Test generated configurations in virtual labs
+- **[Security management](./security-management.mdx)** - Manage firewall policies through Infrahub
