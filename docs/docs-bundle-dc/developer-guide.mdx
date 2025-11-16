@@ -512,23 +512,246 @@ uv run pytest tests/unit/
 
 ### Integration tests
 
-Located in `tests/integration/`, these test end-to-end workflows:
+Integration tests validate end-to-end workflows by spinning up a complete Infrahub instance, loading schemas and data, and executing realistic user scenarios. These tests ensure that both the bundle-dc code and the Infrahub platform work correctly together.
+
+#### How integration tests work
+
+Integration tests use **infrahub-testcontainer**, a Python package that provides Docker-based test fixtures. This approach:
+
+1. **Spins up Infrahub in CI/CD** - Launches a full Infrahub instance (server, database, cache) in Docker containers
+2. **Loads schemas** - Installs all schema definitions from `schemas/`
+3. **Loads bootstrap data** - Populates initial data from `objects/bootstrap/`
+4. **Adds repository** - Registers the demo repository for generators and transforms
+5. **Executes workflows** - Runs complete user scenarios (create branch, load design, run generator, create proposed change, merge)
+6. **Validates results** - Verifies that all expected objects and configurations were created
+
+This approach mirrors exactly what an end user would do, providing high confidence that the system works as documented.
+
+#### Example integration test workflow
+
+The main integration test in `tests/integration/test_workflow.py` validates the complete DC-3 deployment workflow:
 
 ```python
-async def test_dc_workflow(async_client_main):
-    """Test complete DC-3 workflow."""
-    # Load schemas
-    # Load data
-    # Run generator
-    # Validate results
-    assert devices_created
+class TestDCWorkflow(TestInfrahubDockerWithClient):
+    """Test the complete DC-3 workflow from the demo."""
+
+    async def test_01_schema_load(self, client_main):
+        """Load all schemas into Infrahub."""
+        # Executes: infrahubctl schema load schemas
+        pass
+
+    async def test_02_bootstrap_load(self, client_main):
+        """Load bootstrap data."""
+        # Executes: infrahubctl object load objects/bootstrap
+        pass
+
+    def test_05_repository_add(self, client_main):
+        """Add the demo repository."""
+        # Executes: infrahubctl repository add DEMO ...
+        pass
+
+    def test_06_create_branch(self, client_main, default_branch):
+        """Create a new branch for the DC-3 deployment."""
+        # Executes: infrahubctl branch create add-dc3
+        pass
+
+    async def test_07_load_dc3_design(self, client_main, default_branch):
+        """Load DC-3 design data onto the branch."""
+        # Executes: infrahubctl object load objects/dc/dc-arista-s.yml --branch add-dc3
+        pass
+
+    async def test_09_run_generator(self, async_client_main, default_branch):
+        """Run the create_dc generator for DC-3."""
+        # Triggers generator via GraphQL mutation
+        # Waits for completion (up to 30 minutes for complex topologies)
+        pass
+
+    async def test_10_verify_devices_created(self, async_client_main, default_branch):
+        """Verify that devices were created by the generator."""
+        devices = await client.all(kind="DcimGenericDevice")
+        assert devices, "No devices found after generator run"
+        pass
+
+    def test_11_create_diff(self, client_main, default_branch):
+        """Create a diff between the branch and main."""
+        pass
+
+    async def test_12_create_proposed_change(self, async_client_main, default_branch):
+        """Create a proposed change for the branch."""
+        # Creates PC via GraphQL mutation
+        # Waits for checks to run
+        pass
+
+    def test_13_merge_proposed_change(self, client_main, default_branch):
+        """Merge the proposed change."""
+        # Merges PC to main branch
+        pass
+
+    async def test_14_verify_merge_to_main(self, async_client_main):
+        """Verify that DC-3 and devices exist in main branch."""
+        dc3_main = await client.get(kind="TopologyDataCenter", name__value="DC-3")
+        assert dc3_main, "DC-3 not found in main branch after merge"
+        pass
 ```
 
-Run integration tests:
+Each test method represents one step in the workflow, ensuring that the entire process works correctly from start to finish.
+
+#### Running integration tests
+
+Run all integration tests:
 
 ```bash
 uv run pytest tests/integration/
 ```
+
+Run a specific test:
+
+```bash
+uv run pytest tests/integration/test_workflow.py::TestDCWorkflow::test_09_run_generator -v
+```
+
+Watch test execution with verbose output:
+
+```bash
+uv run pytest tests/integration/ -vv -s
+```
+
+#### Benefits for OpsMill and customers
+
+Integration tests provide critical value for both OpsMill (the company behind Infrahub) and customers using this bundle:
+
+##### Testing new Infrahub versions
+
+When OpsMill releases a new version of Infrahub, the integration tests verify backward compatibility:
+
+```bash
+# Test with Infrahub 1.0.0
+INFRAHUB_VERSION=1.0.0 uv run pytest tests/integration/
+
+# Test with Infrahub 1.1.0
+INFRAHUB_VERSION=1.1.0 uv run pytest tests/integration/
+```
+
+If tests pass, the new Infrahub version is compatible with existing workflows. If tests fail, OpsMill knows exactly which workflows broke and can fix regressions before release.
+
+##### Validating customer deployments
+
+Customers can run integration tests to verify their environment before deploying changes:
+
+- **Before upgrading Infrahub** - Run tests to ensure the new version won't break existing generators, transforms, or checks
+- **After customizing the bundle** - Run tests to ensure modifications didn't break core functionality
+- **In CI/CD pipelines** - Automatically test every code change before merging
+
+##### Continuous integration
+
+Integration tests run automatically in GitHub Actions on every commit and pull request:
+
+```yaml
+name: Integration Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run integration tests
+        run: uv run pytest tests/integration/
+```
+
+This catches breaking changes early, before they reach production.
+
+##### Regression prevention
+
+As bugs are discovered and fixed, new integration tests are added to prevent regressions:
+
+1. Bug discovered: "Generator fails when creating more than 10 devices"
+2. Fix applied to generator code
+3. Integration test added to verify fix
+4. Future changes can't reintroduce the bug without failing the test
+
+#### Test isolation and cleanup
+
+Integration tests use Docker containers that are created fresh for each test run and destroyed afterward. This ensures:
+
+- **Clean state** - No leftover data from previous runs
+- **Reproducibility** - Tests produce the same results every time
+- **Parallelization** - Multiple test runs can execute simultaneously without conflicts
+
+The testcontainer automatically handles:
+
+- Starting Infrahub server, database, and cache containers
+- Waiting for services to be ready
+- Providing API clients pre-configured to connect to the test instance
+- Stopping and removing containers after tests complete
+
+#### Understanding test failures
+
+When an integration test fails, the error message indicates which step failed:
+
+```text
+FAILED test_09_run_generator - Generator task finished with state FAILED
+
+FAILED test_14_verify_merge_to_main - DC-3 not found in main branch after merge
+```
+
+Enhanced logging in the tests shows:
+
+- Task states and completion status
+- GraphQL query results
+- API responses
+- Object counts and names
+
+This makes it straightforward to identify whether the issue is:
+
+- A schema problem (objects can't be created)
+- A generator bug (topology creation fails)
+- A transform issue (artifacts aren't generated)
+- A check failure (validation rejects valid configs)
+- An Infrahub platform bug (API errors, task failures)
+
+#### Writing new integration tests
+
+When adding new features, create integration tests that:
+
+1. **Test the happy path** - Verify the feature works when used correctly
+2. **Test error handling** - Verify graceful failures for invalid inputs
+3. **Test edge cases** - Verify behavior at boundaries (zero devices, maximum devices, etc.)
+
+Example integration test for a new generator:
+
+```python
+async def test_new_generator_workflow(self, async_client_main):
+    """Test the new topology generator."""
+    # Create branch
+    branch_name = "test-new-generator"
+    await client.branch.create(branch_name=branch_name)
+
+    # Load design data
+    self.execute_command(
+        f"infrahubctl object load objects/new_topology.yml --branch {branch_name}"
+    )
+
+    # Run generator
+    definition = await client.get("CoreGeneratorDefinition", name__value="create_new_topology")
+    topology = await client.get(kind="TopologyNewType", name__value="TEST-1", branch=branch_name)
+
+    mutation = Mutation(
+        mutation="CoreGeneratorDefinitionRun",
+        input_data={"data": {"id": definition.id, "nodes": [topology.id]}},
+        query={"ok": None, "task": {"id": None}},
+    )
+    response = await client.execute_graphql(query=mutation.render())
+    task = await client.task.wait_for_completion(
+        id=response["CoreGeneratorDefinitionRun"]["task"]["id"], timeout=600
+    )
+
+    # Verify results
+    assert task.state == TaskState.COMPLETED
+    devices = await client.all(kind="DcimGenericDevice", branch=branch_name)
+    assert len(devices) > 0, "Generator should create devices"
+```
+
+Integration tests are the highest-confidence verification that the bundle works correctly end-to-end.
 
 ### Code quality
 

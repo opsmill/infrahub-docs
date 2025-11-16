@@ -17,8 +17,9 @@ In this tutorial, you will:
 2. Access the web interface
 3. Switch between Infrahub branches
 4. View existing data centers and colocation centers
-5. Create a new data center using the web form
-6. Understand the automated workflow behind the scenes
+5. Visualize rack layouts with device placement
+6. Create a new data center using the web form
+7. Understand the automated workflow behind the scenes
 
 ## Prerequisites
 
@@ -129,7 +130,133 @@ Each colocation center card displays:
 The lists automatically update when you switch branches, allowing you to see infrastructure in different states (main, proposed changes, feature branches).
 :::
 
-## Step 4: create a new data center
+## Step 4: visualize rack layouts
+
+The Service Catalog includes a rack visualization page that displays physical rack layouts with mounted devices, similar to NetBox's rack elevation diagrams. This feature helps you understand device placement, rack occupancy, and physical infrastructure organization.
+
+### Access rack visualization
+
+1. Navigate to the sidebar in the Service Catalog
+2. Click **Rack Visualization** in the navigation menu
+3. The rack visualization page will load
+
+### Understanding the rack view
+
+The rack visualization displays:
+
+- **Physical rack diagrams** - Visual representations of racks with numbered rack units (U1-U42)
+- **Mounted devices** - Colored rectangles showing device positions and heights
+- **Device information** - Names, types, and rack unit positions
+- **Role-based colors** - Visual differentiation by device role
+
+### Select a location row
+
+Before racks appear, you need to select a location row:
+
+1. Use the **Select Location Row** dropdown at the top of the page
+2. Choose a row (for example, Row-1 in Pod-1)
+3. All racks in that row will display in a grid layout
+
+:::info
+Location rows are created automatically by the DC generator. Each data center has a Pod (for example, Pod-1) containing a Row (for example, Row-1) with multiple racks.
+:::
+
+### Reading rack diagrams
+
+Each rack diagram shows:
+
+#### Rack units
+
+- Numbered from bottom (U1) to top (U42)
+- Each unit represents 1.75 inches of vertical space
+- Devices mount at specific U positions
+
+#### Device rectangles
+
+Devices appear as colored rectangles with:
+
+- **Height** - 1U, 2U, 4U devices shown proportionally
+- **Position** - Starting U position labeled (for example, U42, U41)
+- **Name or type** - Text showing device identifier
+- **Role color** - Background color indicating device function
+
+For 1U devices, only the device name or type is shown. For multi-unit devices (2U+), both the primary label and secondary information are displayed.
+
+#### Color coding by role
+
+The rack visualization uses role-based colors to help identify device types at a glance:
+
+- **Green** - Leaf switches (access layer)
+- **Blue** - Spine switches (aggregation layer)
+- **Purple** - Border leaf switches (edge connectivity)
+- **Orange** - Console servers (out-of-band management)
+- **Brown** - OOB switches (management network)
+- **Cyan** - Edge routers (WAN connectivity)
+- **Red** - Firewalls (security devices)
+
+A legend at the bottom of the page explains the color mappings.
+
+### Toggle device labels
+
+You can change what information displays on device rectangles:
+
+1. Locate the **Display Options** section in the sidebar
+2. Use the **Device Label** dropdown
+3. Choose between:
+   - **Hostname** (default) - Shows device name (for example, dc-3-leaf-01)
+   - **Device Type** - Shows hardware model (for example, Arista DCS-7280SR-48C6)
+
+For multi-unit devices, the secondary label shows the alternate information. For instance, if you select "Device Type", the secondary label shows the hostname.
+
+### Device placement logic
+
+The DC generator assigns devices to racks based on predefined rules:
+
+#### Leaf devices
+
+- Assigned to rack numbers matching their device number
+- For example, dc-3-leaf-01 → Rack-1, dc-3-leaf-02 → Rack-2
+- Positioned at the top of the rack (U42 for 1U devices)
+
+#### Infrastructure devices
+
+Spine switches, border leafs, console servers, and OOB devices are assigned to middle racks:
+
+- **Spine switches** - Positioned below leaf devices
+- **Border leaf switches** - Positioned below spines
+- **Console servers** - Positioned below border leafs
+- **OOB switches** - Positioned at the bottom
+
+This placement strategy ensures infrastructure devices are centrally located for optimal cabling.
+
+### Clickable device links
+
+Each device in the rack diagram is clickable:
+
+1. Click any device rectangle
+2. A new browser tab opens showing the device in Infrahub UI
+3. View full device details, interfaces, and relationships
+
+The link preserves the current branch context, so you see the device as it exists in the selected branch.
+
+### Example workflow
+
+Here's how to use rack visualization after creating a data center:
+
+1. Create a new DC using the Service Catalog form (for example, DC-3)
+2. Wait for the generator to complete
+3. Navigate to **Rack Visualization**
+4. Switch to the branch containing your DC (for example, add-dc3)
+5. Select the location row (for example, Row-1)
+6. View the generated racks with mounted devices
+7. Verify device placement matches your design
+8. Click devices to inspect details in Infrahub
+
+:::tip
+Rack visualization is particularly useful during proposed change review. Switch to the branch, view rack layouts, and verify devices are positioned correctly before merging to main.
+:::
+
+## Step 5: create a new data center
 
 The Service Catalog provides a guided form for creating new data centers.
 
@@ -189,7 +316,7 @@ Complete each field in the form:
 2. Click the **Submit** button
 3. The Service Catalog will display a progress indicator
 
-## Step 5: understand the behind-the-scenes workflow
+## Step 6: understand the behind-the-scenes workflow
 
 When you submit the form, the Service Catalog executes an automated workflow that:
 
@@ -381,6 +508,7 @@ Congratulations! You've explored Infrahub's Service Catalog:
 - ✅ Accessed the web interface at http://localhost:8501
 - ✅ Switched between branches to view different infrastructure states
 - ✅ Viewed existing data centers and colocation centers
+- ✅ Visualized rack layouts with color-coded device placement
 - ✅ Created a new data center using the guided form
 - ✅ Understood the automated workflow (branch → data → generator → proposed change)
 
