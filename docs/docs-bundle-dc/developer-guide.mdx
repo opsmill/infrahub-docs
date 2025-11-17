@@ -111,7 +111,7 @@ Schemas define the data model using YAML. They specify nodes (object types), att
 
 ### Schema naming conventions
 
-- **Nodes**: PascalCase (for example, `DcimGenericDevice`)
+- **Nodes**: PascalCase (for example, `DcimDevice`)
 - **Attributes**: snake_case (for example, `device_type`)
 - **Relationships**: snake_case (for example, `parent_location`)
 - **Namespaces**: PascalCase (for example, `Dcim`, `Ipam`, `Service`)
@@ -268,7 +268,7 @@ class SpineTransform(InfrahubTransform):
 
     async def transform(self, data: Any) -> Any:
         """Transform InfrahubHub data to spine configuration."""
-        device = data["DcimGenericDevice"]["edges"][0]["node"]
+        device = data["DcimDevice"]["edges"][0]["node"]
 
         # Process data
         context = self.prepare_context(device)
@@ -360,14 +360,14 @@ class CheckSpine(InfrahubCheck):
 
     async def check(self, data: Any) -> None:
         """Validate spine device configuration."""
-        device = data["DcimGenericDevice"]["edges"][0]["node"]
+        device = data["DcimDevice"]["edges"][0]["node"]
 
         # Validation logic
         if not self.has_required_interfaces(device):
             self.log_error(
                 "Missing required interfaces",
                 object_id=device["id"],
-                object_type="DcimGenericDevice"
+                object_type="DcimDevice"
             )
 
         if not self.has_bgp_config(device):
@@ -397,7 +397,7 @@ Queries are defined in `.gql` files and referenced by name in transforms and che
 
 ```graphql
 query GetSpineConfig($device_name: String!) {
-  DcimGenericDevice(name__value: $device_name) {
+  DcimDevice(name__value: $device_name) {
     edges {
       node {
         id
@@ -461,7 +461,7 @@ The bootstrap data uses Infrahub's [interface range expansion feature](https://d
 
 ```yaml
 interfaces:
-  kind: TemplateDcimPhysicalInterface
+  kind: TemplateInterfacePhysical
   data:
     - template_name: N9K-C9336C-FX2_SPINE_Ethernet1/[1-30]
       name: Ethernet1/[1-30]
@@ -568,7 +568,7 @@ class TestDCWorkflow(TestInfrahubDockerWithClient):
 
     async def test_10_verify_devices_created(self, async_client_main, default_branch):
         """Verify that devices were created by the generator."""
-        devices = await client.all(kind="DcimGenericDevice")
+        devices = await client.all(kind="DcimDevice")
         assert devices, "No devices found after generator run"
         pass
 
@@ -747,7 +747,7 @@ async def test_new_generator_workflow(self, async_client_main):
 
     # Verify results
     assert task.state == TaskState.COMPLETED
-    devices = await client.all(kind="DcimGenericDevice", branch=branch_name)
+    devices = await client.all(kind="DcimDevice", branch=branch_name)
     assert len(devices) > 0, "Generator should create devices"
 ```
 
@@ -910,7 +910,7 @@ nodes:
 ```yaml
 relationships:
   - name: backup_device          # New relationship
-    peer: DcimGenericDevice
+    peer: DcimDevice
     cardinality: one
     optional: true
     description: "Backup device for redundancy"
@@ -923,7 +923,7 @@ nodes:
   - name: Router                 # New node type
     namespace: Dcim
     inherit_from:
-      - DcimGenericDevice
+      - DcimDevice
     attributes:
       - name: routing_instance
         kind: Text
@@ -958,7 +958,7 @@ class MyGenerator(InfrahubGenerator):
 ```python
 # Create test data
 test_data = {
-    "DcimGenericDevice": {
+    "DcimDevice": {
         "edges": [{"node": {"name": {"value": "spine1"}}}]
     }
 }

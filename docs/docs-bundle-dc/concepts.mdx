@@ -372,7 +372,7 @@ Generators use batching to efficiently create many objects:
 batch = await client.create_batch()
 
 for device in devices:
-    batch.add(kind="DcimGenericDevice", data=device)
+    batch.add(kind="DcimDevice", data=device)
 
 await batch.execute()
 ```
