@@ -130,7 +130,7 @@ If using standard docker compose deployment:
 
 ```bash
 # Copy artifacts directory to backup location
-docker compose cp -r infrahub-server:/opt/infrahub/storage /backup/artifacts/
+docker compose cp -a infrahub-server:/opt/infrahub/storage /backup/artifacts/
 ```
 
 ## Step 6: Restore from backup
