@@ -63,6 +63,7 @@ const config: Config = {
           sidebarCollapsed: true,
           sidebarPath: "./sidebars.ts",
           editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
+          exclude: ["**/AGENTS.md"],
         },
         blog: false,
         theme: {
