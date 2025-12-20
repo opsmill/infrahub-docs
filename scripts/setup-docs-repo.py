@@ -197,7 +197,7 @@ def setup_source_repo(
         project_name: Name of the project (used for paths and URLs).
         display_name: Human-readable display name for the project.
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Setting up source repository: {source_repo}")
     print(f"Project name: {project_name}")
     print(f"Display name: {display_name}")
@@ -264,7 +264,7 @@ def setup_infrahub_docs(
         display_name: Display name for navbar (defaults to project_name).
         navbar_dropdown: Which dropdown to add to ('tools', 'integrations', 'demos').
     """
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Setting up infrahub-docs repository: {infrahub_docs_repo}")
     print(f"Project name: {project_name}")
     print("=" * 60)
