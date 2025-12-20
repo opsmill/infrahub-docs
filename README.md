@@ -58,6 +58,42 @@ npm run serve
 
 This guide walks through setting up documentation syncing from a new OpsMill repository to this aggregation site.
 
+### Automated Setup (Recommended)
+
+Use the setup script to automate most of the configuration:
+
+```bash
+# Setup both source repo and infrahub-docs at once
+python scripts/setup-docs-repo.py \
+  --source-repo /path/to/my-new-project \
+  --infrahub-docs-repo /path/to/infrahub-docs \
+  --display-name "My New Project"
+
+# Setup source repo only
+python scripts/setup-docs-repo.py \
+  --source-repo /path/to/my-new-project \
+  --display-name "My New Project"
+
+# Setup infrahub-docs only
+python scripts/setup-docs-repo.py \
+  --infrahub-docs-repo /path/to/infrahub-docs \
+  --project-name my-new-project \
+  --display-name "My New Project"
+```
+
+The script will:
+
+- Copy all required template files to the source repository
+- Update configuration files with your project name
+- Create placeholder files in infrahub-docs
+- Generate the plugin configuration snippets to add
+
+Run `python scripts/setup-docs-repo.py --help` for all options.
+
+### Manual Setup
+
+If you prefer to set things up manually, follow the steps below.
+
 ### Prerequisites
 
 - A new OpsMill GitHub repository that needs documentation
