@@ -54,53 +54,222 @@ This command generates static content into the `build` directory and can be serv
 npm run serve
 ```
 
-## How to Setup a New Repo
+## How to Setup Documentation for a New Repository
 
-- Create a branch in the <project> to have it's docs built locally
-- Copy over these files & directories from another repo, like `emma` repo:
+This guide walks through setting up documentation syncing from a new OpsMill repository to this aggregation site.
 
-```console
-docs/
-.vale
-.vale.ini
-.markdownlint.yml
-.yamllint.yml
-tasks.py
-.github/
-  build-docs.sh
-  file-filters.yml
-  labeler.yml
-  labels.yml
-  workflows/
-    ci.yml ## only adding part
-    sync-docs.yml
+### Prerequisites
+
+- A new OpsMill GitHub repository that needs documentation
+- Access to create GitHub Actions secrets (for `PAT_TOKEN`)
+- Cloudflare Pages access (for the integration)
+
+### Part 1: Configure the Source Repository
+
+These steps are performed in your new repository (e.g., `opsmill/my-new-project`).
+
+#### Step 1: Copy required files from an existing repo
+
+Use `infrahub-bundle-dc` as a template. Copy these files and directories:
+
+**Documentation framework:**
+
+```text
+docs/                         # Docusaurus site
+├── .docusaurus/              # (auto-generated, gitignored)
+├── .gitignore
+├── babel.config.js
+├── docs/                     # Your documentation content goes here
+│   └── readme.mdx            # At minimum, create an index page
+├── docusaurus.config.ts      # Site configuration (modify this)
+├── package.json
+├── sidebars.ts               # Sidebar navigation (modify this)
+├── src/
+│   └── css/
+│       └── custom.css
+├── static/
+│   └── img/
+│       ├── favicon.ico
+│       ├── infrahub-hori.svg
+│       └── infrahub-hori-dark.svg
+└── tsconfig.json
 ```
 
-- Modify the following:
+**Linting configuration (copy to repo root):**
 
-```console
-docs/
-  docusaurus.config.ts
-  sidebars.ts
-  docs/  ## Put docs here
-.github/
-  workflows/
-    ci.yml ## only adding part
-    sync-docs.yml ## paths
+```text
+.vale/                        # Vale style rules
+.vale.ini                     # Vale configuration
+.markdownlint.yaml            # Markdown linting rules
+.yamllint.yml                 # YAML linting rules (optional)
+tasks.py                      # Invoke tasks (optional, for local builds)
 ```
 
-- `chmod 755 .github/build-docs.sh`
+**GitHub Actions (copy to `.github/`):**
 
-### In `infrahub-docs` modify the following
+```text
+.github/
+├── build-docs.sh             # Build script for CI
+├── file-filters.yml          # Path filters for CI jobs
+├── labeler.yml               # PR labeling rules
+├── labels.yml                # Label definitions
+└── workflows/
+    ├── ci.yml                # CI pipeline (add docs job)
+    └── sync-docs.yml         # Syncs docs to infrahub-docs
+```
 
-```console
+#### Step 2: Make the build script executable
+
+```bash
+chmod 755 .github/build-docs.sh
+```
+
+#### Step 3: Customize the documentation configuration
+
+**Edit `docs/docusaurus.config.ts`:**
+
+- Update `title` and `tagline` for your project
+- Update `projectName` to match your repository name
+- Update `editUrl` to point to your repository
+- Update the `sidebarId` in navbar items to match your sidebar name
+- Update the GitHub link `href` to your repository
+
+**Edit `docs/sidebars.ts`:**
+
+- Rename the sidebar (e.g., `MyProjectSidebar`)
+- Define your documentation structure
+
+**Edit `docs/package.json`:**
+
+- Update the `name` field to match your project
+
+#### Step 4: Configure the sync workflow
+
+**Edit `.github/workflows/sync-docs.yml`:**
+
+Update the paths to match your project name:
+
+```yaml
+- name: Sync folders
+  run: |
+    rm -rf target-repo/docs/docs-<projectname>/*
+    rm -f target-repo/docs/sidebars-<projectname>.ts
+    cp -r source-repo/docs/docs/* target-repo/docs/docs-<projectname>/
+    cp source-repo/docs/sidebars.ts target-repo/docs/sidebars-<projectname>.ts
+    cd target-repo
+    git config user.name github-actions
+    git config user.email github-actions@github.com
+    git add .
+    if ! (git diff --quiet && git diff --staged --quiet); then git commit -m "Sync docs from <projectname> repo" && git push; fi
+```
+
+#### Step 5: Add documentation CI job (if not present)
+
+Ensure your `.github/workflows/ci.yml` includes:
+
+1. **File change detection** for documentation files (in `file-filters.yml`):
+
+   ```yaml
+   doc_files: &doc_files
+     - "docs/**"
+     - package.json
+     - package-lock.json
+
+   documentation_all:
+     - *doc_files
+     - *markdown_all
+   ```
+
+2. **Documentation build job** to verify docs build successfully before merge
+
+3. **Vale style validation job** (optional but recommended)
+
+#### Step 6: Add the PAT_TOKEN secret
+
+The sync workflow requires a `PAT_TOKEN` secret with write access to `opsmill/infrahub-docs`. Request this from a repository admin.
+
+### Part 2: Configure the Aggregation Repository (infrahub-docs)
+
+These steps are performed in this repository (`opsmill/infrahub-docs`).
+
+#### Step 1: Create placeholder files
+
+```bash
+# Create the docs directory for synced content
+mkdir -p docs/docs-<projectname>
+
+# Create a placeholder file (will be overwritten by sync)
+touch docs/docs-<projectname>/readme.mdx
+
+# Create the sidebar configuration file (will be overwritten by sync)
 touch docs/sidebars-<projectname>.ts
-mkdir docs/docs-<projectname>
-touch docs/docs-<projectname>/readme.mdx ### Placeholder
-vi docs/docusaurus.config.ts ### Add a plugin and navbar entry
 ```
 
-### Remaining tasks
+#### Step 2: Add plugin configuration
 
-- Setup Cloudflare Pages Integration
-- Create PRs and test
+Edit `docs/docusaurus.config.ts` to add your new documentation section.
+
+**Add the sidebar import** at the top of the file:
+
+```typescript
+import sidebars<ProjectName> from "./sidebars-<projectname>";
+```
+
+**Add a new plugin** in the `plugins` array:
+
+```typescript
+[
+  "@docusaurus/plugin-content-docs",
+  {
+    id: "<projectname>",
+    path: "docs-<projectname>",
+    routeBasePath: "<projectname>",
+    sidebarPath: "./sidebars-<projectname>.ts",
+    editUrl: "https://github.com/opsmill/<source-repo>/tree/main/docs",
+  },
+],
+```
+
+**Add a navbar entry** in `themeConfig.navbar.items`:
+
+```typescript
+{
+  type: "docSidebar",
+  sidebarId: "<ProjectName>Sidebar",  // Must match sidebar name in source repo
+  docsPluginId: "<projectname>",
+  position: "left",
+  label: "<Display Name>",
+},
+```
+
+Or add to an existing dropdown menu if appropriate.
+
+### Part 3: Final Setup
+
+#### Step 1: Set up Cloudflare Pages integration
+
+Configure Cloudflare Pages to build and deploy the documentation site. Contact the SRE team for access or help.
+
+#### Step 2: Create pull requests and test
+
+1. Create a PR in your source repository with the documentation setup
+2. Create a PR in `infrahub-docs` with the plugin configuration
+3. Merge the `infrahub-docs` PR first
+4. Merge the source repository PR
+5. Verify the sync workflow runs and documentation appears on the site
+
+### Troubleshooting
+
+**Sync workflow fails with permission errors:**
+
+- Verify the `PAT_TOKEN` secret is configured and has write access to `infrahub-docs`
+
+**Documentation build fails in CI:**
+
+- Run `cd docs && npm install && npm run build` locally to debug
+- Check for broken links or invalid MDX syntax
+
+**Content not appearing after sync:**
+
+- Verify the plugin ID and sidebar configuration match
+- Check that the sync workflow completed successfully
