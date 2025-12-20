@@ -1,6 +1,7 @@
+---
 name: Sync Folders
 
-on:
+"on":
   push:
     branches:
       - main
@@ -34,4 +35,5 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add .
-          if ! (git diff --quiet && git diff --staged --quiet); then git commit -m "Sync docs from {{PROJECT_NAME}} repo" && git push; fi
+          git diff --quiet && git diff --staged --quiet || \
+            git commit -m "Sync docs from {{PROJECT_NAME}} repo" && git push
