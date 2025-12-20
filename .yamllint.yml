@@ -11,6 +11,7 @@ ignore: |
   # https://github.com/sbaudoin/yamllint/issues/16
   /helm/templates
   /python_sdk
+  /infrahub
 
 rules:
   new-lines: disable
