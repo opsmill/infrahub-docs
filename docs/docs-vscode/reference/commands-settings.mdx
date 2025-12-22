@@ -18,6 +18,7 @@ The extension registers the following commands that can be executed via the Comm
 | `infrahub.executeGraphQLQuery` | Execute GraphQL Query | Runs a GraphQL query against selected server/branch | Query tree item |
 | `infrahub.newBranch` | New Branch | Creates a new branch on the selected server | Server tree item |
 | `infrahub.deleteBranch` | Delete Branch | Deletes the selected branch | Branch tree item |
+| `infrahub.visualizeSchema` | Visualize Schema | Opens an interactive graph visualization of the server's schema | Server tree item (online) |
 
 ### Command Execution
 
@@ -31,7 +32,7 @@ The extension registers the following commands that can be executed via the Comm
 
 Right-click on tree view items to access contextual commands:
 
-- **Server Items**: New Branch
+- **Server Items**: New Branch, Visualize Schema
 - **Branch Items**: Delete Branch
 - **Query Items**: Execute Query, Edit Query
 - **YAML Items**: Edit File
@@ -151,7 +152,8 @@ Settings support environment variable substitution using `${env:VARIABLE_NAME}`:
 
 | Item Type | View Item ID | Available Actions |
 |-----------|--------------|-------------------|
-| Server | `infrahubServer` | New Branch |
+| Server (online) | `infrahubServer:online` | New Branch, Visualize Schema |
+| Server (offline) | `infrahubServer:offline` | New Branch |
 | Branch (default) | `infrahubBranch-default` | Delete Branch |
 | Branch (regular) | `infrahubBranch` | Delete Branch |
 
@@ -451,5 +453,6 @@ The extension doesn't define default keyboard shortcuts, but you can add custom 
 ## Further Information
 
 - [Getting Started Tutorial](../tutorials/getting-started.mdx)
+- [How to Visualize Your Schema](../guides/visualize-schema.mdx)
 - [Understanding the Extension Architecture](../topics/extension-architecture.mdx)
 - [GitHub Repository](https://github.com/opsmill/infrahub-vscode)

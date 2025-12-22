@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
         'guides/configure-multiple-servers',
         'guides/execute-graphql-queries',
         'guides/manage-branches',
+        'guides/visualize-schema',
         'guides/snippets',
       ],
     },
