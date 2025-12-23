@@ -2,16 +2,11 @@
 extends: default
 
 ignore: |
+  /generated-configs
   /.git
+  /.github
+  /docs/node_modules
   /.venv
-  /examples
-  /repositories
-  /frontend/**/playwright-report
-  **/node_modules
-  # https://github.com/sbaudoin/yamllint/issues/16
-  /helm/templates
-  /python_sdk
-  /infrahub
 
 rules:
   new-lines: disable
