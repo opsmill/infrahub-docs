@@ -22,7 +22,7 @@ jobs:
       yaml: ${{ steps.changes.outputs.yaml_all }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Filter changed paths
         uses: opsmill/paths-filter@v3.0.2
         id: changes
@@ -38,15 +38,15 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
-      - name: Install Ruff
-        run: pip install ruff==0.11.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
       - name: Run Ruff linter
-        run: ruff check .
+        run: uv run ruff check .
       - name: Check code formatting
-        run: ruff format --check --diff
+        run: uv run ruff format --check --diff
 
   # YAML linting job
   yaml-lint:
@@ -56,13 +56,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
-      - name: Install yamllint
-        run: pip install yamllint==1.35.1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
       - name: Run yamllint
-        run: yamllint -s .
+        run: uv run yamllint -s .
 
   # Documentation build job
   documentation:
@@ -82,7 +82,7 @@ jobs:
       build-status: ${{ job.status }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Update submodules
@@ -95,10 +95,10 @@ jobs:
           cache-dependency-path: docs/package-lock.json
       - name: Install Node dependencies
         run: npm install
-      - name: Install Python dependencies
-        run: pip install invoke toml
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
       - name: Build documentation
-        run: invoke docs
+        run: uv run invoke docs
 
   # Link checking job
   check-links:
@@ -119,7 +119,7 @@ jobs:
         working-directory: ./docs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Update submodules
@@ -134,10 +134,10 @@ jobs:
         run: npm install
       - name: Install sitemap2urllist
         run: cargo install --locked sitemap2urllist
-      - name: Install Python dependencies
-        run: pip install invoke toml
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
       - name: Build documentation
-        run: invoke docs
+        run: uv run invoke docs
       - name: Start Docusaurus server
         run: |
           npm run serve &

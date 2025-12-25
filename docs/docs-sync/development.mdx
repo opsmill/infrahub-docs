@@ -51,7 +51,6 @@ Before committing any changes, run the following commands in order:
 ```bash
 uv run invoke format    # Format code with ruff
 uv run invoke lint      # Lint code with ruff and pylint
-uv run mypy infrahub_sync/ --ignore-missing-imports
 ```
 
 ### Validate the CLI
@@ -77,7 +76,7 @@ uv run pytest -q
 - Python 3.10–3.13 compatible
 - Type hints on new or changed code
 - Ruff-formatted and lint-clean
-- Mypy-checked (do not increase existing error count)
+- Ty-checked (do not increase existing error count)
 - Public functions and classes require documentation strings
 - Raise specific exceptions; avoid broad `except Exception:`
 

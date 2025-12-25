@@ -77,7 +77,7 @@ CI_WORKFLOW_JOBS = """
     runs-on: "ubuntu-22.04"
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - uses: actions/setup-node@v6
@@ -102,7 +102,7 @@ CI_WORKFLOW_JOBS = """
     env:
       VALE_VERSION: "3.13.0"
     steps:
-      - uses: "actions/checkout@v5"
+      - uses: "actions/checkout@v6"
         with:
           submodules: true
       - name: Download Vale

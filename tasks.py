@@ -30,10 +30,10 @@ def lint_yaml(context: Context) -> None:
 
 
 @task
-def lint_mypy(context: Context) -> None:
-    """Run Linter to check all Python files."""
-    print(" - Check code with mypy")
-    exec_cmd = "mypy --show-error-codes ."
+def lint_ty(context: Context) -> None:
+    """Run type checker to check all Python files."""
+    print(" - Check code with ty")
+    exec_cmd = "ty check ."
     with context.cd(MAIN_DIRECTORY_PATH):
         context.run(exec_cmd)
 
@@ -52,7 +52,7 @@ def lint_all(context: Context) -> None:
     """Run all linters."""
     lint_yaml(context)
     lint_ruff(context)
-    # lint_mypy(context)
+    # lint_ty(context)
 
 
 @task(name="docs")
@@ -63,5 +63,5 @@ def docs_build(context: Context) -> None:
     with context.cd(DOCUMENTATION_DIRECTORY):
         output = context.run(exec_cmd)
 
-    if output.exited != 0:
+    if output is None or output.exited != 0:
         sys.exit(-1)
