@@ -30,10 +30,10 @@ def lint_yaml(context: Context) -> None:
 
 
 @task
-def lint_ty(context: Context) -> None:
-    """Run type checker to check all Python files."""
-    print(" - Check code with ty")
-    exec_cmd = "ty check ."
+def lint_mypy(context: Context) -> None:
+    """Run Linter to check all Python files."""
+    print(" - Check code with mypy")
+    exec_cmd = "mypy --show-error-codes ."
     with context.cd(MAIN_DIRECTORY_PATH):
         context.run(exec_cmd)
 
@@ -52,7 +52,7 @@ def lint_all(context: Context) -> None:
     """Run all linters."""
     lint_yaml(context)
     lint_ruff(context)
-    # lint_ty(context)
+    # lint_mypy(context)
 
 
 @task(name="docs")

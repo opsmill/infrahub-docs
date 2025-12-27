@@ -13,14 +13,8 @@ dependencies = [
 dev = [
     "yamllint>=1.37.1",
     "ruff>=0.14.10",
-    "ty>=0.0.1a7",
+    "mypy>=1.19.1",
 ]
-
-[tool.ty]
-environment = { python-version = "3.12" }
-
-[tool.ty.src]
-exclude = ["infrahub/", "docs/"]
 
 [tool.ruff]
 line-length = 120
