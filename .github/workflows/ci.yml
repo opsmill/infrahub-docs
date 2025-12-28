@@ -3,12 +3,17 @@ name: CI
 # yamllint disable rule:truthy rule:line-length
 
 on:
+  pull_request:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   # Detect which files have changed to run only necessary jobs
@@ -20,6 +25,7 @@ jobs:
       documentation: ${{ steps.changes.outputs.documentation_all }}
       python: ${{ steps.changes.outputs.python_all }}
       yaml: ${{ steps.changes.outputs.yaml_all }}
+      markdown: ${{ steps.changes.outputs.markdown_all }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -45,10 +51,15 @@ jobs:
         uses: "astral-sh/setup-uv@v7"
         with:
           version: "0.9.18"
-      - name: Run Ruff linter
-        run: uv run ruff check .
+      - run: uv sync
       - name: Check code formatting
-        run: uv run ruff format --check --diff
+        run: |
+          uv run ruff format --check --diff
+          uv run ruff check --select I .
+      - name: Run linters
+        run: uv run ruff check
+      - name: Run type checks
+        run: uv run mypy .
 
   # YAML linting job
   yaml-lint:
@@ -65,8 +76,27 @@ jobs:
         uses: "astral-sh/setup-uv@v7"
         with:
           version: "0.9.18"
+      - run: uv sync
       - name: Run yamllint
         run: uv run yamllint -s .
+
+  # Markdown linting job
+  markdown-lint:
+    if: needs.files-changed.outputs.markdown == 'true'
+    needs: ["files-changed"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli
+      - name: Run markdownlint
+        run: markdownlint "**/*.{md,mdx}"
 
   # Documentation build job
   documentation:
@@ -79,7 +109,7 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.files-changed.outputs.documentation == 'true'
-    needs: ["files-changed", "yaml-lint", "python-lint"]
+    needs: ["files-changed", "yaml-lint", "python-lint", "markdown-lint"]
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     outputs:
@@ -103,6 +133,8 @@ jobs:
         uses: "astral-sh/setup-uv@v7"
         with:
           version: "0.9.18"
+      - run: uv sync
+        working-directory: ./
       - name: Build documentation
         run: uv run invoke docs
 
