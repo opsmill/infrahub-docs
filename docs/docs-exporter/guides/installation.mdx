@@ -45,8 +45,7 @@ cd infrahub-exporter
 2. **Build the Docker image**
 
 ```bash
-cd development
-docker build . -t infrahub-exporter
+docker build -t infrahub-exporter:latest -f development/Dockerfile .
 ```
 
 3. **Configure your exporter**
@@ -59,5 +58,22 @@ See the [Configuration guide](../guides/configuration.mdx)
 docker run \
   -v "path/to/config.yml:/app/config.yml" \
   -p 8001:8001 \
-  infrahub-exporter
+  infrahub-exporter:latest
+```
+
+5. **Docker compose example
+
+```yaml
+  infrahub-exporter:
+    image: infrahub-exporter:latest
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - path/to/config.yml:/app/config.yml:ro
+      - path/to/queries:/app/queries:ro
+    environment:
+      - INFRAHUB_SIDECAR_LOG_LEVEL=INFO
+    depends_on:
+      - infrahub-server  # adjust to your Infrahub service name
 ```

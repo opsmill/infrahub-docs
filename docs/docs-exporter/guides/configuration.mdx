@@ -51,7 +51,7 @@ metrics:
 These metrics will be available to all configured exporters.
 You can choose one or more exporters:
 
-- Pull-based (Exporter): Exposes a `/metrics` HTTP endpoint for Prometheus or other scrapers.
+- Pull-based (Prometheus): Exposes a `/metrics` HTTP endpoint for Prometheus or other scrapers.
 - Push-based (OTLP): Sends metrics to an OpenTelemetry collector.
 
 ### Prometheus integration
@@ -60,7 +60,7 @@ Configure the Prometheus exporter in your `config.yml` :
 
 ```yaml
 exporters:
-  exporter:
+  prometheus:
     enabled: true   # Pull-based endpoint at /metrics
 ```
 
