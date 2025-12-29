@@ -12,11 +12,11 @@ Infrahub stores critical state for your infrastructure in multiple systems: the 
 
 Infrahub Backup orchestrates backup and restore workflows across deployment targets. It coordinates quiescing and snapshotting services, pulls data out with the right credentials, and packages everything so restores are deterministic. During restore, the tool brings services back in dependency order, reapplies data, and captures logs so you can prove the operation succeeded. Whether you install with Docker Compose, Kubernetes, or a bespoke stack, the CLI abstracts away provider-specific commands and ensures each step runs in a supported sequence.
 
-### Community Edition support
+### Community edition support
 
 The CLI supports Infrahub Community Edition in addition to Enterprise deployments. When you run a backup against Community Edition, the tool stops the Infrahub service while the snapshot is captured, so plan for temporary downtime. Restores must target the same edition that generated the backup—Enterprise backups cannot be applied to Community Edition instances.
 
-### Best Practices
+### Best practices
 
 #### Schedule regular backups
 
@@ -36,7 +36,7 @@ The CLI supports Infrahub Community Edition in addition to Enterprise deployment
 - Watch for schema migrations or new services introduced by the upgrade that might require additional credentials, storage buckets, or hooks in your automation.
 - Keep the validation artifacts—logs, checksums, and timelines—so you can prove post-upgrade recoverability during audits.
 
-## Getting Started
+## Getting started
 
 ### Tutorials
 
@@ -44,7 +44,7 @@ Learn the fundamentals through hands-on exercises:
 
 - [Getting started with the tool](./tutorials/getting-started.mdx) - Your first backup and restore operation
 
-### How-to Guides
+### How-to guides
 
 Accomplish specific tasks:
 

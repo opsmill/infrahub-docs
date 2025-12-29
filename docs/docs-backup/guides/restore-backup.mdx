@@ -7,7 +7,7 @@ import TabItem from '@theme/TabItem';
 
 This guide shows you how to restore your Infrahub instance from a backup file. If you need to recover from data loss, roll back changes, or migrate to new infrastructure, follow these steps to safely restore your system.
 
-## Community Edition compatibility
+## Community edition compatibility
 
 Restores are supported for Infrahub Community Edition when the backup was created from the same edition. Enterprise backups include components that are not available in Community Edition and cannot be restored.
 
@@ -30,7 +30,6 @@ Restoration replaces all existing data. Always verify you have a current backup 
 :::
 
 ## Step 1: Prepare for restoration
-
 
 ### Create safety backup
 
@@ -97,7 +96,7 @@ INFO[0040] All containers started
 INFO[0040] Restore completed successfully
 ```
 
-## Step 4: Verify restoration
+## Step 4: verify restoration
 
 ### Check service health
 
@@ -139,8 +138,7 @@ Verify your data was restored correctly:
 4. Test a few key queries or operations
 5. Review recent task history
 
-## Step 5: Post-restoration tasks
-
+## Step 5: post-restoration tasks
 
 ### Verify integrations
 
@@ -150,7 +148,6 @@ Check external integrations are working:
 - External authentication (LDAP/SSO) functions
 - Webhook endpoints are accessible
 - API integrations reconnect properly
-
 
 ## Validation
 

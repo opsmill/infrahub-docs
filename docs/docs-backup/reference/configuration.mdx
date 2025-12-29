@@ -21,7 +21,7 @@ Tools can be configured through these methods, applied in precedence order:
 | `INFRAHUB_BACKUP_DIR` | Directory for storing backup files | `./infrahub_backups` | `/data/backups` |
 | `INFRAHUB_LOG_FORMAT` | Output format for logs | `text` | `json` |
 
-### Docker Compose configuration
+### Docker compose configuration
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
@@ -37,7 +37,7 @@ Tools can be configured through these methods, applied in precedence order:
 | `INFRAHUB_DB_USERNAME` | Neo4j username | `neo4j` | `admin` |
 | `INFRAHUB_DB_PASSWORD` | Neo4j password | `admin` | `SecurePass123` |
 
-#### PostgreSQL (Task Manager)
+#### Task manager PostgreSQL
 
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
@@ -108,7 +108,7 @@ infrahub-backup environment detect
 
 ### Common issues
 
-**Issue: Cannot detect environment**
+#### Cannot detect environment
 
 ```bash
 # Check Docker
@@ -119,7 +119,7 @@ docker ps
 docker ps --filter "name=infrahub"
 ```
 
-**Issue: Authentication failures**
+#### Authentication failures
 
 ```bash
 # Verify credentials are set
@@ -154,7 +154,6 @@ export INFRAHUB_DB_PASSWORD="${NEO4J_PASSWORD}"
 
 infrahub-backup create --neo4jmetadata=all
 ```
-
 
 ## Related documentation
 

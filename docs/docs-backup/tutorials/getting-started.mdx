@@ -27,7 +27,7 @@ Before starting this tutorial, ensure you have:
 - Terminal access with sudo privileges
 - At least 1GB of free disk space for backups
 
-## Step 1: Install infrahub-backup
+## Step 1: install infrahub-backup
 
 First, install the infrahub-backup tool. The recommended method is to download binaries:
 
@@ -46,7 +46,7 @@ You should see output similar to:
 Version: 1.0.0
 ```
 
-## Step 2: Detect your environment
+## Step 2: detect your environment
 
 Before performing any operations, verify that infrahub-backup can detect your Infrahub deployment:
 
@@ -70,7 +70,7 @@ If you have multiple Infrahub projects, list them all:
 
 This shows all available Docker Compose projects running Infrahub.
 
-## Step 3: Create your first backup
+## Step 3: create your first backup
 
 Now, let's create a backup of your Infrahub instance. This operation will:
 
@@ -105,7 +105,7 @@ INFO[0020] Backup process completed
 The backup file is stored in the `infrahub_backups` directory by default. Note the filename for the restore step.
 :::
 
-## Step 4: Verify your backup
+## Step 4: verify your backup
 
 Check that your backup was created successfully:
 
@@ -122,18 +122,18 @@ You should see:
 - A `.tar.gz` file with today's timestamp
 - Inside the archive: `backup_information.json`, database files, and other components
 
-## Step 5: Capture artifact storage
+## Step 5: capture artifact storage
 
 If your Infrahub workflows produce artifacts stored outside the databases, take a moment to snapshot that storage so the backup remains consistent. Identify the bucket, container, or volume where artifacts live and copy the contents into a dated folder or version. Use your provider’s native tooling (for example, `aws s3 sync`, `az storage blob download`, or `rsync` for shared volumes) and note where you stored the snapshot so you can pair it with the database backup when restoring.
 
-If using standard docker compose deployment:
+If using standard Docker Compose deployment:
 
 ```bash
 # Copy artifacts directory to backup location
 docker compose cp -a infrahub-server:/opt/infrahub/storage /backup/artifacts/
 ```
 
-## Step 6: Restore from backup
+## Step 6: restore from backup
 
 To complete the learning cycle, let's restore from the backup you just created. This simulates recovering from a disaster or rolling back changes.
 
@@ -169,7 +169,7 @@ INFO[0018] Starting all containers...
 INFO[0025] Restore completed successfully
 ```
 
-## Step 7: Verify the restore
+## Step 7: verify the restore
 
 Confirm your Infrahub instance is running correctly:
 
