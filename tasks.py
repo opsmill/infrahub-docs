@@ -21,9 +21,18 @@ def format(context: Context) -> None:
 
 @task
 def lint_yaml(context: Context) -> None:
-    """Run Linter to check all Python files."""
+    """Run Linter to check all YAML files."""
     print(" - Check code with yamllint")
     exec_cmd = "yamllint ."
+    with context.cd(MAIN_DIRECTORY_PATH):
+        context.run(exec_cmd)
+
+
+@task
+def lint_markdown(context: Context) -> None:
+    """Run Linter to check all Markdown files."""
+    print(" - Check code with markdownlint")
+    exec_cmd = "markdownlint '**/*.md' '**/*.mdx'"
     with context.cd(MAIN_DIRECTORY_PATH):
         context.run(exec_cmd)
 
@@ -49,9 +58,10 @@ def lint_ruff(context: Context) -> None:
 @task(name="lint")
 def lint_all(context: Context) -> None:
     """Run all linters."""
+    lint_markdown(context)
     lint_yaml(context)
     lint_ruff(context)
-    # lint_mypy(context)
+    lint_mypy(context)
 
 
 @task(name="docs")
