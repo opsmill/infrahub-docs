@@ -3,12 +3,17 @@ name: CI
 # yamllint disable rule:truthy rule:line-length
 
 on:
+  pull_request:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   # Detect which files have changed to run only necessary jobs
@@ -20,9 +25,10 @@ jobs:
       documentation: ${{ steps.changes.outputs.documentation_all }}
       python: ${{ steps.changes.outputs.python_all }}
       yaml: ${{ steps.changes.outputs.yaml_all }}
+      markdown: ${{ steps.changes.outputs.markdown_all }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Filter changed paths
         uses: opsmill/paths-filter@v3.0.2
         id: changes
@@ -38,15 +44,22 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
-      - name: Install Ruff
-        run: pip install ruff==0.11.0
-      - name: Run Ruff linter
-        run: ruff check .
+      - name: Install uv
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          version: "0.9.18"
+      - run: uv sync
       - name: Check code formatting
-        run: ruff format --check --diff
+        run: |
+          uv run ruff format --check --diff
+          uv run ruff check --select I .
+      - name: Run linters
+        run: uv run ruff check
+      - name: Run type checks
+        run: uv run mypy .
 
   # YAML linting job
   yaml-lint:
@@ -56,13 +69,34 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
-      - name: Install yamllint
-        run: pip install yamllint==1.35.1
+      - name: Install uv
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          version: "0.9.18"
+      - run: uv sync
       - name: Run yamllint
-        run: yamllint -s .
+        run: uv run yamllint -s .
+
+  # Markdown linting job
+  markdown-lint:
+    if: needs.files-changed.outputs.markdown == 'true'
+    needs: ["files-changed"]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli
+      - name: Run markdownlint
+        run: markdownlint "**/*.{md,mdx}"
 
   # Documentation build job
   documentation:
@@ -75,14 +109,14 @@ jobs:
       !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
       needs.files-changed.outputs.documentation == 'true'
-    needs: ["files-changed", "yaml-lint", "python-lint"]
+    needs: ["files-changed", "yaml-lint", "python-lint", "markdown-lint"]
     runs-on: ubuntu-22.04
     timeout-minutes: 5
     outputs:
       build-status: ${{ job.status }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Update submodules
@@ -95,10 +129,14 @@ jobs:
           cache-dependency-path: docs/package-lock.json
       - name: Install Node dependencies
         run: npm install
-      - name: Install Python dependencies
-        run: pip install invoke toml
+      - name: Install uv
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          version: "0.9.18"
+      - run: uv sync
+        working-directory: ./
       - name: Build documentation
-        run: invoke docs
+        run: uv run invoke docs
 
   # Link checking job
   check-links:
@@ -119,7 +157,7 @@ jobs:
         working-directory: ./docs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: true
       - name: Update submodules
@@ -134,10 +172,12 @@ jobs:
         run: npm install
       - name: Install sitemap2urllist
         run: cargo install --locked sitemap2urllist
-      - name: Install Python dependencies
-        run: pip install invoke toml
+      - name: Install uv
+        uses: "astral-sh/setup-uv@v7"
+        with:
+          version: "0.9.18"
       - name: Build documentation
-        run: invoke docs
+        run: uv run invoke docs
       - name: Start Docusaurus server
         run: |
           npm run serve &

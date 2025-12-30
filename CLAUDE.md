@@ -50,14 +50,12 @@ npm run clear      # Clear Docusaurus build cache
 From the repository root, use Python invoke tasks:
 
 ```bash
-invoke docs        # Build documentation (runs npm run build in docs/)
-invoke lint        # Run all linters (ruff + yamllint)
-invoke format      # Format Python files with ruff
-invoke lint-yaml   # Check YAML files
-invoke lint-ruff   # Check Python files with ruff
+uv run invoke docs        # Build documentation (runs npm run build in docs/)
+uv run invoke lint        # Run all linters (ruff + yamllint)
+uv run invoke format      # Format Python files with ruff
 ```
 
-**Note**: Requires Poetry installation. Run `poetry install` to set up Python dependencies.
+**Note**: Requires uv installation. Run `uv sync` to set up Python dependencies.
 
 ### Linting and Quality Checks
 
@@ -307,7 +305,7 @@ The repository uses GitHub Actions for CI/CD:
 - Hosted on Cloudflare Pages
 - Production URL: `https://docs.infrahub.app`
 - Deployment triggered by pushes to `main` branch
-- Build command: `invoke docs` (runs `npm run build` in `docs/`)
+- Build command: `uv run invoke docs` (runs `npm run build` in `docs/`)
 - Build output directory: `docs/build/`
 
 ## Troubleshooting

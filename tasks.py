@@ -1,8 +1,7 @@
 import sys
-
 from pathlib import Path
 
-from invoke import task, Context  # type: ignore
+from invoke import Context, task  # type: ignore[import-untyped]
 
 CURRENT_DIRECTORY = Path(__file__).resolve()
 DOCUMENTATION_DIRECTORY = CURRENT_DIRECTORY.parent / "docs"
@@ -22,9 +21,18 @@ def format(context: Context) -> None:
 
 @task
 def lint_yaml(context: Context) -> None:
-    """Run Linter to check all Python files."""
+    """Run Linter to check all YAML files."""
     print(" - Check code with yamllint")
     exec_cmd = "yamllint ."
+    with context.cd(MAIN_DIRECTORY_PATH):
+        context.run(exec_cmd)
+
+
+@task
+def lint_markdown(context: Context) -> None:
+    """Run Linter to check all Markdown files."""
+    print(" - Check code with markdownlint")
+    exec_cmd = "markdownlint '**/*.md' '**/*.mdx'"
     with context.cd(MAIN_DIRECTORY_PATH):
         context.run(exec_cmd)
 
@@ -50,9 +58,10 @@ def lint_ruff(context: Context) -> None:
 @task(name="lint")
 def lint_all(context: Context) -> None:
     """Run all linters."""
+    lint_markdown(context)
     lint_yaml(context)
     lint_ruff(context)
-    # lint_mypy(context)
+    lint_mypy(context)
 
 
 @task(name="docs")
@@ -63,5 +72,5 @@ def docs_build(context: Context) -> None:
     with context.cd(DOCUMENTATION_DIRECTORY):
         output = context.run(exec_cmd)
 
-    if output.exited != 0:
+    if output is None or output.exited != 0:
         sys.exit(-1)
