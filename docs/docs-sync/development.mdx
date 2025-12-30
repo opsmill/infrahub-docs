@@ -51,6 +51,7 @@ Before committing any changes, run the following commands in order:
 ```bash
 uv run invoke format    # Format code with ruff
 uv run invoke lint      # Lint code with ruff and pylint
+uv run mypy infrahub_sync/ --ignore-missing-imports
 ```
 
 ### Validate the CLI
