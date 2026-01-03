@@ -12,7 +12,7 @@ Emma is an experimental AI-powered assistant for Infrahub that helps you manage 
 Before installing Emma, ensure you have:
 
 - **Infrahub instance**: Emma requires a running Infrahub instance to connect to
-- **Docker** (for containerized deployment) or **Python 3.10+** and **Poetry** (for local development)
+- **Docker** (for containerized deployment) or **Python 3.10+** and **uv** (for local development)
 
 ## Installation methods
 
@@ -23,15 +23,15 @@ The easiest way to get started is using the Infrahub quickstart with Emma includ
 
 ```bash
 # Download and start Infrahub + Emma with Docker Compose
-curl https://infrahub.opsmill.io/1.4.12-emma | docker compose -f - up -d
+curl https://infrahub.opsmill.io/1.6.2-emma | docker compose -f - up -d
 ```
 
 This command will:
 
 - Download the latest Infrahub and Emma configuration
 - Start both services with proper networking
-- Make Emma available at http://localhost:8501
-- Make Infrahub available at http://localhost:8000
+- Make Emma available at `http://localhost:8501`
+- Make Infrahub available at `http://localhost:8000`
 
 :::tip
 Update the version number in the URL to the [latest Infrahub release](https://github.com/opsmill/infrahub/tags) for the most recent features.
@@ -65,7 +65,7 @@ docker network ls
 docker network connect <infrahub-network-name> emma-emma-1
 ```
 
-Emma will be available at http://localhost:8501
+Emma will be available at `http://localhost:8501`
 
 </TabItem>
 <TabItem value="local" label="Local Development">
@@ -79,19 +79,19 @@ git clone https://github.com/opsmill/emma.git
 cd emma
 ```
 
-2. **Install dependencies with Poetry:**
+2. **Install dependencies with uv:**
 
 ```bash
-poetry install
+uv sync
 ```
 
 3. **Run Emma:**
 
 ```bash
-poetry run streamlit run main.py
+uv run streamlit run main.py
 ```
 
-Emma will start on http://localhost:8501
+Emma will start on `http://localhost:8501`
 
 </TabItem>
 </Tabs>

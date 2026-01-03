@@ -382,7 +382,7 @@ WARNING: Unknown feature flag 'invalid_flag' ignored
 
 ```bash
 # Test configuration without starting full application
-poetry run python -c "from emma.utils import validate_config; validate_config()"
+uv run python -c "from emma.utils import validate_config; validate_config()"
 ```
 
 ## Migration and upgrades

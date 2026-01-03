@@ -265,7 +265,7 @@ This guide covers common issues you might encounter while using Emma and how to 
 
 ```bash
 # Ensure you're using the correct command
-poetry run streamlit run main.py
+uv run streamlit run main.py
 
 # Or for direct Python execution
 python -m streamlit run main.py
@@ -343,7 +343,7 @@ export STREAMLIT_LOGGER_LEVEL=debug
 
 # Set Python logging level
 export PYTHONPATH=.
-poetry run python -c "import logging; logging.basicConfig(level=logging.DEBUG)"
+uv run python -c "import logging; logging.basicConfig(level=logging.DEBUG)"
 ```
 
 **For Docker:**
@@ -361,7 +361,7 @@ environment:
 
 ```bash
 # Run with verbose output
-poetry run streamlit run main.py --logger.level=debug
+uv run streamlit run main.py --logger.level=debug
 
 # Check Emma logs
 tail -f ~/.streamlit/logs/
@@ -406,7 +406,7 @@ WARNING: Relationship resolution failed for 'device-01'
 
 1. **Check this troubleshooting guide**
 2. **Review Emma documentation**
-3. **Check Infrahub documentation** at https://docs.infrahub.app
+3. **Check Infrahub documentation** at [docs.infrahub.app](https://docs.infrahub.app)
 4. **Search existing issues** on GitHub
 
 ### Gathering information
@@ -422,9 +422,9 @@ When reporting issues, include:
 
 ### Where to get help
 
-- **GitHub Issues**: https://github.com/opsmill/emma/issues
-- **Infrahub Community**: https://github.com/opsmill/infrahub/discussions
-- **Documentation**: https://docs.infrahub.app
+- **GitHub Issues**: [GitHub](https://github.com/opsmill/emma/issues)
+- **Infrahub Community**: [GitHub Discussions](https://github.com/opsmill/infrahub/discussions)
+- **Documentation**: [docs.infrahub.app](https://docs.infrahub.app)
 
 ### Emergency procedures
 
