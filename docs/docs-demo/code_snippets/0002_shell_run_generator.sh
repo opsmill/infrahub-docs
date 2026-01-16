@@ -1,1 +1,0 @@
-poetry run infrahubctl run bootstrap/generate_topology.py topology=fra05-pod1

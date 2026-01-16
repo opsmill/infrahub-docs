@@ -123,16 +123,6 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
-        id: 'docs-demo',
-        path: 'docs-demo',
-        routeBasePath: 'demo',
-        sidebarCollapsed: false,
-        sidebarPath: './sidebars-demo.ts',
-      },
-    ],
-    [
-      '@docusaurus/plugin-content-docs',
-      {
         id: 'docs-bundle-dc',
         path: 'docs-bundle-dc',
         routeBasePath: 'bundle-dc',
@@ -412,12 +402,6 @@ const config: Config = {
               sidebarId: "schemaSidebar",
               label: "Schema Library",
               docsPluginId: "docs-schema-library",
-            },
-            {
-              type: "docSidebar",
-              sidebarId: "demoSidebar",
-              label: "demo-dc-fabric (depreciated)",
-              docsPluginId: "docs-demo",
             },
           ],
         },
