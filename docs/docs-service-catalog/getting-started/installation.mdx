@@ -28,10 +28,10 @@ Before you get started, make sure you have these tools installed:
     - Or Docker Engine on a Linux VM for server deployments
     - Minimum 4GB RAM allocated to Docker
 
-- 🐍 **Poetry**: Python dependency management tool
-    - Install via the [official installation guide](https://python-poetry.org/docs)
+- 🐍 **uv**: Fast Python package and project manager
+    - Install via the [official installation guide](https://docs.astral.sh/uv/getting-started/installation/)
     - Used to manage Python packages and virtual environments
-    - Version 1.2.0 or higher recommended
+    - Version 0.4.0 or higher recommended
 
 ### System requirements
 
@@ -81,10 +81,10 @@ export INFRAHUB_API_TOKEN="06438eb2-8019-4776-878c-0941b1f1d1ec"
 
 ### Step 3: Install Python dependencies
 
-Use Poetry to create a virtual environment and install all required Python packages.
+Use uv to create a virtual environment and install all required Python packages.
 
 ```shell
-poetry install
+uv sync
 ```
 
 This command:
@@ -94,8 +94,8 @@ This command:
 - Installs Streamlit for the web portal interface
 - Sets up development tools (pytest, ruff, mypy)
 
-:::note First Time Using Poetry?
-Poetry automatically manages virtual environments. All subsequent commands should be run with `poetry run` prefix to ensure they use the correct environment.
+:::note First time using uv?
+uv automatically manages virtual environments. All subsequent commands should be run with `uv run` prefix to ensure they use the correct environment.
 :::
 
 ### Step 4: Start the application stack
@@ -103,7 +103,7 @@ Poetry automatically manages virtual environments. All subsequent commands shoul
 Launch Infrahub and the Service Catalog using Docker Compose. This single command starts multiple services.
 
 ```shell
-poetry run invoke start
+uv run invoke start
 ```
 
 :::important Why Use Invoke?
@@ -130,7 +130,7 @@ This command launches:
 Connect the demo repository to Infrahub for infrastructure as code workflows.
 
 ```shell
-poetry run infrahubctl repository add --ref main --read-only infrahub-demo https://github.com/opsmill/infrahub-demo-service-catalog.git
+uv run infrahubctl repository add --ref main --read-only infrahub-demo https://github.com/opsmill/infrahub-demo-service-catalog.git
 ```
 
 #### Why Git integration?
@@ -196,7 +196,7 @@ Confirm everything is working by accessing both interfaces:
 
 - Ensure Docker is running and has sufficient resources
 - Check for port conflicts (8000, 8501, 5432, 6379)
-- Run `poetry run invoke destroy` then `poetry run invoke start` to reset
+- Run `uv run invoke destroy` then `uv run invoke start` to reset
 
 ### Schema load fails
 
