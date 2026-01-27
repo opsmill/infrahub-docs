@@ -17,6 +17,7 @@ const sidebars: SidebarsConfig = {
         'user-walkthrough',
         'containerlab-deployment',
         'security-management',
+        'cloud-management',
         'service-catalog',
       ],
     },

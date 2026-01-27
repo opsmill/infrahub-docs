@@ -35,6 +35,7 @@ This documentation is organized following the [Diataxis framework](https://diata
 | **[User walkthrough](./user-walkthrough.mdx)** | A complete hands-on tutorial that guides you through the end-user experience: creating topologies, managing branches, running generators, creating proposed changes, and validating configurations. Perfect for learning the workflow from start to finish. |
 | **[Deploy a virtual lab with Containerlab](./containerlab-deployment.mdx)** | Learn how to deploy generated configurations to a virtual network lab using Containerlab. Extract device configurations and topology files from Infrahub, spin up virtual Arista cEOS switches, and test your data center fabric before production deployment. |
 | **[Working with security management](./security-management.mdx)** | Explore Infrahub's security management capabilities by examining firewall policies, security zones, and address objects. Learn how structured security data transforms into vendor-specific firewall configurations (Juniper JunOS) and how to modify policies safely using branches. |
+| **[Cloud resource management](./cloud-management.mdx)** | Manage multi-cloud infrastructure (AWS, GCP, Azure) with a vendor-agnostic schema. Load demo cloud data including accounts, regions, virtual networks, instances, and security groups. Learn how Infrahub serves as a unified inventory for cloud resources. |
 | **[Using the service catalog](./service-catalog.mdx)** | Learn how to use the Service Catalog web interface for simplified infrastructure provisioning. Enable the Streamlit application, navigate between branches, view existing infrastructure, and create new data centers through a guided form-based workflow that automates branch creation and generator execution. |
 
 ### Guides
@@ -82,6 +83,7 @@ The demo implements realistic network topologies including:
 - **Point of presence (POP) networks** with edge routers and peering connections
 - **Network segments** with load balancers and service endpoints
 - **Security zones and policies** with firewall rules and access control
+- **Cloud infrastructure** with vendor-agnostic modeling for AWS, GCP, and Azure
 - **Resource pools** for IP address, VLAN, and ASN allocation
 - **Multi-vendor support** (Arista, Juniper, Cisco, and SONiC templates)
 - **Automated topology generation** from abstract design definitions

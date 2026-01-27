@@ -1,0 +1,195 @@
+---
+title: Cloud resource management
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This tutorial shows an example of cloud resource management schema, which provides a vendor-agnostic way to model cloud infrastructure across AWS, GCP, and Azure. You'll load sample cloud data and explore how Infrahub can serve as a unified inventory for multi-cloud environments.
+
+## Overview
+
+The cloud schema enables you to track:
+
+- **Cloud providers** - AWS, GCP, Azure, or other cloud platforms
+- **Cloud accounts** - AWS accounts, GCP projects, Azure subscriptions
+- **Regions and availability zones** - Geographic locations and fault domains
+- **Virtual networks** - VPCs (AWS), VPC networks (GCP), VNets (Azure)
+- **Subnets** - Network segments within virtual networks
+- **Security groups** - Network access control rules (Security Groups, Firewall Rules, NSGs)
+- **Compute instances** - Virtual machines across all providers
+- **Network infrastructure** - Internet gateways, NAT gateways, route tables, elastic IPs
+- **Network interfaces** - ENIs, NICs attached to instances
+
+This vendor-agnostic model allows you to manage multi-cloud infrastructure from a single source of truth, with consistent naming and relationships regardless of the underlying cloud provider.
+
+## Prerequisites
+
+Before starting this tutorial, ensure you have:
+
+- Completed the [installation guide](./install.mdx) and have Infrahub running
+- Loaded the bootstrap data and schemas
+- Access to the Infrahub web interface at `http://localhost:8000`
+
+## Loading cloud demo data
+
+The demo includes sample data for all three major cloud providers with realistic infrastructure examples.
+
+The easiest way to load the cloud demo is using the provided invoke task:
+
+```bash
+uv run invoke demo-cloud
+```
+
+This command:
+
+1. Creates a new branch named `demo-cloud`
+2. Loads all schemas (including the cloud schema)
+3. Loads cloud object files with sample data for AWS, GCP, and Azure
+4. Displays a URL to view the cloud resources
+
+## Exploring cloud resources
+
+After loading the demo data, navigate to the cloud resources in the Infrahub web interface.
+
+### Viewing all cloud resources
+
+1. Ensure you're on the correct branch (for example, `demo-cloud`)
+2. Navigate to **Cloud Resource** in the left sidebar menu
+3. You'll see a list of all cloud resource types
+
+Or access the cloud resources directly:
+
+```text
+http://localhost:8000/objects/CloudResource?branch=demo-cloud
+```
+
+### Sample data structure
+
+The demo includes a comprehensive multi-cloud environment:
+
+#### Cloud providers (3)
+
+- Amazon Web Services (AWS)
+- Google Cloud Platform (GCP)
+- Microsoft Azure
+
+#### Cloud accounts (12)
+
+Each provider has production, staging, and development accounts:
+
+- `opsmill-aws-production`, `opsmill-aws-staging`, `opsmill-aws-dev`
+- `opsmill-gcp-production`, `opsmill-gcp-staging`, `opsmill-gcp-dev`
+- `opsmill-azure-production`, `opsmill-azure-staging`, `opsmill-azure-dev`
+
+#### Regions and availability zones
+
+- **AWS**: US East (N. Virginia), US West (Oregon), EU West (Ireland)
+- **GCP**: US Central (Iowa), US East (South Carolina), Europe West (Belgium)
+- **Azure**: East US, West US 2, West Europe
+
+Each region includes 3 availability zones.
+
+#### Virtual networks (12)
+
+VPCs and VNets across all accounts with various configurations:
+
+- Production VPCs with public and private subnets
+- Staging and development networks
+- DNS support and hostname configuration
+
+#### Compute instances (19)
+
+Various instance types across all providers:
+
+- Web servers, application servers, database servers
+- Linux and Windows instances
+- Different instance sizes (t3.large, m5.xlarge, n1-standard-2, Standard_D2s_v3, etc.)
+
+#### Network infrastructure
+
+- Internet gateways for public connectivity
+- NAT gateways for private subnet outbound access
+- Route tables for traffic routing
+- Elastic/static IP addresses
+- Network interfaces with security group associations
+
+## Schema architecture
+
+The cloud schema uses a hierarchical structure with clear relationships:
+
+```text
+CloudProvider
+  └── CloudAccount
+        └── CloudVirtualNetwork
+              ├── CloudSubnet
+              ├── CloudSecurityGroup
+              ├── CloudInternetGateway
+              └── CloudRouteTable
+
+CloudRegion
+  └── CloudAvailabilityZone
+        └── CloudInstance
+              └── CloudNetworkInterface
+```
+
+### Key relationships
+
+- **CloudAccount** belongs to a **CloudProvider** (parent relationship)
+- **CloudRegion** is associated with a **CloudProvider**
+- **CloudAvailabilityZone** belongs to a **CloudRegion** (parent relationship)
+- **CloudVirtualNetwork** is associated with a **CloudAccount** and **CloudRegion**
+- **CloudSubnet** belongs to a **CloudVirtualNetwork** (parent relationship)
+- **CloudInstance** is associated with a **CloudAccount**, **CloudAvailabilityZone**, and **CloudSubnet**
+- **CloudSecurityGroup** can be attached to **CloudInstance** and **CloudNetworkInterface**
+
+### Common attributes
+
+All cloud resources inherit from the `CloudResource` generic, providing:
+
+- `name` - Resource name
+- `description` - Optional description
+- `cloud_id` - Provider-specific resource identifier (ARN, resource ID, etc.)
+- `status` - Operational status (active, stopped, provisioning, terminating, error)
+- `tags` - Optional tags for categorization
+
+## Use cases
+
+### Multi-cloud inventory
+
+Use Infrahub as a single source of truth for all cloud resources:
+
+- Track resources across AWS, GCP, and Azure in one place
+- Maintain consistent naming conventions
+- Link cloud resources to on-premises infrastructure
+
+### Security auditing
+
+Query security groups and their associations:
+
+- Identify instances with specific security group configurations
+- Audit network access rules across all clouds
+- Track public IP assignments
+
+### Capacity planning
+
+Analyze compute resources across your cloud footprint:
+
+- Count instances by type, region, or provider
+- Track resource utilization patterns
+- Plan for growth and optimization
+
+### Network documentation
+
+Document your cloud network architecture:
+
+- Map virtual networks, subnets, and routing
+- Track NAT and internet gateway configurations
+- Document network interface assignments
+
+## Next steps
+
+For more information on Infrahub concepts, see:
+
+- **[Understanding the concepts](./concepts.mdx)** - Core Infrahub patterns
+- **[Developer guide](./developer-guide.mdx)** - Extending schemas and creating transforms
