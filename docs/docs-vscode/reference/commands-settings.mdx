@@ -16,6 +16,7 @@ The extension registers the following commands that can be executed via the Comm
 | `infrahub.editInfrahubYaml` | Edit file | Opens the selected YAML file at a specific location | Tree view item |
 | `infrahub.editGqlQuery` | Edit GraphQL Query | Opens the GraphQL query file for editing | Query tree item |
 | `infrahub.executeGraphQLQuery` | Execute GraphQL Query | Runs a GraphQL query against selected server/branch | Query tree item |
+| `infrahub.runTransform` | Run Transform | Executes a Jinja2 or Python transform with automatic command selection | Transform/Artifact tree item |
 | `infrahub.newBranch` | New Branch | Creates a new branch on the selected server | Server tree item |
 | `infrahub.deleteBranch` | Delete Branch | Deletes the selected branch | Branch tree item |
 | `infrahub.visualizeSchema` | Visualize Schema | Opens an interactive graph visualization of the server's schema | Server tree item (online) |
@@ -35,6 +36,7 @@ Right-click on tree view items to access contextual commands:
 - **Server Items**: New Branch, Visualize Schema
 - **Branch Items**: Delete Branch
 - **Query Items**: Execute Query, Edit Query
+- **Transform/Artifact Items**: Run Transform (automatically detects Jinja2 vs Python)
 - **YAML Items**: Edit File
 
 #### Programmatic Execution
@@ -66,20 +68,20 @@ interface ServerConfig {
   name: string;           // Display name for the server
   address: string;        // Server URL (http/https)
   api_token?: string;     // Optional API token for authentication
-  tls_insecure?: boolean; // Optional: Disable TLS certificate verification (default: false)
+  <!-- vale off -->tls_insecure<!-- vale on -->?: boolean; // Optional: Disable TLS certificate verification (default: false)
 }
 ```
 
-#### TLS Configuration Details
+#### TLS configuration details
 
-The `tls_insecure` property controls TLS certificate verification behavior:
+The `<!-- vale off -->tls_insecure<!-- vale on -->` property controls TLS certificate verification behavior:
 
 - **Default value**: `false` (secure, certificates are verified)
 - **When `true`**: Disables certificate verification for development environments
 - **Scope**: Affects all HTTPS connections when any server has this enabled
 - **Security impact**: Makes connections vulnerable to man-in-the-middle attacks
 
-**Use cases for `tls_insecure: true`**:
+**Use cases for `<!-- vale off -->tls_insecure<!-- vale on -->: true`**:
 - Development servers with self-signed certificates
 - Internal testing environments with custom CA certificates
 - Docker containers with self-signed certificates
@@ -104,7 +106,7 @@ The `tls_insecure` property controls TLS certificate verification behavior:
       "name": "Development (Self-Signed)",
       "address": "https://dev.infrahub.local",
       "api_token": "inf_dev_token",
-      "tls_insecure": true
+      "<!-- vale off -->tls_insecure<!-- vale on -->": true
     }
   ],
   "infrahub-vscode.schemaDirectory": "infrastructure/schemas"
@@ -112,7 +114,7 @@ The `tls_insecure` property controls TLS certificate verification behavior:
 ```
 
 :::warning
-Setting `tls_insecure: true` disables certificate verification and is **not recommended for production environments**. Only use this option in development/testing environments with self-signed certificates.
+Setting `<!-- vale off -->tls_insecure<!-- vale on -->: true` disables certificate verification and is **not recommended for production environments**. Only use this option in development/testing environments with self-signed certificates.
 :::
 
 ### Environment Variable Substitution
@@ -315,7 +317,7 @@ inf_[32-character-alphanumeric-string]
 
 ### Token Configuration Methods
 
-#### Method 1: Direct in Settings (Not Recommended)
+#### Method 1: Direct in settings (not recommended)
 
 ```json
 {
@@ -327,7 +329,7 @@ inf_[32-character-alphanumeric-string]
 }
 ```
 
-#### Method 2: Environment Variables (Recommended)
+#### Method 2: Environment variables (recommended)
 
 ```json
 {
@@ -339,7 +341,7 @@ inf_[32-character-alphanumeric-string]
 }
 ```
 
-#### Method 3: VSCode Secrets (Future)
+#### Method 3: VSCode secrets (future)
 
 Planned support for VSCode's secret storage API.
 
@@ -354,19 +356,19 @@ Planned support for VSCode's secret storage API.
 | Commands not appearing | Wrong context | Ensure correct tree view item is selected |
 | Validation not working | Missing YAML extension | Install Red Hat YAML extension |
 | Token not working | Incorrect format or permissions | Verify token format and permissions |
-| TLS certificate errors | Self-signed or invalid certificates | Add `"tls_insecure": true` for development servers |
-| CERT_HAS_EXPIRED | Expired SSL certificate | Renew certificate or use `tls_insecure` for dev |
-| SELF_SIGNED_CERT_IN_CHAIN | Self-signed certificate | Use `"tls_insecure": true` for development |
+| TLS certificate errors | Self-signed or invalid certificates | Add `"<!-- vale off -->tls_insecure<!-- vale on -->": true` for development servers |
+| CERT_HAS_EXPIRED | Expired SSL certificate | Renew certificate or use `<!-- vale off -->tls_insecure<!-- vale on -->` for dev |
+| SELF_SIGNED_CERT_IN_CHAIN | Self-signed certificate | Use `"<!-- vale off -->tls_insecure<!-- vale on -->": true` for development |
 
-### TLS Error Messages
+### TLS error messages
 
+<!-- vale off -->
 The extension provides specific error messages for common TLS issues:
-
 - **"TLS Certificate expired - check tls_insecure setting"**: The server's certificate has expired
 - **"Self-signed certificate - check tls_insecure setting"**: The server uses a self-signed certificate
 - **"TLS Verification failed - check tls_insecure setting"**: General certificate verification failure
-
 These messages appear in the server tree view when connection attempts fail due to certificate issues.
+<!-- vale on -->
 
 ### Debug Output
 
@@ -455,4 +457,5 @@ The extension doesn't define default keyboard shortcuts, but you can add custom 
 - [Getting Started Tutorial](../tutorials/getting-started.mdx)
 - [How to Visualize Your Schema](../guides/visualize-schema.mdx)
 - [Understanding the Extension Architecture](../topics/extension-architecture.mdx)
+- [Security Configuration and Best Practices](../topics/security-configuration.mdx)
 - [GitHub Repository](https://github.com/opsmill/infrahub-vscode)

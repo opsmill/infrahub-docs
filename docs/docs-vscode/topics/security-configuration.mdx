@@ -9,13 +9,13 @@ This document covers security considerations, TLS configuration, API token manag
 
 The Infrahub VSCode extension handles connections to Infrahub servers which may contain sensitive infrastructure data. Proper security configuration ensures your connections are encrypted and authenticated appropriately for your environment.
 
-## TLS Certificate Configuration
+## TLS certificate configuration
 
-### Understanding TLS in the Extension
+### Understanding TLS in the extension
 
 The extension connects to Infrahub servers over HTTPS using TLS encryption. By default, the extension verifies server certificates to ensure secure connections. However, development environments often use self-signed certificates that fail standard verification.
 
-### Production Environment (Default Secure Settings)
+### Production environment (default secure settings)
 
 For production environments, always use properly signed certificates:
 
@@ -26,7 +26,7 @@ For production environments, always use properly signed certificates:
       "name": "Production",
       "address": "https://infrahub.company.com",
       "api_token": "${env:INFRAHUB_PROD_TOKEN}"
-      // tls_insecure defaults to false - secure mode
+      // <!-- vale off -->tls_insecure<!-- vale on --> defaults to false - secure mode
     }
   ]
 }
@@ -38,7 +38,7 @@ For production environments, always use properly signed certificates:
 - Maintains encryption integrity
 - Complies with enterprise security policies
 
-### Development Environment (Insecure Mode)
+### Development environment (insecure mode)
 
 For development environments with self-signed certificates:
 
@@ -49,13 +49,13 @@ For development environments with self-signed certificates:
       "name": "Development",
       "address": "https://dev.infrahub.local",
       "api_token": "${env:INFRAHUB_DEV_TOKEN}",
-      "tls_insecure": true
+      "<!-- vale off -->tls_insecure<!-- vale on -->": true
     }
   ]
 }
 ```
 
-**When to Use `tls_insecure: true`:**
+**When to Use `<!-- vale off -->tls_insecure<!-- vale on -->: true`:**
 - Local development servers with self-signed certificates
 - Docker containers with self-generated certificates
 - Internal testing environments with custom CA certificates
@@ -67,7 +67,7 @@ For development environments with self-signed certificates:
 - Should never be used in production
 - Affects all HTTPS connections in the VSCode process
 
-### Mixed Environment Configuration
+### Mixed environment configuration
 
 You can configure different TLS settings for different environments:
 
@@ -90,16 +90,16 @@ You can configure different TLS settings for different environments:
       "name": "Development",
       "address": "https://dev.infrahub.local:8000",
       "api_token": "${env:INFRAHUB_DEV_TOKEN}",
-      "tls_insecure": true
+      "<!-- vale off -->tls_insecure<!-- vale on -->": true
       // Allows self-signed certificates
     }
   ]
 }
 ```
 
-### How TLS Configuration Works Internally
+### How TLS configuration works internally
 
-When any server has `tls_insecure: true`:
+When any server has `<!-- vale off -->tls_insecure<!-- vale on -->: true`:
 
 1. **Environment Variable**: Sets `NODE_TLS_REJECT_UNAUTHORIZED = '0'`
 2. **Global Effect**: Affects all HTTPS connections in the VSCode process
@@ -108,11 +108,11 @@ When any server has `tls_insecure: true`:
 
 This approach was chosen to ensure compatibility with the Infrahub SDK and provide reliable certificate bypassing when needed.
 
-## API Token Security
+## API token security
 
-### Token Storage Best Practices
+### Token storage best practices
 
-#### ❌ Don't Store Tokens Directly
+#### ❌ Don't store tokens directly
 
 ```json
 // NEVER do this - tokens visible in settings
@@ -138,7 +138,7 @@ This approach was chosen to ensure compatibility with the Infrahub SDK and provi
 }
 ```
 
-### Setting Up Environment Variables
+### Setting up environment variables
 
 #### macOS and Linux
 
@@ -166,9 +166,9 @@ Using PowerShell:
 [System.Environment]::SetEnvironmentVariable('INFRAHUB_PROD_TOKEN', 'inf_prod_1234567890abcdef', 'User')
 ```
 
-### Token Management Best Practices
+### Token management best practices
 
-#### Token Rotation
+#### Token rotation
 
 Regularly rotate API tokens:
 
@@ -185,7 +185,7 @@ export INFRAHUB_PROD_TOKEN="$NEW_TOKEN"
 echo "export INFRAHUB_PROD_TOKEN=\"$NEW_TOKEN\"" >> ~/.zshrc
 ```
 
-#### Minimal Permissions
+#### Minimal permissions
 
 Create tokens with minimal required permissions:
 
@@ -194,7 +194,7 @@ Create tokens with minimal required permissions:
 - **Separate tokens** for each environment
 - **Short-lived tokens** for temporary access
 
-#### Token Security Checklist
+#### Token security checklist
 
 - [ ] Tokens stored in environment variables, not settings files
 - [ ] Different tokens for each environment (dev, staging, prod)
@@ -203,11 +203,11 @@ Create tokens with minimal required permissions:
 - [ ] Tokens excluded from version control (`.env` files in `.gitignore`)
 - [ ] Access to tokens limited to authorized personnel
 
-## Network Security Considerations
+## Network security considerations
 
-### Firewall and Proxy Configuration
+### Firewall and proxy configuration
 
-#### Corporate Proxy Settings
+#### Corporate proxy settings
 
 If behind a corporate proxy, VSCode inherits system proxy settings. For manual configuration:
 
@@ -219,15 +219,15 @@ If behind a corporate proxy, VSCode inherits system proxy settings. For manual c
 }
 ```
 
-#### Network Access Requirements
+#### Network access requirements
 
 The extension requires outbound HTTPS access to:
 - Infrahub server endpoints (configured addresses)
 - Schema validation endpoints (`https://schema.infrahub.app/`)
 
-### VPN and Network Isolation
+### VPN and network isolation
 
-#### VPN-Protected Servers
+#### VPN-protected servers
 
 For servers behind VPN:
 
@@ -244,16 +244,16 @@ For servers behind VPN:
 }
 ```
 
-#### Network Segmentation
+#### Network segmentation
 
 Consider network segmentation best practices:
 - Development servers on isolated networks
 - Production servers with restricted access
 - API tokens with network-based restrictions
 
-## Compliance and Audit Considerations
+## Compliance and audit considerations
 
-### Logging and Monitoring
+### Logging and monitoring
 
 The extension logs connection attempts and errors. Monitor logs for:
 
@@ -262,7 +262,7 @@ The extension logs connection attempts and errors. Monitor logs for:
 - Unusual connection patterns
 - Token usage patterns
 
-### Compliance Requirements
+### Compliance requirements
 
 For regulated environments:
 
@@ -273,16 +273,16 @@ For regulated environments:
 - Log security-relevant events
 - Regular security configuration reviews
 
-#### GDPR / Data Privacy
+#### GDPR / data privacy
 
 - Understand what data is transmitted to servers
 - Ensure proper encryption in transit
 - Document data processing activities
 - Implement data retention policies
 
-### Security Scanning Integration
+### Security scanning integration
 
-#### VS Code Security Extensions
+#### VS Code security extensions
 
 Consider installing complementary security extensions:
 
@@ -296,26 +296,26 @@ Consider installing complementary security extensions:
 }
 ```
 
-#### Static Analysis
+#### Static analysis
 
 Regularly scan configuration files for:
 - Hardcoded tokens or secrets
 - Insecure TLS configurations
 - Overly permissive settings
 
-## Troubleshooting Security Issues
+## Troubleshooting security issues
 
-### Common TLS Errors and Solutions
+### Common TLS errors and solutions
 
-#### Certificate Expired
+#### Certificate expired
 
 **Error**: `CERT_HAS_EXPIRED`
 
 **Solutions**:
 1. Renew the server certificate (production)
-2. Add `"tls_insecure": true` (development only)
+2. Add `"<!-- vale off -->tls_insecure<!-- vale on -->": true` (development only)
 
-#### Self-Signed Certificate
+#### Self-signed certificate
 
 **Error**: `SELF_SIGNED_CERT_IN_CHAIN`
 
@@ -324,7 +324,7 @@ Regularly scan configuration files for:
 2. Add `"tls_insecure": true` (development)
 3. Add certificate to system trust store
 
-#### Certificate Verification Failed
+#### Certificate verification failed
 
 **Error**: `UNABLE_TO_VERIFY_LEAF_SIGNATURE`
 
@@ -333,9 +333,9 @@ Regularly scan configuration files for:
 2. Update system CA certificate store
 3. Use `"tls_insecure": true` for development
 
-### Authentication Issues
+### Authentication issues
 
-#### Token Not Working
+#### Token not working
 
 **Symptoms**: `401 Unauthorized` errors
 
@@ -345,7 +345,7 @@ Regularly scan configuration files for:
 3. Token expiration date
 4. Environment variable substitution
 
-#### Environment Variable Not Found
+#### Environment variable not found
 
 **Error**: Token resolves to literal `${env:VARIABLE_NAME}`
 
@@ -354,29 +354,29 @@ Regularly scan configuration files for:
 2. Restart VSCode after setting variables
 3. Check variable name spelling
 
-### Network Connectivity Issues
+### Network connectivity issues
 
-#### Proxy Interference
+#### Proxy interference
 
 **Symptoms**: Connection timeouts or SSL errors
 
 **Solutions**:
 1. Configure VSCode proxy settings
-2. Add infrahub server to proxy bypass list
+2. Add Infrahub server to proxy bypass list
 3. Verify proxy supports HTTPS CONNECT
 
-#### Firewall Blocking
+#### Firewall blocking
 
 **Symptoms**: Connection refused or timeouts
 
 **Solutions**:
 1. Verify outbound HTTPS (443) access
-2. Add Infrahub server to firewall allowlist
+2. Add Infrahub server to firewall <!-- vale off -->allowlist<!-- vale on -->
 3. Check for deep packet inspection interference
 
-## Security Best Practices Summary
+## Security best practices summary
 
-### Development Environment
+### Development environment
 
 - ✅ Use `tls_insecure: true` for self-signed certificates
 - ✅ Use separate development API tokens
@@ -384,7 +384,7 @@ Regularly scan configuration files for:
 - ✅ Regular token rotation
 - ❌ Never use production tokens in development
 
-### Staging Environment
+### Staging environment
 
 - ✅ Use proper certificates when possible
 - ✅ Separate staging API tokens
@@ -392,7 +392,7 @@ Regularly scan configuration files for:
 - ✅ Test certificate configurations
 - ❌ Don't use `tls_insecure` unless necessary
 
-### Production Environment
+### Production environment
 
 - ✅ Always use proper CA-signed certificates
 - ✅ Never use `tls_insecure: true`
@@ -401,7 +401,7 @@ Regularly scan configuration files for:
 - ✅ Regular security reviews
 - ❌ Never compromise on certificate verification
 
-### Token Management
+### Token management
 
 - ✅ Store in environment variables
 - ✅ Use minimal required permissions
@@ -410,7 +410,7 @@ Regularly scan configuration files for:
 - ❌ Never commit tokens to version control
 - ❌ Don't share tokens between environments
 
-## Related Documentation
+## Related documentation
 
 - [Configure Multiple Servers Guide](../guides/configure-multiple-servers.mdx)
 - [Commands and Settings Reference](../reference/commands-settings.mdx)

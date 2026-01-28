@@ -1,0 +1,269 @@
+---
+title: How to Run Transforms and Artifacts
+description: Execute Jinja2 and Python transforms directly from VSCode with automatic command selection and variable support
+---
+
+This guide shows you how to execute Infrahub transforms (both Jinja2 and Python) directly from VSCode. The extension automatically detects transform types and uses the appropriate `infrahubctl` command for execution.
+
+## Prerequisites
+
+- Infrahub VSCode extension installed and configured
+- At least one Infrahub server configured
+- A workspace with `.infrahub.yml` file containing transforms and artifact definitions
+- `infrahubctl` CLI tool installed and available in your system PATH
+
+## Understanding Transform Types
+
+The extension supports two types of transforms:
+
+- **Jinja2 Transforms**: Template-based transforms using Jinja2 syntax (executed with `infrahubctl render`)
+- **Python Transforms**: Code-based transforms using Python classes (executed with `infrahubctl transform`)
+
+## Step 1: Configure transforms in .infrahub.yml
+
+### Jinja2 Transforms
+
+Define Jinja2 transforms in your `.infrahub.yml`:
+
+```yaml
+jinja2_transforms:
+  - name: topology_clab
+    description: Template to generate a containerlab topology
+    query: topology_simulator
+    template_path: templates/clab_topology.j2
+```
+
+### Python Transforms
+
+Define Python transforms in your `.infrahub.yml`:
+
+```yaml
+python_transforms:
+  - name: leaf
+    class_name: Leaf
+    file_path: transforms/leaf.py
+  - name: spine
+    class_name: Spine
+    file_path: transforms/spine.py
+  - name: edge
+    class_name: Edge
+    file_path: transforms/edge.py
+```
+
+### Artifact Definitions
+
+Define artifact definitions that reference your transforms:
+
+```yaml
+artifact_definitions:
+  - name: leaf_config
+    artifact_name: leaf
+    content_type: text/plain
+    targets: leafs
+    transformation: leaf  # References python_transforms
+    parameters:
+      device: name__value
+      
+  - name: Containerlab Topology
+    artifact_name: containerlab-topology
+    content_type: text/plain
+    targets: topologies_clab
+    transformation: topology_clab  # References jinja2_transforms
+    parameters:
+      name: name__value
+```
+
+## Step 2: Execute transforms from VSCode
+
+### Method 1: From Artifact Definitions
+
+1. Open the **Infrahub YAML** tree view in VSCode
+2. Expand your `.infrahub.yml` file
+3. Navigate to **artifact_definitions**
+4. You'll see each artifact with its transform type displayed in parentheses:
+   - `leaf_config (python)`
+   - `Containerlab Topology (jinja)`
+5. Click the play icon next to the desired artifact
+
+### Method 2: From Transform Definitions
+
+1. In the **Infrahub YAML** tree view, navigate to:
+   - **jinja2_transforms** for Jinja2 templates, or
+   - **python_transforms** for Python transforms
+2. Select the play icon to run the transform directly
+
+### Transform Execution Process
+
+When you run a transform, the extension will:
+
+1. **Auto-detect transform type**: The extension automatically determines whether to use `infrahubctl render` (Jinja2) or `infrahubctl transform` (Python)
+
+2. **Prompt for branch selection**: Choose which Infrahub branch to execute against
+
+3. **Collect transform variables**: Enter any required variables in `key=value` format:
+   ```
+   site=nyc
+   device=router01
+   environment=production
+   ```
+
+4. **Execute the appropriate command**:
+   - For Jinja2: `infrahubctl render topology_clab site=nyc --branch main`
+   - For Python: `infrahubctl transform leaf device=router01 --branch main`
+
+## Step 3: Working with transform variables
+
+### Adding Variables
+
+When prompted for variables:
+
+1. Enter each variable in `key=value` format
+2. Press Enter to add another variable
+3. Leave empty and press Enter to finish
+
+### Variable Examples
+
+```
+# Network configuration
+site=atl01
+rack=A12
+vlan=100
+
+# Device specifics  
+device=spine01
+role=spine
+asn=65001
+
+# Environment settings
+environment=production
+region=us-east
+```
+
+### Variable Validation
+
+The extension validates variable format:
+- ✅ `device=router01` (valid)
+- ✅ `site=nyc` (valid)
+- ❌ `device=` (invalid - empty value)
+- ❌ `=router01` (invalid - empty key)
+- ❌ `devicerouter01` (invalid - missing =)
+
+## Step 4: Understanding command execution
+
+### Automatic Command Selection
+
+The extension intelligently chooses the correct `infrahubctl` command:
+
+| Transform Type | Command Used | Example |
+|---|---|---|
+| Jinja2 | `infrahubctl render` | `infrahubctl render topology_clab --branch main` |
+| Python | `infrahubctl transform` | `infrahubctl transform leaf device=spine01 --branch main` |
+
+### Transform Type Detection
+
+The extension determines transform types by:
+
+1. **For artifact definitions**: Looking up the `transformation` field in both `jinja2_transforms` and `python_transforms` sections
+2. **For direct transforms**: Using the section they're defined in (`jinja2_transforms` vs `python_transforms`)
+
+### Terminal Integration
+
+Commands execute in the VSCode integrated terminal, allowing you to:
+
+- See real-time output
+- Monitor progress
+- Debug any errors
+- Access command history
+
+## Step 5: Example workflow
+
+Here's a complete example of setting up and running transforms:
+
+### 1. Create directory structure
+```bash
+mkdir -p transforms templates
+```
+
+### 2. Define transforms in .infrahub.yml
+```yaml
+---
+jinja2_transforms:
+  - name: device_config
+    description: Generate device configuration
+    query: device_query
+    template_path: templates/device.j2
+
+python_transforms:
+  - name: topology_builder
+    class_name: TopologyBuilder
+    file_path: transforms/topology.py
+
+artifact_definitions:
+  - name: router_config
+    artifact_name: router-config
+    content_type: text/plain
+    targets: routers
+    transformation: device_config  # Jinja2 transform
+    parameters:
+      device: name__value
+      
+  - name: network_topology
+    artifact_name: topology
+    content_type: application/json
+    targets: networks
+    transformation: topology_builder  # Python transform
+    parameters:
+      network: name__value
+```
+
+### 3. Execute from VSCode
+<!-- vale off -->
+1. Navigate to **artifact_definitions** → **router_config (jinja)**
+<!-- vale on -->
+2. Click play icon
+3. Select branch: `main`
+4. Add variables: `device=router01`, `site=nyc`
+5. Command executes: `infrahubctl render device_config device=router01 site=nyc --branch main`
+
+## Troubleshooting
+
+### Common Issues
+
+**"Transform type not determined"**
+- Verify the `transformation` field matches a name in `jinja2_transforms` or `python_transforms`
+- Check YAML syntax and indentation
+
+**"infrahubctl command not found"**
+- Ensure `infrahubctl` is installed: `pip install infrahubctl`
+- Verify it's in your system PATH
+- Restart VSCode after installation
+
+**"No transform selected"**
+- Ensure your artifact definition has a valid `transformation` field
+- Verify the referenced transform exists in your configuration
+
+**Transform execution fails**
+- Check the terminal output for specific error messages
+- Verify branch exists and is accessible
+- Ensure required variables are provided
+- Check transform syntax (Jinja2 templates or Python code)
+
+### Best Practices
+
+1. **Organize transforms logically**: Group related transforms in clearly named sections
+2. **Use descriptive names**: Transform names should clearly indicate their purpose
+3. **Document variables**: Add comments in your `.infrahub.yml` describing expected variables
+4. **Test incrementally**: Start with simple transforms and add complexity gradually
+5. **Version control**: Keep transform files and `.infrahub.yml` in version control
+
+## Next Steps
+
+- **[Managing Branches](./manage-branches.mdx)**: Learn how to work with different Infrahub branches
+- **[Configure Multiple Servers](./configure-multiple-servers.mdx)**: Set up development, staging, and production environments
+- **[Extension Commands Reference](../reference/commands-settings.mdx)**: Complete list of available commands
+
+## Further Resources
+
+- [Infrahub Transforms Documentation](https://docs.infrahub.app/topics/transforms)
+- [infrahubctl CLI Reference](https://docs.infrahub.app/reference/cli)
+- [Jinja2 Template Documentation](https://jinja.palletsprojects.com/)
