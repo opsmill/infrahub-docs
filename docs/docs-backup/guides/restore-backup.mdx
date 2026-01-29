@@ -63,6 +63,46 @@ The restore process will:
 5. Restore PostgreSQL task manager
 6. Restart all services
 
+### Restore from S3
+
+Restore directly from S3 or S3-compatible storage using an `s3://` URI:
+
+<Tabs>
+<TabItem value="aws-s3" label="AWS S3" default>
+
+```bash
+# Restore from S3
+infrahub-backup restore s3://my-backups/infrahub/prod/infrahub_backup_20250929_143022.tar.gz
+```
+
+</TabItem>
+<TabItem value="minio" label="MinIO">
+
+```bash
+# Restore from MinIO or S3-compatible storage
+infrahub-backup restore \
+  --s3-endpoint http://minio.local:9000 \
+  s3://my-backups/infrahub_backup_20250929_143022.tar.gz
+```
+
+</TabItem>
+<TabItem value="env-vars" label="Environment Variables">
+
+```bash
+# Configure S3 via environment variables
+export AWS_ACCESS_KEY_ID=your-access-key
+export AWS_SECRET_ACCESS_KEY=your-secret-key
+
+infrahub-backup restore s3://my-backups/infrahub/prod/infrahub_backup_20250929_143022.tar.gz
+```
+
+</TabItem>
+</Tabs>
+
+:::info
+The backup is downloaded to the local backup directory before restoration. The downloaded file is automatically cleaned up after the restore completes.
+:::
+
 ### Restore to specific project
 
 If you have multiple Infrahub projects:

@@ -21,6 +21,10 @@ These flags apply to all infrahub-backup commands:
 | `--project <name>` | Target specific Docker Compose project | Auto-detect | `INFRAHUB_PROJECT` |
 | `--backup-dir <path>` | Directory for backup files | `./infrahub_backups` | `INFRAHUB_BACKUP_DIR` |
 | `--log-format <text\|json>` | Output format for logs | `text` | `INFRAHUB_LOG_FORMAT` |
+| `--s3-bucket <name>` | S3 bucket name for backup storage | - | `INFRAHUB_S3_BUCKET` |
+| `--s3-prefix <path>` | S3 key prefix (path within bucket) | - | `INFRAHUB_S3_PREFIX` |
+| `--s3-endpoint <url>` | Custom S3 endpoint URL (for MinIO) | - | `INFRAHUB_S3_ENDPOINT` |
+| `--s3-region <region>` | AWS region for S3 bucket | `us-east-1` | `INFRAHUB_S3_REGION` |
 | `--help, -h` | Show help for any command | - | - |
 
 ### Backup commands
@@ -42,6 +46,8 @@ infrahub-backup create [flags]
 | `--force` | Force backup even if tasks are running | `false` |
 | `--neo4jmetadata <type>` | Neo4j metadata to include | `all` |
 | `--exclude-taskmanager`  | Exclude the task manager (Prefect) database from the backup archive | `false` |
+| `--s3-upload` | Upload backup to S3 after creation | `false` |
+| `--s3-keep-local` | Keep local backup file after S3 upload | `false` |
 
 **Neo4j metadata options:**
 
@@ -61,36 +67,51 @@ infrahub-backup create --force
 
 # Backup without user metadata
 infrahub-backup create --neo4jmetadata=none
+
+# Backup and upload to S3
+infrahub-backup create --s3-upload --s3-bucket my-backups --s3-prefix infrahub/prod
+
+# Backup and upload to S3, keeping local copy
+infrahub-backup create --s3-upload --s3-bucket my-backups --s3-keep-local
 ```
 
 #### restore
 
-Restores Infrahub from a backup file.
+Restores Infrahub from a backup file or S3 URI.
 
 **Syntax:**
 
 ```bash
-infrahub-backup restore <backup-file>
+infrahub-backup restore <backup-file|s3-uri>
 ```
 
 **Arguments:**
 
-- `<backup-file>` - Path to backup archive (required)
+- `<backup-file|s3-uri>` - Path to backup archive or S3 URI (required)
+  - Local file: `infrahub_backup_20250929_143022.tar.gz`
+  - S3 URI: `s3://bucket/prefix/infrahub_backup_20250929_143022.tar.gz`
 
 **Flags:**
 
 | Flag | Description | Default |
 |------|-------------|---------|
 | `--exclude-taskmanager` | Skip restoring the task manager database even if the dump is present | `false` |
+| `--migrate-format` | Run Neo4j database format migration after restore | `false` |
 
 **Examples:**
 
 ```bash
-# Basic restore
+# Restore from local file
 infrahub-backup restore infrahub_backup_20250929_143022.tar.gz
 
+# Restore from S3
+infrahub-backup restore s3://my-backups/infrahub/prod/infrahub_backup_20250929_143022.tar.gz
+
+# Restore from MinIO
+infrahub-backup restore --s3-endpoint http://minio.local:9000 s3://my-backups/infrahub_backup_20250929_143022.tar.gz
+
 # Restore when the task manager database was excluded from the backup
-infrahub-backup restore infrahub_backup_20251022_120000.tar.gz --exclude-taskmanager-db
+infrahub-backup restore infrahub_backup_20251022_120000.tar.gz --exclude-taskmanager
 ```
 
 ### Environment commands

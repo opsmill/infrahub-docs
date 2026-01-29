@@ -217,9 +217,55 @@ else
 fi
 ```
 
-### Remote backup storage
+### S3 backup storage
 
-After local backup, transfer to remote storage:
+Upload backups directly to S3 or S3-compatible storage (like MinIO):
+
+<Tabs>
+<TabItem value="aws-s3" label="AWS S3" default>
+
+```bash
+# Upload to S3 (deletes local file by default)
+infrahub-backup create --s3-upload --s3-bucket my-backups --s3-prefix infrahub/prod
+
+# Upload to S3 but keep local copy
+infrahub-backup create --s3-upload --s3-bucket my-backups --s3-keep-local
+```
+
+</TabItem>
+<TabItem value="minio" label="MinIO">
+
+```bash
+# Upload to MinIO or S3-compatible storage
+infrahub-backup create --s3-upload \
+  --s3-bucket my-backups \
+  --s3-endpoint http://minio.local:9000 \
+  --s3-region us-east-1
+```
+
+</TabItem>
+<TabItem value="env-vars" label="Environment Variables">
+
+```bash
+# Configure S3 via environment variables
+export INFRAHUB_S3_BUCKET=my-backups
+export INFRAHUB_S3_PREFIX=infrahub/prod
+export AWS_ACCESS_KEY_ID=your-access-key
+export AWS_SECRET_ACCESS_KEY=your-secret-key
+
+infrahub-backup create --s3-upload
+```
+
+</TabItem>
+</Tabs>
+
+:::info
+AWS credentials are loaded from the standard AWS credential chain: environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`), shared credentials file (`~/.aws/credentials`), or IAM roles when running on AWS infrastructure.
+:::
+
+### Manual remote backup storage
+
+If you prefer manual transfers, you can copy backups after creation:
 
 ```bash
 # Backup locally first
@@ -228,7 +274,7 @@ infrahub-backup create
 # Transfer to remote storage
 LATEST_BACKUP=$(ls -t infrahub_backups/*.tar.gz | head -1)
 
-# S3 example
+# S3 example (manual)
 aws s3 cp "$LATEST_BACKUP" s3://my-bucket/infrahub-backups/
 
 # SCP example
