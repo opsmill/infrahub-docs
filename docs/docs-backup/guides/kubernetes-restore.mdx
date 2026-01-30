@@ -1,0 +1,319 @@
+---
+title: How to restore Infrahub on Kubernetes
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This guide walks you through restoring your Infrahub instance on Kubernetes from a backup stored in S3-compatible storage. The restore process uses the same `infrahub-backup` Helm chart and runs as a Kubernetes Job.
+
+:::warning
+Restoring a backup will overwrite your current Infrahub data. Create a safety backup before proceeding if you need to preserve any recent changes.
+:::
+
+## Prerequisites
+
+Before restoring:
+
+- A backup file stored in S3-compatible storage
+- The backup was created from the same Infrahub edition (Community or Enterprise)
+- Access to modify Helm values for your Infrahub deployment
+- S3 credentials with read access to the backup bucket
+
+## Step 1: Identify the backup to restore
+
+List available backups in your S3 bucket:
+
+```bash
+# AWS S3
+aws s3 ls s3://my-infrahub-backups/
+
+# MinIO
+mc ls myminio/my-infrahub-backups/
+```
+
+Note the exact filename of the backup you want to restore, for example:
+`infrahub_backup_20250120_020000.tar.gz`
+
+### Verify backup metadata
+
+Before restoring, verify the backup is compatible:
+
+```bash
+# Download and inspect metadata
+aws s3 cp s3://my-infrahub-backups/infrahub_backup_20250120_020000.tar.gz ./
+tar -xzOf infrahub_backup_20250120_020000.tar.gz backup_information.json | jq '.'
+```
+
+Check that:
+- `neo4j_edition` matches your current deployment
+- `infrahub_version` is compatible with your target version
+- `components` includes the data you need to restore
+
+## Step 2: Configure S3 source
+
+Create or verify the S3 credentials secret exists:
+
+```bash
+kubectl create secret generic backup-s3-credentials \
+  --namespace infrahub \
+  --from-literal=AWS_ACCESS_KEY_ID=your-access-key \
+  --from-literal=AWS_SECRET_ACCESS_KEY=your-secret-key
+```
+
+## Step 3: Configure the restore Job
+
+<Tabs>
+<TabItem value="subchart" label="Via Infrahub Helm Chart (Recommended)" default>
+
+Add the restore configuration to your Infrahub Helm values:
+
+```yaml
+# values.yaml for Infrahub Helm chart
+infrahub-backup:
+  enabled: true
+
+  # Disable backup during restore
+  backup:
+    enabled: false
+
+  # Enable restore
+  restore:
+    enabled: true
+    s3:
+      bucket: "my-infrahub-backups"
+      key: "infrahub_backup_20250120_020000.tar.gz"
+      endpoint: "https://s3.amazonaws.com"
+      region: "us-east-1"
+      secretName: "backup-s3-credentials"
+```
+
+</TabItem>
+<TabItem value="standalone" label="Standalone Chart">
+
+Create a values file for the restore operation:
+
+```yaml
+# restore-values.yaml
+backup:
+  enabled: false
+
+restore:
+  enabled: true
+  s3:
+    bucket: "my-infrahub-backups"
+    key: "infrahub_backup_20250120_020000.tar.gz"
+    endpoint: "https://s3.amazonaws.com"
+    region: "us-east-1"
+    secretName: "backup-s3-credentials"
+```
+
+</TabItem>
+</Tabs>
+
+## Step 4: Deploy the restore Job
+
+:::warning
+The restore process will stop Infrahub services temporarily. Plan for downtime during the restore operation.
+:::
+
+<Tabs>
+<TabItem value="subchart-deploy" label="Via Infrahub Helm Chart" default>
+
+Update your Infrahub Helm release:
+
+```bash
+helm upgrade infrahub opsmill/infrahub \
+  --namespace infrahub \
+  --values values.yaml
+```
+
+</TabItem>
+<TabItem value="standalone-deploy" label="Standalone Chart">
+
+Install or upgrade the chart with restore enabled:
+
+```bash
+helm upgrade --install infrahub-backup opsmill/infrahub-backup \
+  --namespace infrahub \
+  --values restore-values.yaml
+```
+
+</TabItem>
+</Tabs>
+
+## Step 5: Monitor restore progress
+
+### Watch the restore Job
+
+```bash
+# Check Job status
+kubectl get job -n infrahub -l app.kubernetes.io/name=infrahub-backup
+
+# Watch pod status
+kubectl get pods -n infrahub -l app.kubernetes.io/name=infrahub-backup -w
+```
+
+### View restore logs
+
+```bash
+# Stream logs from the restore pod
+kubectl logs -n infrahub -l app.kubernetes.io/name=infrahub-backup -f
+```
+
+Expected output for a successful restore:
+
+```
+INFO[0000] Starting restore process...
+INFO[0001] Downloading backup from S3: s3://my-infrahub-backups/infrahub_backup_20250120_020000.tar.gz
+INFO[0010] Download completed (1.5GB)
+INFO[0010] Extracting backup archive...
+INFO[0012] Validating backup metadata...
+INFO[0012] Backup ID: 20250120_020000
+INFO[0012] Infrahub version: 0.15.0
+INFO[0012] Components: database, task-manager-db
+INFO[0013] Validating checksums...
+INFO[0015] All checksums valid
+INFO[0015] Stopping Infrahub services...
+INFO[0020] Wiping transient data (cache, message-queue)...
+INFO[0022] Restoring PostgreSQL database...
+INFO[0030] PostgreSQL restore completed
+INFO[0030] Restarting support services...
+INFO[0035] Restoring Neo4j database...
+INFO[0060] Neo4j restore completed
+INFO[0060] Starting Infrahub services...
+INFO[0070] All services started
+INFO[0070] Restore completed successfully
+```
+
+## Step 6: Verify restored instance
+
+### Check service health
+
+```bash
+# Verify all pods are running
+kubectl get pods -n infrahub
+
+# Check Infrahub server logs
+kubectl logs -n infrahub -l app.kubernetes.io/component=infrahub-server --tail=50
+```
+
+### Validate data integrity
+
+1. **Access the Infrahub UI** - Log in and verify your data is present
+2. **Check the GraphQL API** - Query a known object to confirm data restoration
+3. **Review task manager** - Verify historical task runs are visible
+
+### Test a sample query
+
+```bash
+# Port-forward to the Infrahub server
+kubectl port-forward -n infrahub svc/infrahub-server 8000:8000
+
+# Query the API
+curl -X POST http://localhost:8000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ InfrahubStatus { summary { schema_hash } } }"}'
+```
+
+## Step 7: Disable restore and re-enable backups
+
+After a successful restore, update your values to disable the restore Job and re-enable scheduled backups:
+
+```yaml
+infrahub-backup:
+  enabled: true
+
+  backup:
+    enabled: true
+    mode: "cronjob"
+    schedule: "0 2 * * *"
+    storage:
+      type: "s3"
+      s3:
+        bucket: "my-infrahub-backups"
+        endpoint: "https://s3.amazonaws.com"
+        region: "us-east-1"
+        secretName: "backup-s3-credentials"
+
+  restore:
+    enabled: false  # Disable restore
+```
+
+Apply the updated configuration:
+
+```bash
+helm upgrade infrahub opsmill/infrahub \
+  --namespace infrahub \
+  --values values.yaml
+```
+
+## Troubleshooting
+
+### Restore Job fails to start
+
+Check if the S3 credentials secret exists:
+
+```bash
+kubectl get secret backup-s3-credentials -n infrahub
+```
+
+Verify the secret contains the expected keys:
+
+```bash
+kubectl get secret backup-s3-credentials -n infrahub -o jsonpath='{.data}' | jq 'keys'
+```
+
+### Download fails
+
+Check network connectivity and S3 endpoint configuration:
+
+```bash
+# View detailed error in logs
+kubectl logs -n infrahub -l app.kubernetes.io/name=infrahub-backup
+
+# Common issues:
+# - Incorrect bucket name
+# - Wrong S3 endpoint URL
+# - Invalid credentials
+# - Network policy blocking egress
+```
+
+### Checksum validation fails
+
+The backup file may be corrupted. Try downloading a fresh copy:
+
+```bash
+# Verify the backup locally
+aws s3 cp s3://my-infrahub-backups/infrahub_backup_20250120_020000.tar.gz ./
+tar -tzf infrahub_backup_20250120_020000.tar.gz > /dev/null
+```
+
+### Services fail to restart
+
+Check for resource constraints or scheduling issues:
+
+```bash
+# Check pod events
+kubectl describe pods -n infrahub -l app.kubernetes.io/name=infrahub
+
+# Check node resources
+kubectl top nodes
+```
+
+## Validation
+
+Confirm your restore completed successfully:
+
+- [ ] Restore Job completed without errors
+- [ ] All Infrahub pods are running
+- [ ] Infrahub UI is accessible
+- [ ] Data is present and correct
+- [ ] Task manager shows historical runs
+- [ ] Scheduled backups are re-enabled
+- [ ] Restore Job is disabled to prevent accidental re-runs
+
+## Related resources
+
+- [How to backup Infrahub on Kubernetes](./kubernetes-backup.mdx)
+- [How to restore from backup (CLI)](./restore-backup.mdx)

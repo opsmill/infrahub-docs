@@ -11,24 +11,38 @@ This guide shows you how to install Infrahub Backup on your system.
 
 Before installing Infrahub Backup, ensure you have:
 
+**For Docker deployments:**
+
 - Administrative or sudo access on your system
-- One of the following deployment environments:
-  - Docker with Docker Compose (for Docker deployments)
-  - kubectl configured with required permissions (for Kubernetes deployments)
-  
-If building from source:
-  
+- Docker with Docker Compose installed
+
+**For Kubernetes deployments (in-band via Helm):**
+
+- Permissions to install or upgrade the `infrahub-backup` Helm chart in your cluster
+
+**For Kubernetes deployments (out-of-band CLI):**
+
+- Administrative or sudo access on your system
+- kubectl configured with permissions to access the Infrahub namespace
+
+**If building from source:**
+
 - Git and network access to clone the repository
 - Go 1.21 or later installed
 
 ## Installation methods
+
+<Tabs groupId="deployment-type">
+<TabItem value="docker" label="Docker" default>
+
+Choose one of the following methods to install the CLI for Docker deployments:
 
 <Tabs>
 <TabItem value="direct" label="Direct Download" default>
 
 ### Download the pre-built binary
 
-If you want the fastest installation, download the pre-built binary directly:
+Download the pre-built binary directly:
 
 ```bash
 # Download the appropriate binary for your system
@@ -104,9 +118,80 @@ To install Infrahub Backup, build from source:
 </TabItem>
 </Tabs>
 
+</TabItem>
+<TabItem value="kubernetes" label="Kubernetes">
+
+<Tabs>
+<TabItem value="helm" label="Helm (In-band)" default>
+
+### Enable via Infrahub Helm chart (Recommended)
+
+If you deploy Infrahub on Kubernetes using the Infrahub Helm chart, enable the `infrahub-backup` subchart. This in-band approach deploys backup functionality directly within your cluster—no separate CLI installation required.
+
+```yaml
+# values.yaml for Infrahub Helm chart
+infrahub-backup:
+  enabled: true
+
+  backup:
+    enabled: true
+    mode: "cronjob"
+    schedule: "0 2 * * *"
+    storage:
+      type: "s3"
+      s3:
+        bucket: "my-infrahub-backups"
+        endpoint: "https://s3.amazonaws.com"
+        region: "us-east-1"
+        secretName: "backup-s3-credentials"
+```
+
+Apply the configuration:
+
+```bash
+helm upgrade infrahub opsmill/infrahub \
+  --namespace infrahub \
+  --values values.yaml
+```
+
+This approach integrates backups with your existing Infrahub deployment and is ideal for GitOps workflows with ArgoCD or Flux.
+
+For detailed configuration options, see:
+- [How to backup Infrahub on Kubernetes](./kubernetes-backup.mdx)
+
+</TabItem>
+<TabItem value="cli" label="CLI (Out-of-band)">
+
+### Install the CLI for out-of-band operations
+
+If you need to run backup operations from outside the cluster (for example, from a CI/CD pipeline or local workstation), install the CLI binary:
+
+```bash
+# Download the appropriate binary for your system
+curl https://infrahub.opsmill.io/ops/$(uname -s)/$(uname -m)/infrahub-backup -o infrahub-backup
+
+# Make it executable
+chmod +x infrahub-backup
+
+# Move to a directory in your PATH (optional)
+sudo mv infrahub-backup /usr/local/bin/
+```
+
+Ensure kubectl is configured with access to the Infrahub namespace before running commands.
+
+</TabItem>
+</Tabs>
+
+</TabItem>
+</Tabs>
+
 ## Verify installation
 
-After installation, verify the tools are working correctly:
+:::note
+If you installed via Helm (in-band), skip this section—verification is handled by Kubernetes. The steps below apply to CLI installations only.
+:::
+
+After installing the CLI, verify it is working correctly:
 
 ```bash
 # Check versions
@@ -127,7 +212,11 @@ Version: [git ref]
 
 ## Configure environment
 
-Infrahub Backup use environment variables for configuration. Set these based on your deployment:
+:::note
+If you installed via Helm (in-band), configuration is managed through Helm values. The environment variables below apply to CLI installations only.
+:::
+
+Infrahub Backup CLI uses environment variables for configuration. Set these based on your deployment:
 
 ### Docker Compose deployments
 
@@ -165,7 +254,11 @@ export PREFECT_API_DATABASE_CONNECTION_URL=postgresql://user:pass@localhost/pref
 
 ## Validation
 
-Confirm the tools can connect to your Infrahub instance:
+:::note
+If you installed via Helm (in-band), validate your deployment by checking the CronJob status with `kubectl get cronjobs -n infrahub`. The steps below apply to CLI installations only.
+:::
+
+Confirm the CLI can connect to your Infrahub instance:
 
 ```bash
 # List available projects (Docker)
@@ -177,11 +270,11 @@ infrahub-backup environment detect
 
 If these commands succeed, installation is complete.
 
-## Advanced usage
+## Advanced usage (Docker deployments)
 
 ### System service installation
 
-To run scheduled backups, install as a systemd service:
+For Docker deployments, you can run scheduled backups using a systemd service:
 
 1. Create service file:
 

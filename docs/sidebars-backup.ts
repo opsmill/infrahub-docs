@@ -17,6 +17,8 @@ const sidebars: SidebarsConfig = {
         'guides/install',
         'guides/backup-instance',
         'guides/restore-backup',
+        'guides/kubernetes-backup',
+        'guides/kubernetes-restore',
       ],
     },
     {

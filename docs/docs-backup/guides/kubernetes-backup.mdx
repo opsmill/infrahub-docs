@@ -1,0 +1,379 @@
+---
+title: How to backup Infrahub on Kubernetes
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This guide walks you through backing up your Infrahub instance running on Kubernetes using the `infrahub-backup` Helm chart. If you deploy Infrahub through GitOps tools like ArgoCD or Flux and don't have direct kubectl access, this approach lets you manage backups declaratively through Helm values.
+
+## Why use the Helm chart for backups
+
+The Helm chart approach offers several advantages over running `infrahub-backup` directly:
+
+- **No kubectl access required** - Deploy backups through your existing GitOps pipeline
+- **Declarative configuration** - Backup settings are version-controlled alongside your Infrahub deployment
+- **Scheduled backups** - Built-in CronJob support for automated periodic backups
+- **S3 integration** - Push backups directly to S3-compatible storage without manual transfers
+
+## Prerequisites
+
+Before configuring backups:
+
+- Infrahub is deployed on Kubernetes via the Infrahub Helm chart
+- You have access to modify Helm values (directly or through GitOps)
+- For S3 storage: An S3-compatible bucket and credentials
+
+## Installation methods
+
+<Tabs>
+<TabItem value="subchart" label="Via Infrahub Helm Chart (Recommended)" default>
+
+The recommended approach is to enable the backup functionality as a subchart within your existing Infrahub Helm deployment:
+
+```yaml
+# values.yaml for Infrahub Helm chart
+infrahub-backup:
+  enabled: true
+
+  backup:
+    enabled: true
+    mode: "cronjob"
+    schedule: "0 2 * * *"
+
+    storage:
+      type: "s3"
+      s3:
+        bucket: "my-infrahub-backups"
+        endpoint: "https://s3.amazonaws.com"
+        region: "us-east-1"
+        secretName: "backup-s3-credentials"
+```
+
+This method ensures the backup job runs in the same namespace as your Infrahub deployment and automatically has access to the correct service names.
+
+</TabItem>
+<TabItem value="standalone" label="Standalone Chart">
+
+For advanced use cases, you can install the `infrahub-backup` chart separately:
+
+```bash
+# Add the OpsMill Helm repository
+helm repo add opsmill https://opsmill.github.io/infrahub-helm
+helm repo update
+
+# Install the backup chart
+helm install infrahub-backup opsmill/infrahub-backup \
+  --namespace infrahub \
+  --values backup-values.yaml
+```
+
+When using the standalone chart, ensure it's deployed in the same namespace as your Infrahub instance.
+
+</TabItem>
+</Tabs>
+
+## Step 1: Configure backup settings
+
+Choose between one-shot backups or scheduled backups based on your needs.
+
+### One-shot backup (Job)
+
+For a single backup operation, use `mode: "job"`:
+
+```yaml
+infrahub-backup:
+  enabled: true
+
+  backup:
+    enabled: true
+    mode: "job"
+
+    storage:
+      type: "s3"
+      s3:
+        bucket: "my-infrahub-backups"
+        endpoint: "https://s3.amazonaws.com"
+        region: "us-east-1"
+        secretName: "backup-s3-credentials"
+```
+
+The Job runs once when deployed and creates a single backup.
+
+### Scheduled backup (CronJob)
+
+For automated periodic backups, use `mode: "cronjob"` with a schedule:
+
+```yaml
+infrahub-backup:
+  enabled: true
+
+  backup:
+    enabled: true
+    mode: "cronjob"
+    schedule: "0 2 * * *"  # Daily at 2 AM
+
+    storage:
+      type: "s3"
+      s3:
+        bucket: "my-infrahub-backups"
+        endpoint: "https://s3.amazonaws.com"
+        region: "us-east-1"
+        secretName: "backup-s3-credentials"
+```
+
+Common schedule examples:
+
+| Schedule | Description |
+|----------|-------------|
+| `0 2 * * *` | Daily at 2:00 AM |
+| `0 */6 * * *` | Every 6 hours |
+| `0 2 * * 0` | Weekly on Sunday at 2:00 AM |
+| `0 2 1 * *` | Monthly on the 1st at 2:00 AM |
+
+### Backup options
+
+Fine-tune the backup behavior with additional options:
+
+```yaml
+infrahub-backup:
+  backup:
+    options:
+      force: false              # Proceed even if tasks are running
+      excludeTaskmanager: false # Skip PostgreSQL backup
+      neo4jMetadata: "all"      # Options: all, none, users, roles
+```
+
+## Step 2: Configure storage
+
+<Tabs>
+<TabItem value="s3" label="S3-Compatible Storage (Recommended)" default>
+
+For production deployments, store backups in S3-compatible storage:
+
+### Create the S3 credentials secret
+
+```bash
+kubectl create secret generic backup-s3-credentials \
+  --namespace infrahub \
+  --from-literal=AWS_ACCESS_KEY_ID=your-access-key \
+  --from-literal=AWS_SECRET_ACCESS_KEY=your-secret-key
+```
+
+### Configure S3 storage in values
+
+```yaml
+infrahub-backup:
+  backup:
+    storage:
+      type: "s3"
+      s3:
+        bucket: "my-infrahub-backups"
+        endpoint: "https://s3.amazonaws.com"
+        region: "us-east-1"
+        secretName: "backup-s3-credentials"
+```
+
+### S3-compatible providers
+
+The chart works with any S3-compatible storage:
+
+| Provider | Endpoint Example |
+|----------|------------------|
+| AWS S3 | `https://s3.amazonaws.com` |
+| MinIO | `https://minio.example.com` |
+
+</TabItem>
+<TabItem value="local" label="Local Storage">
+
+For testing or simple setups, store backups locally in the pod:
+
+```yaml
+infrahub-backup:
+  backup:
+    storage:
+      type: "local"
+      path: "/infrahub_backups"
+```
+
+:::warning
+With local storage, backups are stored in an `emptyDir` volume and lost when the pod terminates. You must manually copy the backup file from the pod before it completes.
+:::
+
+### Retrieve backup from pod
+
+```bash
+# Find the backup pod
+kubectl get pods -n infrahub -l app.kubernetes.io/name=infrahub-backup
+
+# Copy the backup file
+kubectl cp infrahub/infrahub-backup-xxxxx:/infrahub_backups/infrahub_backup_20250120_020000.tar.gz ./backup.tar.gz
+```
+
+</TabItem>
+</Tabs>
+
+## Step 3: Deploy the backup
+
+<Tabs>
+<TabItem value="subchart-deploy" label="Via Infrahub Helm Chart" default>
+
+Update your Infrahub Helm release with the backup configuration:
+
+```bash
+helm upgrade infrahub opsmill/infrahub \
+  --namespace infrahub \
+  --values values.yaml
+```
+
+Or if using GitOps, commit the values changes and let ArgoCD/Flux sync.
+
+</TabItem>
+<TabItem value="standalone-deploy" label="Standalone Chart">
+
+Install or upgrade the standalone backup chart:
+
+```bash
+helm upgrade --install infrahub-backup opsmill/infrahub-backup \
+  --namespace infrahub \
+  --values backup-values.yaml
+```
+
+</TabItem>
+</Tabs>
+
+## Step 4: Monitor backup progress
+
+### Check backup status
+
+```bash
+# For CronJob - list recent jobs
+kubectl get jobs -n infrahub -l app.kubernetes.io/name=infrahub-backup
+
+# For one-shot Job
+kubectl get job infrahub-backup -n infrahub
+```
+
+### View backup logs
+
+```bash
+# Get the pod name
+kubectl get pods -n infrahub -l app.kubernetes.io/name=infrahub-backup
+
+# View logs
+kubectl logs -n infrahub -l app.kubernetes.io/name=infrahub-backup --tail=100 -f
+```
+
+Expected output for a successful backup:
+
+```
+INFO[0000] Starting backup process...
+INFO[0000] Checking for running tasks...
+INFO[0001] No running tasks found
+INFO[0001] Creating backup ID: 20250120_020000
+INFO[0002] Backing up Neo4j database...
+INFO[0015] Neo4j backup completed (1.2GB)
+INFO[0015] Backing up PostgreSQL database...
+INFO[0018] PostgreSQL backup completed (256MB)
+INFO[0020] Creating compressed archive...
+INFO[0025] Uploading to S3: s3://my-infrahub-backups/infrahub_backup_20250120_020000.tar.gz
+INFO[0030] Upload completed successfully
+INFO[0030] Backup completed successfully
+```
+
+## Step 5: Verify the backup
+
+### For S3 storage
+
+Verify the backup exists in your S3 bucket:
+
+```bash
+# Using AWS CLI
+aws s3 ls s3://my-infrahub-backups/
+
+# Using MinIO client
+mc ls myminio/my-infrahub-backups/
+```
+
+### Validate backup integrity
+
+Download and verify a backup:
+
+```bash
+# Download
+aws s3 cp s3://my-infrahub-backups/infrahub_backup_20250120_020000.tar.gz ./
+
+# Verify archive
+tar -tzf infrahub_backup_20250120_020000.tar.gz > /dev/null && echo "Archive is valid"
+
+# View metadata
+tar -xzOf infrahub_backup_20250120_020000.tar.gz backup_information.json | jq '.'
+```
+
+## Understanding permissions
+
+The Helm chart creates a ServiceAccount with the required RBAC permissions to perform backups.
+
+### Default behavior
+
+By default, the chart creates:
+- A ServiceAccount named `infrahub-backup`
+- A Role with required permissions
+- A RoleBinding linking the ServiceAccount to the Role
+
+### Required permissions
+
+The backup process needs these Kubernetes permissions:
+
+| Resource | Verbs | Purpose |
+|----------|-------|---------|
+| `pods` | list, get | Discover Infrahub pods |
+| `pods/exec` | create | Execute backup commands in pods |
+| `deployments` | get, patch | Scale down/up during backup |
+| `statefulsets` | get, patch | Scale down/up during backup |
+| `pods/log` | get | Monitor backup progress |
+
+### Using an existing ServiceAccount
+
+If your security policy requires using a pre-existing ServiceAccount:
+
+```yaml
+infrahub-backup:
+  serviceAccount:
+    create: false
+    name: "my-existing-serviceaccount"
+
+  rbac:
+    create: false  # Assumes permissions already exist
+```
+
+### Cloud provider integration
+
+Add annotations for cloud provider IAM integration:
+
+```yaml
+infrahub-backup:
+  serviceAccount:
+    annotations:
+      # AWS IRSA
+      eks.amazonaws.com/role-arn: "arn:aws:iam::123456789012:role/infrahub-backup"
+      # GCP Workload Identity
+      iam.gke.io/gcp-service-account: "infrahub-backup@project.iam.gserviceaccount.com"
+```
+
+## Validation
+
+Confirm your backup configuration works:
+
+- [ ] Backup Job/CronJob is created in the correct namespace
+- [ ] ServiceAccount has required RBAC permissions
+- [ ] S3 credentials secret exists and is correctly referenced
+- [ ] Backup completes without errors in logs
+- [ ] Backup file appears in S3 bucket (or can be retrieved from pod for local storage)
+- [ ] Backup archive passes integrity check
+- [ ] Backup metadata contains expected components
+
+## Related resources
+
+- [How to restore from backup on Kubernetes](./kubernetes-restore.mdx)
+- [How to backup your instance (CLI)](./backup-instance.mdx)
