@@ -11,6 +11,10 @@ This guide walks you through restoring your Infrahub instance on Kubernetes from
 Restoring a backup will overwrite your current Infrahub data. Create a safety backup before proceeding if you need to preserve any recent changes.
 :::
 
+## High availability (CloudNativePG)
+
+If your deployment uses a CloudNativePG HA PostgreSQL cluster, the restore process automatically detects and targets the primary pod. No special configuration is needed. See the [Kubernetes backup guide](./kubernetes-backup.mdx#high-availability-cloudnativepg) for details on supported HA operators.
+
 ## Prerequisites
 
 Before restoring:
@@ -123,7 +127,7 @@ The restore process will stop Infrahub services temporarily. Plan for downtime d
 Update your Infrahub Helm release:
 
 ```bash
-helm upgrade infrahub opsmill/infrahub \
+helm upgrade infrahub oci://registry.opsmill.io/opsmill/chart/infrahub \
   --namespace infrahub \
   --values values.yaml
 ```
@@ -134,7 +138,7 @@ helm upgrade infrahub opsmill/infrahub \
 Install or upgrade the chart with restore enabled:
 
 ```bash
-helm upgrade --install infrahub-backup opsmill/infrahub-backup \
+helm upgrade --install infrahub-backup oci://registry.opsmill.io/opsmill/chart/infrahub-backup \
   --namespace infrahub \
   --values restore-values.yaml
 ```
@@ -243,7 +247,7 @@ infrahub-backup:
 Apply the updated configuration:
 
 ```bash
-helm upgrade infrahub opsmill/infrahub \
+helm upgrade infrahub oci://registry.opsmill.io/opsmill/chart/infrahub \
   --namespace infrahub \
   --values values.yaml
 ```

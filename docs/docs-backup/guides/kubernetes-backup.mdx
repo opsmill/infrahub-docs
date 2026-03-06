@@ -16,6 +16,16 @@ The Helm chart approach offers several advantages over running `infrahub-backup`
 - **Scheduled backups** - Built-in CronJob support for automated periodic backups
 - **S3 integration** - Push backups directly to S3-compatible storage without manual transfers
 
+## High availability (CloudNativePG)
+
+For Kubernetes deployments using HA PostgreSQL, `infrahub-backup` supports [CloudNativePG](https://cloudnative-pg.io/) clusters. CloudNativePG is the only supported HA PostgreSQL operator.
+
+When multiple `task-manager-db` pods are detected, the tool automatically identifies the primary instance using the `cnpg.io/instanceRole` pod label and targets it for backup and restore operations. No additional configuration is required — HA detection is transparent.
+
+:::info
+If you are using a different PostgreSQL HA operator, you must ensure a single `task-manager-db` pod is available during backup and restore operations.
+:::
+
 ## Prerequisites
 
 Before configuring backups:
@@ -58,12 +68,8 @@ This method ensures the backup job runs in the same namespace as your Infrahub d
 For advanced use cases, you can install the `infrahub-backup` chart separately:
 
 ```bash
-# Add the OpsMill Helm repository
-helm repo add opsmill https://opsmill.github.io/infrahub-helm
-helm repo update
-
 # Install the backup chart
-helm install infrahub-backup opsmill/infrahub-backup \
+helm install infrahub-backup oci://registry.opsmill.io/opsmill/chart/infrahub-backup \
   --namespace infrahub \
   --values backup-values.yaml
 ```
@@ -221,7 +227,7 @@ kubectl cp infrahub/infrahub-backup-xxxxx:/infrahub_backups/infrahub_backup_2025
 Update your Infrahub Helm release with the backup configuration:
 
 ```bash
-helm upgrade infrahub opsmill/infrahub \
+helm upgrade infrahub oci://registry.opsmill.io/opsmill/chart/infrahub \
   --namespace infrahub \
   --values values.yaml
 ```
@@ -234,7 +240,7 @@ Or if using GitOps, commit the values changes and let ArgoCD/Flux sync.
 Install or upgrade the standalone backup chart:
 
 ```bash
-helm upgrade --install infrahub-backup opsmill/infrahub-backup \
+helm upgrade --install infrahub-backup oci://registry.opsmill.io/opsmill/chart/infrahub-backup \
   --namespace infrahub \
   --values backup-values.yaml
 ```

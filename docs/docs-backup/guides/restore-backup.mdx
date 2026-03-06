@@ -29,6 +29,22 @@ Before restoring from backup:
 Restoration replaces all existing data. Always verify you have a current backup before proceeding with a restore operation.
 :::
 
+## Docker high availability deployments
+
+If your Docker Compose deployment runs multiple task manager replicas (HA setup), you must stop the `task-manager` and `task-manager-background-svc` containers before running a restore. This prevents those services from accessing the database while data is being replaced.
+
+```bash
+# Stop task manager services before restore
+docker compose stop task-manager task-manager-background-svc
+```
+
+After the restore completes, restart the stopped services:
+
+```bash
+# Restart task manager services after restore
+docker compose start task-manager task-manager-background-svc
+```
+
 ## Step 1: Prepare for restoration
 
 ### Create safety backup

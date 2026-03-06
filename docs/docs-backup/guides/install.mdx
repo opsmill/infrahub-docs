@@ -149,7 +149,7 @@ infrahub-backup:
 Apply the configuration:
 
 ```bash
-helm upgrade infrahub opsmill/infrahub \
+helm upgrade infrahub oci://registry.opsmill.io/opsmill/chart/infrahub \
   --namespace infrahub \
   --values values.yaml
 ```
