@@ -79,15 +79,15 @@ const config: Config = {
         redirects: [
           {
             from: '/overview/schema',
-            to: '/getting-started/overview',
+            to: '/overview/overview',
           },
           {
             from: '/overview/versioning',
-            to: '/getting-started/overview',
+            to: '/overview/overview',
           },
           {
             from: '/overview/generators',
-            to: '/getting-started/overview',
+            to: '/overview/overview',
           },
           {
             from: '/python-sdk',
