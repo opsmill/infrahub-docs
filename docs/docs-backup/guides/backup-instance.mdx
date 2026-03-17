@@ -160,7 +160,8 @@ Example metadata structure:
   "checksums": {
     "database": "sha256:abc123...",
     "prefect.dump": "sha256:def456..."
-  }
+  },
+  "redacted": false
 }
 ```
 
@@ -262,6 +263,30 @@ infrahub-backup create --s3-upload
 :::info
 AWS credentials are loaded from the standard AWS credential chain: environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`), shared credentials file (`~/.aws/credentials`), or IAM roles when running on AWS infrastructure.
 :::
+
+### Redacted backups
+
+If you need to share a backup for debugging or testing purposes without exposing sensitive data, use the `--redact` flag. This replaces all attribute values in the Neo4j database with random UUIDs before the backup is created.
+
+:::danger
+The `--redact` flag is a **destructive operation** that irreversibly modifies the live database. All attribute values will be replaced with random UUIDs. Only use this on a disposable copy of your instance, never on a production database you intend to keep using.
+:::
+
+Because this operation is destructive, `--force` is required as confirmation:
+
+```bash
+infrahub-backup create --redact --force
+```
+
+The resulting backup archive is marked as redacted in its metadata (`"redacted": true`), so consumers can identify that the data has been anonymized.
+
+A typical workflow for creating a redacted backup safely:
+
+1. Create a normal backup of your production instance
+2. Restore that backup to a temporary or staging instance
+3. Run the redacted backup on the temporary instance
+4. Share the redacted backup archive
+5. Tear down the temporary instance
 
 ### Manual remote backup storage
 

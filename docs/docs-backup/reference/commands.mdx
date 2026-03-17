@@ -41,13 +41,15 @@ infrahub-backup create [flags]
 
 **Flags:**
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--force` | Force backup even if tasks are running | `false` |
-| `--neo4jmetadata <type>` | Neo4j metadata to include | `all` |
-| `--exclude-taskmanager`  | Exclude the task manager (Prefect) database from the backup archive | `false` |
-| `--s3-upload` | Upload backup to S3 after creation | `false` |
-| `--s3-keep-local` | Keep local backup file after S3 upload | `false` |
+| Flag | Description | Default | Environment Variable |
+|------|-------------|---------|---------------------|
+| `--force` | Force backup even if tasks are running | `false` | `INFRAHUB_FORCE` |
+| `--redact` | Redact all attribute values before backup (destructive, requires `--force`) | `false` | `INFRAHUB_REDACT` |
+| `--neo4jmetadata <type>` | Neo4j metadata to include | `all` | `INFRAHUB_NEO4JMETADATA` |
+| `--exclude-taskmanager`  | Exclude the task manager (Prefect) database from the backup archive | `false` | `INFRAHUB_EXCLUDE_TASKMANAGER` |
+| `--s3-upload` | Upload backup to S3 after creation | `false` | `INFRAHUB_S3_UPLOAD` |
+| `--s3-keep-local` | Keep local backup file after S3 upload | `false` | `INFRAHUB_S3_KEEP_LOCAL` |
+| `--sleep` | Sleep duration after backup for manual file transfer | `0` | `INFRAHUB_SLEEP` |
 
 **Neo4j metadata options:**
 
@@ -73,6 +75,9 @@ infrahub-backup create --s3-upload --s3-bucket my-backups --s3-prefix infrahub/p
 
 # Backup and upload to S3, keeping local copy
 infrahub-backup create --s3-upload --s3-bucket my-backups --s3-keep-local
+
+# Create a redacted backup (replaces all attribute values with random UUIDs)
+infrahub-backup create --redact --force
 ```
 
 #### restore
