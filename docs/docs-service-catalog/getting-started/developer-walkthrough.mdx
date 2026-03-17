@@ -2,6 +2,7 @@
 title: Developer Walkthrough
 description: A step-by-step guide to running the demo from a developer perspective.
 ---
+
 import ReferenceLink from "../../src/components/Card";
 
 In this walkthrough, we detail the key building blocks of the demo, explain how it works, and describe how the components interact. This guide is intended for developers who want to understand the implementation details of the service catalog PoC.
@@ -28,12 +29,12 @@ graph TB
     %% Service Layer
     ServiceGeneric["Service Generic (Generic)"]:::generic
     ServiceDedicatedInternet["Service Dedicated Internet<br/>- status<br/>- bandwidth<br/>- ip_package"]:::service
-    
+
     %% Location Layer
     LocationGeneric["Location Generic (Generic)"]:::generic
     LocationHosting["Location Hosting (Generic)"]:::generic
     LocationSite["Location Site (Concrete)"]:::location
-    
+
     %% DCIM Layer
     DcimGenericDevice["Dcim Generic Device (Generic)"]:::generic
     DcimPhysicalDevice["Dcim Physical Device (Generic)"]:::generic
@@ -41,13 +42,13 @@ graph TB
     DcimInterface["Dcim Interface (Generic)"]:::generic
     DcimInterfaceL2["Dcim Interface L2 (Concrete)"]:::dcim
     DcimInterfaceL3["Dcim Interface L3 (Concrete)"]:::dcim
-    
+
     %% IPAM Layer
     IpamIPAddress["Ipam IP Address"]:::ipam
     IpamPrefix["Ipam Prefix<br/>- status<br/>- role"]:::ipam
     IpamVLAN["Ipam VLAN<br/>- vlan_id<br/>- status<br/>- role"]:::ipam
     IpamL2Domain["Ipam L2 Domain"]:::ipam
-    
+
     %% Inheritance relationships
     ServiceGeneric -.->|inherits| ServiceDedicatedInternet
     LocationGeneric -.->|inherits| LocationHosting
@@ -56,36 +57,36 @@ graph TB
     DcimPhysicalDevice -.->|inherits| DcimDevice
     DcimInterface -.->|inherits| DcimInterfaceL2
     DcimInterface -.->|inherits| DcimInterfaceL3
-    
+
     %% Service Relationships
     ServiceDedicatedInternet -->|"location (1:1)"| LocationSite
     ServiceDedicatedInternet -->|"dedicated_interfaces (1:many)"| DcimInterface
     ServiceDedicatedInternet -->|"vlan (1:1)"| IpamVLAN
     ServiceDedicatedInternet -->|"gateway_ip_address (1:1)"| IpamIPAddress
     ServiceDedicatedInternet -->|"prefix (1:1)"| IpamPrefix
-    
+
     %% Location Relationships
     LocationSite -->|"services (1:many)"| ServiceGeneric
     LocationHosting -->|"devices (1:many)"| DcimPhysicalDevice
     LocationHosting -->|"prefixes (1:many)"| IpamPrefix
     LocationHosting -->|"vlans (1:many)"| IpamVLAN
-    
+
     %% Device Relationships
     DcimDevice -->|"location (1:1)"| LocationHosting
     DcimGenericDevice -->|"interfaces (1:many)"| DcimInterface
     DcimGenericDevice -->|"primary_address (1:1)"| IpamIPAddress
-    
+
     %% Interface Relationships
     DcimInterfaceL2 -->|"untagged_vlan (1:1)"| IpamVLAN
     DcimInterfaceL2 -->|"tagged_vlan (1:many)"| IpamVLAN
     DcimInterfaceL3 -->|"ip_addresses (1:many)"| IpamIPAddress
-    
+
     %% IPAM Relationships
     IpamIPAddress -->|"interface (1:1)"| DcimInterfaceL3
     IpamPrefix -->|"vlan (1:1)"| IpamVLAN
     IpamVLAN -->|"l2domain (1:1)"| IpamL2Domain
     IpamL2Domain -->|"vlans (1:many)"| IpamVLAN
-    
+
     %% Highlight key service flow
     ServiceDedicatedInternet -.->|"allocates from pool"| IpamVLAN
     ServiceDedicatedInternet -.->|"allocates from pool"| IpamPrefix
@@ -623,15 +624,15 @@ flowchart LR
     %% Nodes
     SR[Service Request]:::request
     SP[Service Object]:::service
-    
+
     VP["VLAN Pool<br/>100-199"]:::pool
     PP["Prefix Pool<br/>10.0.0.0/16"]:::pool
-    
+
     V[VLAN 142]:::resource
     P["Prefix 10.0.42.0/28"]:::resource
     SW["Switch Port<br/>ge-0/0/5"]:::resource
     GW["Gateway IP<br/>10.0.42.1/28"]:::resource
-    
+
     %% Flow
     SR -->|Creates| SP
     SP -->|"Allocates from"| VP
@@ -640,7 +641,7 @@ flowchart LR
     PP -->|Provides| P
     SP -->|"Finds available"| SW
     P -->|"First IP becomes"| GW
-    
+
     %% Assignments
     V -.->|"Assigned to"| SP
     P -.->|"Assigned to"| SP
