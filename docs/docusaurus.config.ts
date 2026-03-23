@@ -123,11 +123,11 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
-        id: 'docs-bundle-dc',
-        path: 'docs-bundle-dc',
-        routeBasePath: 'bundle-dc',
+        id: 'docs-demo-dc',
+        path: 'docs-demo-dc',
+        routeBasePath: 'demo-dc',
         sidebarCollapsed: false,
-        sidebarPath: './sidebars-bundle-dc.ts',
+        sidebarPath: './sidebars-demo-dc.ts',
       },
     ],
     [
@@ -389,7 +389,7 @@ const config: Config = {
               type: "docSidebar",
               sidebarId: "BundleDcSidebar",
               label: "DC Bundle",
-              docsPluginId: "docs-bundle-dc",
+              docsPluginId: "docs-demo-dc",
             },
             {
               type: "docSidebar",
