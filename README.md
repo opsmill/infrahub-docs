@@ -106,7 +106,7 @@ These steps are performed in your new repository (e.g., `opsmill/my-new-project`
 
 #### Step 1: Copy required files from an existing repo
 
-Use `infrahub-bundle-dc` as a template. Copy these files and directories:
+Use `infrahub-demo-dc` as a template. Copy these files and directories:
 
 **Documentation framework:**
 
