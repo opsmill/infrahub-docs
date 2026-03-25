@@ -27,7 +27,7 @@ All components are registered in `.infrahub.yml`, which acts as the configuratio
 ## Project structure
 
 ```text
-infrahub-bundle-dc/
+infrahub-demo-dc/
 ├── .infrahub.yml              # Component registration
 ├── checks/                    # Validation checks
 │   ├── spine.py
@@ -777,8 +777,8 @@ uv run invoke validate
 
 ```bash
 # Clone repository
-git clone https://github.com/opsmill/infrahub-bundle-dc.git
-cd infrahub-bundle-dc
+git clone https://github.com/opsmill/infrahub-demo-dc.git
+cd infrahub-demo-dc
 
 # Install dependencies
 uv sync
@@ -869,7 +869,7 @@ Use the `--rebuild` flag when you modify:
 5. Check logs for errors:
 
 ```bash
-docker logs infrahub-bundle-dc-service-catalog-1
+docker logs infrahub-demo-dc-service-catalog-1
 ```
 
 #### Service catalog environment variables
