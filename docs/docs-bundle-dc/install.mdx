@@ -48,8 +48,8 @@ uv --version
 Clone the demo repository to your local machine:
 
 ```bash
-git clone https://github.com/opsmill/infrahub-bundle-dc.git
-cd infrahub-bundle-dc
+git clone https://github.com/opsmill/infrahub-demo-dc.git
+cd infrahub-demo-dc
 ```
 
 ## Step 3: install Python dependencies
@@ -293,7 +293,7 @@ uv run infrahubctl object load objects/security/
 uv run python scripts/populate_security_relationships.py
 
 # 6. Add the demo repository
-uv run infrahubctl repository add DEMO https://github.com/opsmill/infrahub-bundle-dc.git --read-only --ref main
+uv run infrahubctl repository add DEMO https://github.com/opsmill/infrahub-demo-dc.git --read-only --ref main
 
 # 7. Load event actions (optional, enables automatic generator execution)
 uv run infrahubctl object load objects/events/

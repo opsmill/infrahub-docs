@@ -74,7 +74,7 @@ Check that the service-catalog container is running:
 docker ps --filter "name=service-catalog"
 ```
 
-You should see a container named `infrahub-bundle-dc-service-catalog-1` or similar in the output.
+You should see a container named `infrahub-demo-dc-service-catalog-1` or similar in the output.
 
 ## Step 2: access the service catalog
 
@@ -92,7 +92,7 @@ The interface displays:
 - **Create new data center** - Button to access the DC creation form
 
 :::info
-If the page doesn't load, verify the container is running and check the logs with `docker logs infrahub-bundle-dc-service-catalog-1`.
+If the page doesn't load, verify the container is running and check the logs with `docker logs infrahub-demo-dc-service-catalog-1`.
 :::
 
 ## Step 3: switch branches and view infrastructure
@@ -386,7 +386,7 @@ If the container fails to start:
 1. Check Docker logs:
 
 ```bash
-docker logs infrahub-bundle-dc-service-catalog-1
+docker logs infrahub-demo-dc-service-catalog-1
 ```
 
 2. Verify environment variables in `.env`:
@@ -416,7 +416,7 @@ docker ps --format "table {{.Names}}\t{{.Ports}}" --filter "name=service-catalog
 3. Try accessing via container IP directly:
 
 ```bash
-docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' infrahub-bundle-dc-service-catalog-1
+docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' infrahub-demo-dc-service-catalog-1
 ```
 
 ### Branch selector is empty
@@ -426,7 +426,7 @@ If no branches appear in the dropdown:
 1. Verify Infrahub server connection from the container:
 
 ```bash
-docker exec infrahub-bundle-dc-service-catalog-1 curl http://infrahub-server:8000/api/schema
+docker exec infrahub-demo-dc-service-catalog-1 curl http://infrahub-server:8000/api/schema
 ```
 
 2. Check that branches exist in Infrahub:
@@ -438,7 +438,7 @@ uv run infrahubctl branch list
 3. Review Service Catalog logs for API errors:
 
 ```bash
-docker logs infrahub-bundle-dc-service-catalog-1 | grep -i error
+docker logs infrahub-demo-dc-service-catalog-1 | grep -i error
 ```
 
 ### Generator timeout errors
@@ -464,7 +464,7 @@ If the submit button doesn't work:
 4. Review Service Catalog logs during submission:
 
 ```bash
-docker logs -f infrahub-bundle-dc-service-catalog-1
+docker logs -f infrahub-demo-dc-service-catalog-1
 ```
 
 ## Advanced usage
