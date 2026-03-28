@@ -17,6 +17,7 @@ After completing this installation:
 - **Service Catalog portal** accessible for requesting services
 - **Demo data** loaded including locations, devices, and network resources
 - **Git integration** configured for infrastructure as code workflows
+- **Semaphore automation** ready to deploy configurations to network devices
 
 ## Prerequisites
 
@@ -112,7 +113,7 @@ The `invoke start` command is a wrapper that:
 
 - Ensures the correct Docker Compose configuration is used
 - Mounts the `service_catalog` module into the Infrahub container
-- Starts both Infrahub and the Streamlit application
+- Starts Infrahub, the Streamlit application, and Semaphore
 - Sets up networking between containers
 :::
 
@@ -125,6 +126,7 @@ This command launches:
 - **Redis**: Cache and message broker
 - **RabbitMQ**: Task queue for asynchronous operations
 - **Service Catalog**: Streamlit web portal (port 8501)
+- **Semaphore**: Ansible automation UI (port 3000)
 
 ### Step 5: Configure Git integration
 
@@ -191,12 +193,22 @@ Confirm everything is working by accessing both interfaces:
     - Service request forms are accessible
     - No connection errors appear
 
+### Semaphore automation UI
+
+- **URL**: [http://localhost:3000](http://localhost:3000)
+- **Username**: `admin`
+- **Password**: `semaphore`
+- **What to Check**:
+    - Login page loads successfully
+    - The deployment project and playbook are visible after login
+    - Inventory and environment are configured
+
 ## Troubleshooting common issues
 
 ### Services won't start
 
 - Ensure Docker is running and has sufficient resources
-- Check for port conflicts (8000, 8501, 5432, 6379)
+- Check for port conflicts (3000, 8000, 8501, 5432, 6379)
 - Run `uv run invoke destroy` then `uv run invoke start` to reset
 
 ### Schema load fails

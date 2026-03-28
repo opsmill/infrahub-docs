@@ -710,6 +710,98 @@ The `@st.cache_resource` decorator:
 
 <ReferenceLink title="Learn about Streamlit" url="https://streamlit.io/" openInNewTab/>
 
+## The deployment layer
+
+### Semaphore for Ansible automation
+
+[Semaphore](https://semaphoreui.com/) (SemaphoreUI) is an open-source web UI for running Ansible playbooks. In this demo, it serves as the deployment step: after a service is provisioned in Infrahub and the proposed change is merged, Semaphore runs playbooks that fetch the generated device configurations and deploy them to network equipment.
+
+```mermaid
+flowchart LR
+    classDef semaphore fill:#e6f3ff,stroke:#4a90e2,stroke-width:2px
+    classDef ansible fill:#fff2e6,stroke:#ff9800,stroke-width:2px
+    classDef infrahub fill:#e6ffe6,stroke:#4caf50,stroke-width:2px
+    classDef device fill:#ffe6f2,stroke:#e91e63,stroke-width:2px
+
+    S[Semaphore UI]:::semaphore
+    P[deploy.yml Playbook]:::ansible
+    I[Dynamic Inventory]:::ansible
+    INF[Infrahub API]:::infrahub
+    D1[Device 1]:::device
+    D2[Device 2]:::device
+    D3[Device N]:::device
+
+    S -->|Triggers| P
+    P -->|Uses| I
+    I -->|Queries devices| INF
+    P -->|Fetches artifacts| INF
+    P -->|Deploys config| D1
+    P -->|Deploys config| D2
+    P -->|Deploys config| D3
+```
+
+### Dynamic inventory
+
+The inventory file (`ansible/inventory.yml`) uses the `opsmill.infrahub.inventory` plugin to build the device inventory dynamically from Infrahub at runtime. Instead of maintaining a static list of hosts, the plugin queries Infrahub for all `DcimDevice` nodes and composes host variables from their attributes:
+
+```yaml title="ansible/inventory.yml"
+plugin: opsmill.infrahub.inventory
+api_endpoint: "http://infrahub-server:8000"
+
+nodes:
+  DcimDevice:
+    include:
+      - name
+      - location.name
+      - role
+      - device_type.name
+      - primary_address.address
+      - status
+
+compose:
+  hostname: name
+  ansible_host: primary_address.address | ansible.utils.ipaddr('address')
+  platform: device_type.platform.ansible_network_os
+  location: location.name
+```
+
+This means any device added or modified in Infrahub is automatically reflected in the Ansible inventory — no manual synchronization required.
+
+### The deployment playbook
+
+The `ansible/deploy.yml` playbook performs two tasks per device:
+
+1. **Fetch configuration artifact** — Uses `opsmill.infrahub.artifact_fetch` to retrieve the `startup-config` artifact from Infrahub, identified by the device's node ID
+2. **Save configuration** — Writes the fetched configuration to a local file (`/tmp/<hostname>_startup_config.txt`)
+
+```yaml title="ansible/deploy.yml"
+- name: Deploy configuration to network devices
+  hosts: all
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: "Fetch configuration artifact from Infrahub"
+      opsmill.infrahub.artifact_fetch:
+        artifact_name: "startup-config"
+        target_id: "{{ id }}"
+      register: artifact
+
+    - name: Save configs to localhost
+      ansible.builtin.copy:
+        content: "{{ artifact.text }}"
+        dest: "/tmp/{{ inventory_hostname }}_startup_config.txt"
+```
+
+### Semaphore container setup
+
+The Semaphore container (`semaphore/Dockerfile`) extends the official image with the dependencies needed to interact with Infrahub:
+
+- **infrahub-sdk**: Python SDK installed via pip, required by the Ansible collection
+- **`opsmill.infrahub` collection**: Ansible collection installed via `ansible-galaxy`, providing the `inventory` plugin and `artifact_fetch` module
+
+At runtime, the container mounts the `ansible/` directory as its playbook source, so any changes to playbooks or inventory are reflected immediately without rebuilding.
+
 ## Architecture takeaways
 
 ### Key design decisions
@@ -719,6 +811,7 @@ The `@st.cache_resource` decorator:
 3. **Resource Management**: Centralized pools prevent conflicts
 4. **Branch-Based Workflows**: Safe testing and rollback capabilities
 5. **User-Friendly Abstractions**: Hide complexity behind clear choices
+6. **Deployment Automation**: Semaphore bridges the gap between source of truth and network devices, using dynamic inventory and artifact-based configuration delivery
 
 ### Extending the demo
 
@@ -729,6 +822,7 @@ Consider these enhancements for production use:
 - Integration with ITSM platforms
 - Automated testing of provisioned services
 - Rollback and decommissioning automation
+- Event-driven deployment: trigger Semaphore runs automatically when proposed changes are merged in Infrahub
 
 ## Next steps
 

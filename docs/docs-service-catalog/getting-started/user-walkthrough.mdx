@@ -27,6 +27,7 @@ The demo simulates a typical enterprise service delivery process:
 3. **Review & Approval**: Network architect reviews and approves the implementation
 4. **Resource Allocation**: System automatically provisions VLANs, IPs, and configurations
 5. **Service Delivery**: Customer receives access details for their new service
+6. **Automated Deployment**: Semaphore runs Ansible playbooks to fetch generated configurations from Infrahub and deploy them to network devices
 
 <ReferenceLink title="Blog post" url="https://opsmill.com/blog/how-to-turn-your-source-of-truth-into-a-service-factory/" openInNewTab/>
 
@@ -268,6 +269,44 @@ This review process provides:
    - **VLAN Information**: VLAN ID for their traffic
    - **Support Contacts**: Who to contact for service issues
 
+## Step 4: Deploy the configurations
+
+After the proposed change is merged, you can use Semaphore to deploy the generated configurations to network devices.
+
+### Access the Semaphore UI
+
+1. **Open Semaphore**
+   - Navigate to `http://localhost:3000`
+   - Username: `admin`
+   - Password: `semaphore`
+
+2. **Locate the Deployment Task**
+   - Find the deployment project in the Semaphore dashboard
+   - The project is configured with the `deploy.yml` playbook and the dynamic Infrahub inventory
+
+### Run the deployment playbook
+
+1. **Start a Task Run**
+   - Click "Run" to launch the deployment playbook
+   - Semaphore uses the dynamic inventory plugin to query Infrahub for all devices and their attributes
+
+2. **Monitor Real-Time Output**
+   - Watch the live output as Ansible connects to each device
+   - The playbook fetches the `startup-config` artifact from Infrahub for each device
+   - Configurations are saved locally (and in a real environment, pushed to devices)
+
+3. **Verify Deployment Success**
+   - Check that all tasks complete with "ok" or "changed" status
+   - Review the output for any errors or skipped hosts
+   - Confirm that configuration files were generated for each device
+
+:::tip What the Playbook Does
+The `deploy.yml` playbook performs two tasks per device:
+
+1. **Fetch configuration artifact** — Uses the `opsmill.infrahub.artifact_fetch` module to retrieve the `startup-config` artifact from Infrahub
+2. **Save configuration** — Writes the configuration to a local file for deployment
+:::
+
 :::success Workflow Complete!
 You've successfully:
 
@@ -275,6 +314,7 @@ You've successfully:
 2. ✅ Reviewed the automated resource allocation
 3. ✅ Approved the implementation as a network architect
 4. ✅ Delivered a fully configured network service
+5. ✅ Deployed configurations to network devices via Semaphore
 
 All in minutes, with zero manual configuration errors!
 :::

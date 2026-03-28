@@ -64,6 +64,8 @@ In many ways, Infrahub is the perfect tool to support your service catalog imple
 - **Resource Managers**: Infrahub's resource managers can be used to automate the allocation and management of resources, ensuring robust and efficient resource management.
 - **Branching**: Infrahub's branching capabilities allow you to isolate changes in a separate branch, paving the way for testing and validation before deploying changes to production.
 
+To complete the workflow from service request to configuration deployment, this demo also integrates [Semaphore](https://semaphoreui.com/), an open-source Ansible automation UI. Once a proposed change is reviewed and merged in Infrahub, Semaphore runs Ansible playbooks that fetch the generated device configurations from Infrahub and deploy them to network devices — closing the loop from self-service request to production deployment.
+
 If you want more information about the business case and how this PoC was built, you can read the corresponding [blog post](https://opsmill.com/blog/how-to-turn-your-source-of-truth-into-a-service-factory/) on the OpsMill website.
 
 <ReferenceLink title="Blog post" url="https://opsmill.com/blog/how-to-turn-your-source-of-truth-into-a-service-factory/" openInNewTab/>
