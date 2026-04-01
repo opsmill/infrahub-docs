@@ -118,6 +118,7 @@ Much of the schema is based on the [Infrahub schema library](https://github.com/
 - `base`: Contains generic definitions for `IPAM` (IP address, prefix, etc.), `DCIM` (network device, interface, etc.), `location`, and `organization` (provider, manufacturer). Importing this folder is mandatory as it provides the basic definitions required for extensions.
 - `location_minimal`: Defines a hierarchical tree for country, metro, and site.
 - `vlan`: Includes nodes for VLANs and L2 domains.
+- `circuit` (optional): Defines circuits with endpoints for site-to-site connections. This schema is available in `schemas/circuit/` but is not loaded by default.
 
 <ReferenceLink title="Learn about schema library" url="https://docs.infrahub.app/schema-library" openInNewTab/>
 
@@ -655,7 +656,7 @@ The generator transforms a service request:
 
 ```yaml
 Service: DI-12345
-Location: Atlanta 
+Location: Paris
 Bandwidth: 1 Gbps
 IP Package: Medium
 ```

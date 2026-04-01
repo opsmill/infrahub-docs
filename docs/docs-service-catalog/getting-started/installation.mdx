@@ -128,39 +128,37 @@ This command launches:
 - **Service Catalog**: Streamlit web portal (port 8501)
 - **Semaphore**: Ansible automation UI (port 3000)
 
-### Step 5: Configure Git integration
+### Step 5: Initialize the demo environment
 
-Connect the demo repository to Infrahub for infrastructure as code workflows.
+Once Infrahub is up and running, initialize the demo by loading the repository, permissions, and seeding Semaphore.
 
 ```shell
-uv run infrahubctl repository add --ref main --read-only infrahub-demo https://github.com/opsmill/infrahub-demo-service-catalog.git
+uv run invoke init
 ```
 
-#### Why Git integration?
+This single command performs three things:
 
-This connection enables:
+1. **Seeds Semaphore** with the project, SSH key, repository, inventory, environment, and task template (idempotent — safe to run multiple times)
+2. **Loads the repository** configuration from `repository.yaml` into Infrahub — a read-write `CoreRepository` that references the local checkout mounted at `/upstream` in the container
+3. **Loads permissions** from `permissions.yml`, creating an operator account (`john` / `infrahub`) with permissions to manage repositories, merge branches, and review proposed changes
+
+#### What the repository provides
+
+Once Infrahub imports the repository, it picks up:
 
 - **Generator Scripts**: Python code that automates service provisioning
 - **Configuration Templates**: Jinja2 templates for device configurations
-- **Schema**: Track changes to data models over time
-- **Objects and data**: Infrastructure changes through pull requests
-
-:::info About Read-Only Mode
-The `--read-only` flag means:
-
-- Infrahub can fetch and execute code from the repository
-- Changes in Infrahub won't be pushed back to Git
-- Perfect for demo environments and testing
-
-For production, you'd typically use bidirectional sync to enable full GitOps workflows.
-:::
+- **Schema**: Data models for DCIM, IPAM, services, and locations
+- **Objects and data**: Demo infrastructure loaded from YAML fixtures
+- **Menu**: Custom navigation structure for the Infrahub UI
 
 :::tip Understanding the Data Model
-This imports:
+The repository imports:
 
-- **Locations**: Sites like Atlanta, Dallas, Denver, and Seattle
-- **Devices**: Core switches, edge routers, and customer equipment
-- **Network Resources**: VLAN pools, IP prefix pools
+- **Locations**: Sites in Paris, Brussels, New York, and Dallas
+- **Devices**: Core switches and edge routers at each site
+- **Providers**: Transit and peering providers (Cogent, Zayo, Colt, Lumen, Equinix)
+- **Network Resources**: VLAN pools, IP prefix pools, interface profiles
 - **Templates**: Device configurations and service definitions
 
 The schema uses a hierarchical structure:
@@ -178,12 +176,13 @@ Confirm everything is working by accessing both interfaces:
 ### Infrahub web UI
 
 - **URL**: [http://localhost:8000](http://localhost:8000)
-- **Username**: `admin`
-- **Password**: `infrahub`
+- **Admin account**: `admin` / `infrahub`
+- **Operator account**: `john` / `infrahub` (limited permissions)
 - **What to Check**:
     - Navigate to the Schema page to see loaded models
     - Check the Objects page to verify demo data is present
     - Confirm the repository appears under Repositories
+    - Log in as `john` to verify operator-level access works
 
 ### Service catalog portal
 
@@ -200,8 +199,8 @@ Confirm everything is working by accessing both interfaces:
 - **Password**: `semaphore`
 - **What to Check**:
     - Login page loads successfully
-    - The deployment project and playbook are visible after login
-    - Inventory and environment are configured
+    - The "Service Catalog" project is visible (created by `invoke init`)
+    - The "Deploy" task template and "Infrahub" inventory are configured
 
 ## Troubleshooting common issues
 
