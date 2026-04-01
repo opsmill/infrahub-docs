@@ -423,7 +423,7 @@ const config: Config = {
           items: [
             {
               type: "docSidebar",
-              sidebarId: "SolutionAiDcSidebar",
+              sidebarId: "solutionAiDcSidebar",
               label: "AI Datacenter",
               docsPluginId: "docs-infrahub-solution-ai-dc",
             },
