@@ -261,6 +261,17 @@ const config: Config = {
       },
     ],
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-infrahub-solution-ai-dc',
+        path: 'docs-infrahub-solution-ai-dc',
+        routeBasePath: 'infrahub-solution-ai-dc',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-infrahub-solution-ai-dc.ts',
+        editUrl: 'https://github.com/opsmill/infrahub-solution-ai-dc/tree/main/docs',
+      },
+    ],
+    [
       '@docusaurus/plugin-google-tag-manager',
       {
         containerId: 'GTM-MQ2RZ3SP',
@@ -402,6 +413,19 @@ const config: Config = {
               sidebarId: "schemaSidebar",
               label: "Schema Library",
               docsPluginId: "docs-schema-library",
+            },
+          ],
+        },
+        {
+          type: 'dropdown',
+          position: 'left',
+          label: 'Solutions',
+          items: [
+            {
+              type: "docSidebar",
+              sidebarId: "SolutionAiDcSidebar",
+              label: "AI Datacenter",
+              docsPluginId: "docs-infrahub-solution-ai-dc",
             },
           ],
         },
