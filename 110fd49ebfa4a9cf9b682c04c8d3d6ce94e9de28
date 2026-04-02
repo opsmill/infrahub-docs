@@ -1,0 +1,25 @@
+CLAUDE.md
+  e8fc2984dcaa5300 23,119
+docs/docusaurus.config.ts
+  e8fc2984dcaa5300 246-252,361-364
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "110fd49ebfa4a9cf9b682c04c8d3d6ce94e9de28",
+  "prompts": {
+    "e8fc2984dcaa5300": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b0f118a9-f09c-47df-9c72-05952eb0f077",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Bearchitek",
+      "messages": [],
+      "total_additions": 18,
+      "total_deletions": 0,
+      "accepted_lines": 18,
+      "overriden_lines": 0
+    }
+  }
+}
