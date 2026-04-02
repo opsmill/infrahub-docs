@@ -243,6 +243,16 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
+        id: 'docs-skills',
+        path: 'docs-skills',
+        routeBasePath: 'skills',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-skills.ts',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
         id: 'docs-integrations',
         path: 'docs-integrations',
         routeBasePath: 'integrations',
@@ -345,6 +355,12 @@ const config: Config = {
               sidebarId: "mcpSidebar",
               label: "MCP Server for Infrahub",
               docsPluginId: "docs-mcp",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "skillsSidebar",
+              label: "Skills for Infrahub",
+              docsPluginId: "docs-skills",
             },
             {
               type: "docSidebar",

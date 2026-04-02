@@ -20,6 +20,7 @@ Documentation is synced from these upstream repositories:
 - Schema library docs: `opsmill/schema-library`
 - Infrahub Sync docs: `opsmill/infrahub-sync`
 - Emma docs: `opsmill/emma`
+- Infrahub Skills docs: `opsmill/infrahub-skills`
 
 ### Git Submodules
 
@@ -115,6 +116,7 @@ This site uses multiple Docusaurus plugin instances to combine documentation fro
 | Emma | `docs/docs-emma/` | `/emma` | `opsmill/emma` |
 | VS Code Extension | `docs/docs-vscode/` | `/vscode` | VS Code extension docs |
 | MCP Server | `docs/docs-mcp/` | `/mcp` | MCP integration docs |
+| Skills | `docs/docs-skills/` | `/skills` | `opsmill/infrahub-skills` |
 | Integrations | `docs/docs-integrations/` | `/integrations` | Integration guides |
 | Exporter | `docs/docs-exporter/` | `/exporter` | Exporter documentation |
 
