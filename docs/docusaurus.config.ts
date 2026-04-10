@@ -243,11 +243,11 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
-        id: 'docs-infrahub-ai-skills',
-        path: 'docs-infrahub-ai-skills',
+        id: 'docs-ai-skills',
+        path: 'docs-ai-skills',
         routeBasePath: 'skills',
         sidebarCollapsed: false,
-        sidebarPath: './sidebars-infrahub-ai-skills.ts',
+        sidebarPath: './sidebars-ai-skills.ts',
       },
     ],
     [
@@ -358,9 +358,9 @@ const config: Config = {
             },
             {
               type: "docSidebar",
-              sidebarId: "InfrahubAISkillsSidebar",
-              label: "Infrahub Skills",
-              docsPluginId: "docs-infrahub-ai-skills",
+              sidebarId: "AISkillsSidebar",
+              label: "Infrahub AI Skills",
+              docsPluginId: "docs-ai-skills",
             },
             {
               type: "docSidebar",
