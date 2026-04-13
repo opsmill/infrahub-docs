@@ -17,17 +17,17 @@ git clone https://github.com/opsmill/infrahub-exporter.git
 cd infrahub-exporter
 ```
 
-2. **Install dependencies**
+1. **Install dependencies**
 
 ```bash
 poetry install
 ```
 
-3. **Configure your exporter**
+1. **Configure your exporter**
 
 See the [Configuration guide](../guides/configuration.mdx)
 
-4. **Run the exporter**
+1. **Run the exporter**
 
 ```bash
 poetry run python -m infrahub_exporter --config path/to/config.yml
@@ -42,17 +42,17 @@ git clone https://github.com/opsmill/infrahub-exporter.git
 cd infrahub-exporter
 ```
 
-2. **Build the Docker image**
+1. **Build the Docker image**
 
 ```bash
 docker build -t infrahub-exporter:latest -f development/Dockerfile .
 ```
 
-3. **Configure your exporter**
+1. **Configure your exporter**
 
 See the [Configuration guide](../guides/configuration.mdx)
 
-4. **Run the container**
+1. **Run the container**
 
 ```bash
 docker run \
@@ -61,7 +61,7 @@ docker run \
   infrahub-exporter:latest
 ```
 
-5. **Docker compose example
+1. **Docker compose example
 
 ```yaml
   infrahub-exporter:
