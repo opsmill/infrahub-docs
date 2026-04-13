@@ -53,14 +53,15 @@ The Service Catalog provides a simplified, user-friendly interface for requestin
 
    - **Service Identifier**: Choose a unique name (for example: "DI-DEMO-001")
    - **Account Reference**: Customer or project identifier
-   - **Location**: Select from available sites (Paris, Brussels, New York, Dallas)
+   - **Location**: Select a site within a location (for example: "Paris 1", "Brussels 1", "New York 1", "Dallas 1")
    - **Bandwidth**: Choose from human-readable options:
-        - "Hundred Megabits" (100 Mbps)
-        - "One Gigabit" (1 Gbps)
         - "Ten Gigabits" (10 Gbps)
+        - "One Gigabit" (1 Gbps)
+        - "Hundred Megabits" (100 Mbps)
+
    - **IP Package**: Select based on customer needs:
         - "Small" (6 usable IPs)
-            - "Medium" (14 usable IPs)
+        - "Medium" (14 usable IPs)
         - "Large" (30 usable IPs)
 
 4. **Submit the Request**
@@ -97,6 +98,8 @@ When you submit the request:
    - **Draft**: Initial request submitted, awaiting processing
    - **In Delivery**: Resources allocated, implementation in progress
    - **Active**: Service fully provisioned and operational
+
+In this example, the Service Request is in Draft state.
 
 ![Service Requests](./../media/service_requests.png)
 
@@ -147,7 +150,7 @@ Infrahub serves as the "source of truth" for your network infrastructure, mainta
 
 3. **Examine Site Details**
    - Click `Location` > `Site` to see all sites
-   - Select a site (for example: "Paris")
+   - Select a site (for example: "Paris 1")
    - Review the site's components:
         - Associated devices and their roles
         - Current VLAN assignments
