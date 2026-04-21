@@ -69,6 +69,10 @@ const config: Config = {
         theme: {
           customCss: "./src/css/custom.css",
         },
+        gtag: {
+          trackingID: process.env.GA_MEASUREMENT_ID ?? "G-12QVSPMRGD",
+          anonymizeIP: true,
+        },
       } satisfies Preset.Options,
     ],
   ],
