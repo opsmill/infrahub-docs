@@ -128,6 +128,22 @@ If you have multiple Infrahub projects:
 infrahub-backup restore infrahub_backups/infrahub_backup_20250929_143022.tar.gz --project=infrahub-staging
 ```
 
+### Reset the deployment ID
+
+Every Infrahub instance carries a unique deployment ID stored on the Root node in the Neo4j database. When you restore a production backup into a non-production environment — for example, cloning prod into staging or spinning up a disaster-recovery replica — the restored instance inherits the source deployment ID, and both environments report the same identity.
+
+If you need the restored instance to appear as a distinct deployment, add the `--reset-deployment-id` flag:
+
+```bash
+infrahub-backup restore infrahub_backups/infrahub_backup_20250929_143022.tar.gz --reset-deployment-id
+```
+
+The flag generates a new UUID and writes it to the Root node after the database is restored and before the Infrahub application containers start, so the application never observes the source deployment ID.
+
+:::info
+Omit this flag when you are restoring into the same environment the backup came from (for example, recovering from data loss on the original instance). Resetting the deployment ID is only required when the restored instance is logically separate from the source.
+:::
+
 ## Step 3: Monitor restoration progress
 
 Watch the detailed restoration output:

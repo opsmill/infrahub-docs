@@ -102,6 +102,7 @@ infrahub-backup restore <backup-file|s3-uri>
 |------|-------------|---------|
 | `--exclude-taskmanager` | Skip restoring the task manager database even if the dump is present | `false` |
 | `--migrate-format` | Run Neo4j database format migration after restore | `false` |
+| `--reset-deployment-id` | Generate a new Root node UUID after restore to detach this instance from the source deployment ID | `false` |
 
 **Examples:**
 
