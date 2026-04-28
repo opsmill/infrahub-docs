@@ -418,7 +418,7 @@ const config: Config = {
           items: [
             {
               type: "docSidebar",
-              sidebarId: "BundleDcSidebar",
+              sidebarId: "DemoDcSidebar",
               label: "DC Bundle",
               docsPluginId: "docs-demo-dc",
             },
