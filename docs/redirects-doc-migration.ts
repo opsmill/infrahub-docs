@@ -108,31 +108,31 @@ export const redirects_migration: Redirect[] = [
 
     // ── Development Resources ─────────────────────────────────────────────────
     { from: '/topics/developer-guide', to: '/development-resources/developer-guide' },
-    { from: '/topics/graphql', to: '/development-resources/graphql/' },
+    { from: '/topics/graphql', to: '/development-resources/graphql/overview' },
     { from: '/guides/graphql-fragment', to: '/development-resources/graphql-fragments' },
 
     // ── Deploy & Manage — Install & Configure ────────────────────────────────
     { from: '/topics/hardware-requirements', to: '/deploy-manage/install-configure/hardware-requirements' },
-    { from: '/guides/installation', to: '/deploy-manage/install-configure/install/' },
-    { from: '/guides/production-deployment', to: '/deploy-manage/install-configure/production-deployment/' },
+    { from: '/guides/installation', to: '/deploy-manage/install-configure/install/overview' },
+    { from: '/guides/production-deployment', to: '/deploy-manage/install-configure/production-deployment/overview' },
     { from: '/guides/configuration-changes', to: '/deploy-manage/install-configure/configure-infrahub' },
 
     // ── Deploy & Manage — Run & Observe ──────────────────────────────────────
     { from: '/topics/tasks', to: '/deploy-manage/run-observe/tasks' },
     { from: '/guides/telemetry', to: '/deploy-manage/run-observe/telemetry' },
     { from: '/topics/activity-log', to: '/deploy-manage/run-observe/activity-log' },
-    { from: '/topics/log-forwarding', to: '/deploy-manage/run-observe/log-forwarding/' },
+    { from: '/topics/log-forwarding', to: '/deploy-manage/run-observe/log-forwarding/overview' },
     { from: '/guides/log-forwarding', to: '/deploy-manage/run-observe/log-forwarding/configure-log-forwarding' },
 
     // ── Deploy & Manage — Maintain & Upgrade ────────────────────────────────
-    { from: '/guides/upgrade', to: '/deploy-manage/maintain-upgrade/upgrade/' },
-    { from: '/topics/database-backup', to: '/deploy-manage/maintain-upgrade/database-backup/' },
+    { from: '/guides/upgrade', to: '/deploy-manage/maintain-upgrade/upgrade/overview' },
+    { from: '/topics/database-backup', to: '/deploy-manage/maintain-upgrade/database-backup/overview' },
     { from: '/guides/database-backup', to: '/deploy-manage/maintain-upgrade/database-backup/backup-and-restore' },
 
     // ── Deploy & Manage — User Management & Security ─────────────────────────
     { from: '/topics/authentication', to: '/deploy-manage/user-management/authentication' },
-    { from: '/guides/sso', to: '/deploy-manage/user-management/sso/' },
-    { from: '/topics/permissions-roles', to: '/deploy-manage/user-management/permissions-roles/' },
+    { from: '/guides/sso', to: '/deploy-manage/user-management/sso/overview' },
+    { from: '/topics/permissions-roles', to: '/deploy-manage/user-management/permissions-roles/overview' },
     { from: '/guides/accounts-permissions', to: '/deploy-manage/user-management/permissions-roles/manage-accounts-and-permissions' },
     { from: '/guides/managing-api-tokens', to: '/deploy-manage/user-management/managing-api-tokens' },
 
@@ -159,7 +159,7 @@ export const redirects_migration: Redirect[] = [
     // category labels. Slugs: spaces→hyphens, "&"→double-hyphens, duplicates→-1 suffix.
 
     // Old "Guides" sub-categories
-    { from: '/category/installation--setup', to: '/deploy-manage/install-configure/install/' },
+    { from: '/category/installation--setup', to: '/deploy-manage/install-configure/install/overview' },
     { from: '/category/schema--data-modeling', to: '/schema-and-data' },
     { from: '/category/data-management', to: '/schema-and-data' },
     { from: '/category/artifact--transform', to: '/automation-and-outputs' },
@@ -189,6 +189,17 @@ export const redirects_migration: Redirect[] = [
 
     // Old "Topics > Development Resources"
     { from: '/category/development-resources', to: '/development-resources' },
+
+    // ── Deploy & Manage sub-hub index → overview backward-compat ───────────────
+    // Old /X/ URLs for deploy-manage sub-folders and graphql (from index.mdx) now redirect to /X/overview.
+    { from: ['/deploy-manage/install-configure/install', '/deploy-manage/install-configure/install/'], to: '/deploy-manage/install-configure/install/overview' },
+    { from: ['/deploy-manage/install-configure/production-deployment', '/deploy-manage/install-configure/production-deployment/'], to: '/deploy-manage/install-configure/production-deployment/overview' },
+    { from: ['/deploy-manage/run-observe/log-forwarding', '/deploy-manage/run-observe/log-forwarding/'], to: '/deploy-manage/run-observe/log-forwarding/overview' },
+    { from: ['/deploy-manage/maintain-upgrade/database-backup', '/deploy-manage/maintain-upgrade/database-backup/'], to: '/deploy-manage/maintain-upgrade/database-backup/overview' },
+    { from: ['/deploy-manage/maintain-upgrade/upgrade', '/deploy-manage/maintain-upgrade/upgrade/'], to: '/deploy-manage/maintain-upgrade/upgrade/overview' },
+    { from: ['/deploy-manage/user-management/sso', '/deploy-manage/user-management/sso/'], to: '/deploy-manage/user-management/sso/overview' },
+    { from: ['/deploy-manage/user-management/permissions-roles', '/deploy-manage/user-management/permissions-roles/'], to: '/deploy-manage/user-management/permissions-roles/overview' },
+    { from: ['/development-resources/graphql', '/development-resources/graphql/'], to: '/development-resources/graphql/overview' },
 
     // ── Feature hub index → overview backward-compat ─────────────────────────
     // Old canonical /X/ URLs (from index.mdx) now redirect to /X/overview.
