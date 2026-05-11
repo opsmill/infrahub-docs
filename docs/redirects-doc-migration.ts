@@ -192,14 +192,14 @@ export const redirects_migration: Redirect[] = [
 
     // ── Deploy & Manage sub-hub index → overview backward-compat ───────────────
     // Old /X/ URLs for deploy-manage sub-folders and graphql (from index.mdx) now redirect to /X/overview.
-    { from: ['/deploy-manage/install-configure/install', '/deploy-manage/install-configure/install/'], to: '/deploy-manage/install-configure/install/overview' },
-    { from: ['/deploy-manage/install-configure/production-deployment', '/deploy-manage/install-configure/production-deployment/'], to: '/deploy-manage/install-configure/production-deployment/overview' },
-    { from: ['/deploy-manage/run-observe/log-forwarding', '/deploy-manage/run-observe/log-forwarding/'], to: '/deploy-manage/run-observe/log-forwarding/overview' },
-    { from: ['/deploy-manage/maintain-upgrade/database-backup', '/deploy-manage/maintain-upgrade/database-backup/'], to: '/deploy-manage/maintain-upgrade/database-backup/overview' },
-    { from: ['/deploy-manage/maintain-upgrade/upgrade', '/deploy-manage/maintain-upgrade/upgrade/'], to: '/deploy-manage/maintain-upgrade/upgrade/overview' },
-    { from: ['/deploy-manage/user-management/sso', '/deploy-manage/user-management/sso/'], to: '/deploy-manage/user-management/sso/overview' },
-    { from: ['/deploy-manage/user-management/permissions-roles', '/deploy-manage/user-management/permissions-roles/'], to: '/deploy-manage/user-management/permissions-roles/overview' },
-    { from: ['/development-resources/graphql', '/development-resources/graphql/'], to: '/development-resources/graphql/overview' },
+    { from: '/deploy-manage/install-configure/install', to: '/deploy-manage/install-configure/install/overview' },
+    { from: '/deploy-manage/install-configure/production-deployment', to: '/deploy-manage/install-configure/production-deployment/overview' },
+    { from: '/deploy-manage/run-observe/log-forwarding', to: '/deploy-manage/run-observe/log-forwarding/overview' },
+    { from: '/deploy-manage/maintain-upgrade/database-backup', to: '/deploy-manage/maintain-upgrade/database-backup/overview' },
+    { from: '/deploy-manage/maintain-upgrade/upgrade', to: '/deploy-manage/maintain-upgrade/upgrade/overview' },
+    { from: '/deploy-manage/user-management/sso', to: '/deploy-manage/user-management/sso/overview' },
+    { from: '/deploy-manage/user-management/permissions-roles', to: '/deploy-manage/user-management/permissions-roles/overview' },
+    { from: '/development-resources/graphql', to: '/development-resources/graphql/overview' },
 
     // ── Feature hub index → overview backward-compat ─────────────────────────
     // Old canonical /X/ URLs (from index.mdx) now redirect to /X/overview.
