@@ -316,6 +316,11 @@ const config: Config = {
     '@docusaurus/theme-mermaid',
   ],
   themeConfig: {
+    announcementBar: {
+      id: 'docs-restructure-2026',
+      content: '📚 New docs structure: content is now grouped by capability, not split across Topics and Guides. <a href="/release-notes/infrahub/docs-restructure"><strong>See what changed →</strong></a>',
+      isCloseable: true,
+    },
     navbar: {
       logo: {
         alt: "Infrahub",
