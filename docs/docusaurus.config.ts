@@ -3,6 +3,7 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import globalVars from './globalVars';
 import path from 'path';
+import { redirects_migration } from './redirects-doc-migration';
 
 function getDocsRelative(filePath) {
   const rootDocsDir = path.join(process.cwd(), 'docs');
@@ -121,6 +122,8 @@ const config: Config = {
             from: '/emma/emma/',
             to: '/emma/',
           },
+          // This covers all the redirects setup during doc migration
+          ...redirects_migration,
         ],
       },
     ],
@@ -313,6 +316,11 @@ const config: Config = {
     '@docusaurus/theme-mermaid',
   ],
   themeConfig: {
+    announcementBar: {
+      id: 'docs-restructure-2026',
+      content: '📚 New docs structure: content is now grouped by capability, not split across Topics and Guides. <a href="/release-notes/infrahub/docs-restructure"><strong>See what changed →</strong></a>',
+      isCloseable: true,
+    },
     navbar: {
       logo: {
         alt: "Infrahub",
