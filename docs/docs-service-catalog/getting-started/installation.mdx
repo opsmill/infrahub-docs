@@ -139,8 +139,8 @@ uv run invoke init
 This single command performs three things:
 
 1. **Seeds Semaphore** with the project, SSH key, repository, inventory, environment, and task template (idempotent — safe to run multiple times)
-2. **Loads the repository** configuration from `repository.yaml` into Infrahub — a read-write `CoreRepository` that references the local checkout mounted at `/upstream` in the container
-3. **Loads permissions** from `permissions.yml`, creating an operator account (`john` / `infrahub`) with permissions to manage repositories, merge branches, and review proposed changes
+2. **Loads the repository** configuration from `bootstrap/repository.yaml` into Infrahub — a read-write `CoreRepository` that references the local checkout mounted at `/upstream` in the container
+3. **Loads permissions** from `bootstrap/permissions.yml`, creating an operator account (`john` / `infrahub`) with permissions to manage repositories, merge branches, and review proposed changes
 
 #### What the repository provides
 
