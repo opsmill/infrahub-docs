@@ -297,8 +297,8 @@ const config: Config = {
     [
       '@signalwire/docusaurus-plugin-llms-txt',
       {
-        siteTitle: 'Infrahub Documentation',
-        siteDescription: 'Comprehensive guide to Infrahub - the modern infrastructure management platform',
+        siteTitle: 'Infrahub by OpsMill - Documentation',
+        siteDescription: 'Infrahub by OpsMill - the modern infrastructure data management platform. Infrahub is the open-source product built by OpsMill (https://opsmill.com).',
         depth: 2,
         content: {
           enableMarkdownFiles: true,
