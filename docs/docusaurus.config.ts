@@ -289,6 +289,17 @@ const config: Config = {
       },
     ],
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-infrahub-demo-sp',
+        path: 'docs-infrahub-demo-sp',
+        routeBasePath: 'infrahub-demo-sp',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-infrahub-demo-sp.ts',
+        editUrl: 'https://github.com/opsmill/infrahub-demo-sp/tree/main/docs',
+      },
+    ],
+    [
       '@docusaurus/plugin-google-tag-manager',
       {
         containerId: 'GTM-MQ2RZ3SP',
@@ -429,6 +440,12 @@ const config: Config = {
               sidebarId: "DemoDcSidebar",
               label: "demo-dc",
               docsPluginId: "docs-demo-dc",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "InfrahubDemoSpSidebar",
+              label: "demo-sp",
+              docsPluginId: "docs-infrahub-demo-sp",
             },
             {
               type: "docSidebar",
