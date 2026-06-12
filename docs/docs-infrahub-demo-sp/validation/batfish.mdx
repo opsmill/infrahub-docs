@@ -1,0 +1,103 @@
+---
+title: Batfish validation
+---
+
+`BatfishBackboneCheck` runs the [Batfish](https://www.batfish.org/) query
+battery against the rendered MPLS backbone configs and reports findings
+as Infrahub log entries. It runs automatically on every proposed change
+touching the backbone, and can also be invoked ad-hoc from the CLI or
+the Streamlit service catalog.
+
+## What it checks
+
+For each MPLS backbone, the check:
+
+1. Fetches the rendered configuration artifact for every PE whose platform is
+   in `SUPPORTED_PLATFORMS` (`arista_eos`, `cisco_iosxr`, `juniper_junos`).
+   Nokia SR OS and SR Linux are not parsed by Batfish today — they're
+   reported as INFO so the gap is explicit, not invisible.
+2. Loads the configs into a temporary Batfish snapshot.
+3. Runs five Batfish questions and maps each answer row to a `Finding`:
+
+| Query | What it flags | Severity |
+|---|---|---|
+| `fileParseStatus` | Files Batfish couldn't model at all (`PARSE_FAIL`, `ORPHANED`, `WILL_NOT_COMMIT`) | ERROR |
+| `fileParseStatus` | Files partially parsed (`PARTIALLY_UNRECOGNIZED` — Batfish grammar gaps) | WARNING |
+| `parseWarning` | Per-line "Batfish doesn't model this construct" notes | WARNING |
+| `undefinedReferences` | Configuration references a structure (route-map, ACL, peer-group) that isn't defined anywhere | ERROR |
+| `bgpSessionCompatibility` | Configured BGP session doesn't pair cleanly with the other end (mismatched AS, missing remote, etc.) | WARNING |
+| `isisEdges` | Expected IS-IS adjacency between two PEs isn't present | WARNING |
+
+Only ERROR findings block the merge. WARNING and INFO surface in the
+proposed-change log so reviewers see them without preventing the merge.
+
+## Run from the CLI
+
+```bash
+uv run invoke batfish
+# or against a specific backbone:
+uv run invoke batfish --backbone mpls-backbone-1
+```
+
+Requires:
+
+- Infrahub running (`uv run invoke start`)
+- The `batfish` sidecar running (started automatically by `invoke start`)
+- At least one rendered `pe-*` artifact (`invoke bootstrap` if you've
+  never bootstrapped, or `invoke init` for a clean rebuild)
+
+The CLI exit code is 0 when the check passes — i.e. zero ERROR findings.
+WARNING and INFO findings still print but don't fail the run.
+
+## Run from the Service Catalog
+
+The Streamlit catalog (port 8501) has a **Validation → Batfish Check**
+page. It runs the same query battery as the CLI, but with stage-by-stage
+progress:
+
+1. *Fetching backbone topology …*
+2. *Fetching N rendered configuration(s) …* (one tick per PE)
+3. *Waiting for Batfish coordinator at batfish:9996 …*
+4. *Initializing snapshot …*
+5. *Running query: Parse status / Parse warnings / Undefined references / BGP / IS-IS edges*
+
+Findings then render in three tabs (🚫 Errors / ⚠️ Warnings / ℹ️ Info) with
+per-query expanders inside each tab. The Branch + Backbone selectors are
+populated from Infrahub so typos can't silently no-op the check.
+
+## Run as a proposed-change check
+
+The check is registered in `.infrahub.yml` against the
+`topologies_mpls` target. Every proposed change touching an MPLS
+backbone runs it automatically; the result appears in the proposed
+change's **Checks** tab in the Infrahub UI.
+
+## The Batfish sidecar
+
+`docker-compose.override.yml` adds a `batfish/allinone:latest` container.
+It exposes the coordinator on port 9996 (`/v2/networks`) and is reachable
+from any other container on the `sp-demo` network as `batfish:9996`. No
+host port mapping is set up by default — the sidecar talks only inside
+the compose network.
+
+Set `BATFISH_DISABLED=1` to skip the check entirely (for example, for CI
+environments that don't want to start the sidecar):
+
+```bash
+BATFISH_DISABLED=1 uv run pytest
+```
+
+## Known limitations
+
+- **No SR Linux / Nokia SR OS support.** Batfish doesn't parse either
+  grammar, so those PEs are filtered out and surfaced as INFO findings.
+- **Partial parses are common.** Batfish's per-vendor grammars lag real
+  vendor syntax — features like `mpls ip`, `vrf-import` policies, and
+  `route-target import vpn-ipv4` show up as parseWarnings even though
+  the configs are valid on the target platform. That's why parseWarning
+  is mapped to WARNING (informational) rather than ERROR.
+- **IS-IS adjacencies are inferred from configuration, not observed.** Batfish
+  compares advertised IS-IS interface tuples to predict who *should*
+  peer; it doesn't see live protocol state. A `isisEdges` finding may
+  mean "configuration drift between PEs" or "this PE isn't fully
+  meshed with the others yet."
