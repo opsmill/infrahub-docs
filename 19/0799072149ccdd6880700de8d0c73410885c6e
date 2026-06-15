@@ -1,0 +1,20 @@
+docs/package.json
+  s_369af5700a0b98::t_45742e842569e9 44-54,56-61
+  s_369af5700a0b98::t_aaed6b6c33aaf5 55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "190799072149ccdd6880700de8d0c73410885c6e",
+  "prompts": {},
+  "sessions": {
+    "s_369af5700a0b98": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ae659080-23c5-4da1-a066-1b5c2ba6910a",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Bearchitek <benoit@opsmill.com>"
+    }
+  }
+}
