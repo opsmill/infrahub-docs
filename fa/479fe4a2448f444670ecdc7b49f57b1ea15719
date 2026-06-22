@@ -1,0 +1,19 @@
+pyproject.toml
+  s_6036c5df33341c::t_5c7105fd56f7bd 15-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.9",
+  "base_commit_sha": "fa479fe4a2448f444670ecdc7b49f57b1ea15719",
+  "prompts": {},
+  "sessions": {
+    "s_6036c5df33341c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "db64c90b-8f6f-4657-9f64-ae14bd825e04",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Bearchitek <benoit@opsmill.com>"
+    }
+  }
+}
