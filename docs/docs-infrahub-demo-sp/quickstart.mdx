@@ -1,0 +1,123 @@
+---
+title: Quick start
+---
+
+This page gets you from clone to a running demo in about 10 minutes. For an
+overview of what `invoke init` creates, see the
+[landing page](./readme.mdx#architecture-at-a-glance).
+
+## Prerequisites
+
+- Docker / Docker Compose
+- Python 3.10+
+- `uv` (https://docs.astral.sh/uv/)
+- (Optional) containerlab >= 0.50
+- (Optional) `pnpm` (https://pnpm.io/) — only needed for `uv run invoke docs`,
+  which builds the Docusaurus site locally
+
+## 1. Clone and install
+
+```bash
+git clone https://github.com/opsmill/infrahub-demo-sp.git
+cd infrahub-demo-sp
+cp .env.example .env
+uv sync
+```
+
+Open `.env` and review the values — see [Configuration](#configuration)
+below for what each variable does. The defaults are fine for a local
+demo; you typically only edit `INFRAHUB_SERVICE_CATALOG` (to enable the
+Streamlit sidecar) and `INFRAHUB_DATASET` (to switch tenant theme).
+
+## 2. Start Infrahub and bootstrap data
+
+```bash
+uv run invoke init
+```
+
+This destroys any prior state, starts the containers, loads the schemas,
+the menu, all bootstrap objects (4 PEs, full backbone, resource pools,
+plus the selected customer-facing dataset), and generates schema
+protocol bindings.
+
+Wait ~30 s after the containers come up before bootstrap runs.
+
+## 3. Open the Infrahub UI
+
+Visit http://localhost:8000 — log in with `admin` / `infrahub`. The
+sidebar menu shows **Service Catalog → L3 VPNs**, **Topology → MPLS
+Backbones**, and **MPLS** (ISIS / LDP / MP-BGP processes).
+
+## 4. Start the Streamlit Service Catalog
+
+Set `INFRAHUB_SERVICE_CATALOG="true"` in `.env`, then run:
+
+```bash
+uv run invoke start
+```
+
+Every `invoke start` / `invoke init` will now also build and start the
+Streamlit sidecar. Visit http://localhost:8501. Create your first L3VPN.
+
+The Service Catalog also exposes a second wizard — **Create SD-WAN
+service** — for provisioning Cisco Viptela or Versa Networks SD-WAN
+overlays. The flow mirrors Create L3VPN: pick vendor and topology, list
+the sites, submit. See [services/sdwan](./services/sdwan.mdx) for the
+lifecycle, vendor differences, and known gaps.
+
+## 5. (Optional) Run Batfish validation
+
+Under the sidebar **Validation → Batfish Check** the catalog runs
+`BatfishBackboneCheck` against the rendered MPLS backbone configs and
+shows findings bucketed by severity. Each query (parse status, undefined
+references, BGP session compatibility, IS-IS adjacency mesh) progresses
+with its own status indicator so a slow Batfish init isn't a blank
+screen.
+
+The Batfish sidecar is enabled by default in `docker-compose.override.yml`
+and started by `invoke start`. You can also run the same check from the
+command line:
+
+```bash
+uv run invoke batfish
+```
+
+See [validation/batfish](./validation/batfish.mdx) for what each
+finding means and how severity is tiered.
+
+## 6. (Optional) Bring up the containerlab
+
+See [`lab/containerlab`](./lab/containerlab.mdx).
+
+## Configuration
+
+All configurable behaviour is driven by environment variables in `.env`
+(loaded with `set -a; source .env; set +a` before any `uv run invoke`
+command). `uv run invoke info` prints the resolved values.
+
+| Variable | Default | Effect |
+|---|---|---|
+| `INFRAHUB_ADDRESS` | `http://localhost:8000` | Where the SDK / Streamlit catalog reach the server |
+| `INFRAHUB_API_TOKEN` | demo token | Authentication. Rotate before any non-local use |
+| `INFRAHUB_UI_URL` | `http://localhost:8000` | Used by the Streamlit catalog for "open in Infrahub" links |
+| `INFRAHUB_GIT_LOCAL` | `false` | `true` registers a `CoreRepository` pointed at the bind-mounted `/upstream` (no GitHub clone needed). `false` registers a `CoreReadOnlyRepository` against the public GitHub repository |
+| `INFRAHUB_SERVICE_CATALOG` | `false` | `true` builds + starts the Streamlit sidecar on every `invoke start` / `invoke init` |
+| `INFRAHUB_DATASET` | `financial` | Customer-facing tenant overlay loaded on top of the shared backbone. One subdirectory of `objects/datasets/`. Ships with `financial` (internal bank, 8 division tenants, `trading-floor-vpn`) and `isp` (Lumina Networks pan-European ISP, 8 customer tenants, `kestrel-bank-mpls`) |
+| `INFRAHUB_ENTERPRISE` | `false` | `true` streams the Enterprise edition compose file from `https://infrahub.opsmill.io/enterprise/<INFRAHUB_VERSION>` instead of the Community one. Requires an Enterprise license / pull credentials |
+| `INFRAHUB_VERSION` | `stable` | Compose file version tag pulled from `infrahub.opsmill.io` (use `latest`, `stable`, or a specific release like `1.4.0`) |
+| `INFRAHUB_PORT` | `8000` | Override the Infrahub server port |
+| `PREFECT_PORT` | `4200` | Override the Prefect task-manager port |
+| `STREAMLIT_PORT` | `8501` | Override the Streamlit catalog port |
+
+To switch dataset:
+
+```bash
+# in .env
+INFRAHUB_DATASET="isp"
+```
+
+…then `uv run invoke init` to wipe and reload from the new dataset.
+
+## Troubleshooting
+
+See [`troubleshooting`](./troubleshooting.mdx).

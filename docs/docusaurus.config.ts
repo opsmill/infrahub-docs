@@ -3,6 +3,7 @@ import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import globalVars from './globalVars';
 import path from 'path';
+import { redirects_migration } from './redirects-doc-migration';
 
 function getDocsRelative(filePath) {
   const rootDocsDir = path.join(process.cwd(), 'docs');
@@ -69,6 +70,10 @@ const config: Config = {
         theme: {
           customCss: "./src/css/custom.css",
         },
+        gtag: {
+          trackingID: process.env.GA_MEASUREMENT_ID ?? "G-FNVRQ6HH0B",
+          anonymizeIP: true,
+        },
       } satisfies Preset.Options,
     ],
   ],
@@ -117,6 +122,8 @@ const config: Config = {
             from: '/emma/emma/',
             to: '/emma/',
           },
+          // This covers all the redirects setup during doc migration
+          ...redirects_migration,
         ],
       },
     ],
@@ -282,6 +289,17 @@ const config: Config = {
       },
     ],
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-infrahub-demo-sp',
+        path: 'docs-infrahub-demo-sp',
+        routeBasePath: 'infrahub-demo-sp',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-infrahub-demo-sp.ts',
+        editUrl: 'https://github.com/opsmill/infrahub-demo-sp/tree/main/docs',
+      },
+    ],
+    [
       '@docusaurus/plugin-google-tag-manager',
       {
         containerId: 'GTM-MQ2RZ3SP',
@@ -290,8 +308,8 @@ const config: Config = {
     [
       '@signalwire/docusaurus-plugin-llms-txt',
       {
-        siteTitle: 'Infrahub Documentation',
-        siteDescription: 'Comprehensive guide to Infrahub - the modern infrastructure management platform',
+        siteTitle: 'Infrahub by OpsMill - Documentation',
+        siteDescription: 'Infrahub by OpsMill - the modern infrastructure data management platform. Infrahub is the open-source product built by OpsMill (https://opsmill.com).',
         depth: 2,
         content: {
           enableMarkdownFiles: true,
@@ -309,6 +327,11 @@ const config: Config = {
     '@docusaurus/theme-mermaid',
   ],
   themeConfig: {
+    announcementBar: {
+      id: 'docs-restructure-2026',
+      content: '📚 New docs structure: content is now grouped by capability, not split across Topics and Guides. <a href="/release-notes/infrahub/docs-restructure"><strong>See what changed →</strong></a>',
+      isCloseable: true,
+    },
     navbar: {
       logo: {
         alt: "Infrahub",
@@ -414,9 +437,15 @@ const config: Config = {
           items: [
             {
               type: "docSidebar",
-              sidebarId: "BundleDcSidebar",
-              label: "DC Bundle",
+              sidebarId: "DemoDcSidebar",
+              label: "demo-dc",
               docsPluginId: "docs-demo-dc",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "InfrahubDemoSpSidebar",
+              label: "demo-sp",
+              docsPluginId: "docs-infrahub-demo-sp",
             },
             {
               type: "docSidebar",
