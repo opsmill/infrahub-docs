@@ -50,6 +50,7 @@ tar -xzOf infrahub_backup_20250120_020000.tar.gz backup_information.json | jq '.
 ```
 
 Check that:
+
 - `neo4j_edition` matches your current deployment
 - `infrahub_version` is compatible with your target version
 - `components` includes the data you need to restore
@@ -167,7 +168,7 @@ kubectl logs -n infrahub -l app.kubernetes.io/name=infrahub-backup -f
 
 Expected output for a successful restore:
 
-```
+```text
 INFO[0000] Starting restore process...
 INFO[0001] Downloading backup from S3: s3://my-infrahub-backups/infrahub_backup_20250120_020000.tar.gz
 INFO[0010] Download completed (1.5GB)

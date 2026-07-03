@@ -272,7 +272,7 @@ kubectl logs -n infrahub -l app.kubernetes.io/name=infrahub-backup --tail=100 -f
 
 Expected output for a successful backup:
 
-```
+```text
 INFO[0000] Starting backup process...
 INFO[0000] Checking for running tasks...
 INFO[0001] No running tasks found
@@ -323,6 +323,7 @@ The Helm chart creates a ServiceAccount with the required RBAC permissions to pe
 ### Default behavior
 
 By default, the chart creates:
+
 - A ServiceAccount named `infrahub-backup`
 - A Role with required permissions
 - A RoleBinding linking the ServiceAccount to the Role
