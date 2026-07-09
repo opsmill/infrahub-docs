@@ -1,5 +1,5 @@
 ---
-title: How to backup Infrahub on Kubernetes
+title: Back up Infrahub on Kubernetes
 ---
 
 import Tabs from '@theme/Tabs';
@@ -192,7 +192,7 @@ The chart works with any S3-compatible storage:
 </TabItem>
 <TabItem value="local" label="Local Storage">
 
-For testing or simple setups, store backups locally in the pod:
+For testing or basic setups, store backups locally in the pod:
 
 ```yaml
 infrahub-backup:
@@ -382,5 +382,5 @@ Confirm your backup configuration works:
 
 ## Related resources
 
-- [How to restore from backup on Kubernetes](./kubernetes-restore.mdx)
-- [How to backup your instance (CLI)](./backup-instance.mdx)
+- [Restore Infrahub on Kubernetes](./kubernetes-restore.mdx)
+- [Back up your Infrahub instance (CLI)](./backup-instance.mdx)

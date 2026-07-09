@@ -19,7 +19,7 @@ For Kubernetes deployments, the `infrahub-backup` Helm chart provides a declarat
 Infrahub Backup supports high availability (HA) deployments on both Kubernetes and Docker Compose:
 
 - **Kubernetes**: HA PostgreSQL is supported via [CloudNativePG](https://cloudnative-pg.io/) only. The tool automatically detects and targets the primary pod during backup and restore — no additional configuration is needed.
-- **Docker Compose**: HA setups require stopping the `task-manager` and `task-manager-background-svc` containers before running a restore to prevent database accesses during the process. See [How to restore from backup](./guides/restore-backup.mdx#docker-high-availability-deployments) for details.
+- **Docker Compose**: HA setups require stopping the `task-manager` and `task-manager-background-svc` containers before running a restore to prevent database accesses during the process. See [Restore from a backup](./guides/restore-backup.mdx#docker-high-availability-deployments) for details.
 
 ### Community edition support
 
@@ -59,11 +59,11 @@ Learn the fundamentals through hands-on exercises:
 
 Accomplish specific tasks:
 
-- [How to install](./guides/install.mdx) - Install the tool on your system
-- [How to backup your Infrahub instance](./guides/backup-instance.mdx) - Create comprehensive backups
-- [How to restore from backup](./guides/restore-backup.mdx) - Restore your instance from a backup file
-- [How to backup Infrahub on Kubernetes](./guides/kubernetes-backup.mdx) - Backup using the Helm chart
-- [How to restore Infrahub on Kubernetes](./guides/kubernetes-restore.mdx) - Restore using the Helm chart
+- [Install Infrahub Backup](./guides/install.mdx) - Install the tool on your system
+- [Back up your Infrahub instance](./guides/backup-instance.mdx) - Create comprehensive backups
+- [Restore from a backup](./guides/restore-backup.mdx) - Restore your instance from a backup file
+- [Back up Infrahub on Kubernetes](./guides/kubernetes-backup.mdx) - Backup using the Helm chart
+- [Restore Infrahub on Kubernetes](./guides/kubernetes-restore.mdx) - Restore using the Helm chart
 
 ### Reference
 
