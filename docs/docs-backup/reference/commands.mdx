@@ -2,7 +2,7 @@
 title: CLI command reference
 ---
 
-Complete reference for Infrahub Backup commands, flags, and options.
+Complete reference for the Infrahub Ops CLI tools (`infrahub-backup`, `infrahub-collect`), their commands, flags, and options.
 
 ## infrahub-backup
 
@@ -175,6 +175,89 @@ infrahub-backup version
 ```bash
 Version: 1.0.0
 ```
+
+## infrahub-collect
+
+### Command structure
+
+```bash
+infrahub-collect [global-flags] <command> [flags]
+```
+
+### Global flags
+
+These flags apply to all infrahub-collect commands:
+
+| Flag | Description | Default | Environment Variable |
+|------|-------------|---------|---------------------|
+| `--project <name>` | Target specific Docker Compose project | Auto-detect | `INFRAHUB_PROJECT` |
+| `--k8s-namespace <name>` | Target specific Kubernetes namespace | Auto-detect | `INFRAHUB_K8S_NAMESPACE` |
+| `--output-dir <path>` | Directory for bundle files | `./infrahub_bundles` | `INFRAHUB_OUTPUT_DIR` |
+| `--log-format <text\|json>` | Output format for logs | `text` | `INFRAHUB_LOG_FORMAT` |
+| `--help, -h` | Show help for any command | - | - |
+
+### Collect commands
+
+#### create
+
+Collects a troubleshooting bundle from the Infrahub instance. Collection is read-only: no container or pod is stopped, restarted, or scaled. Individual collector failures are recorded in the bundle manifest and do not abort the run.
+
+**Syntax:**
+
+```bash
+infrahub-collect create [flags]
+```
+
+**Flags:**
+
+| Flag | Description | Default | Environment Variable |
+|------|-------------|---------|---------------------|
+| `--log-lines <n>` | Maximum log lines collected per container | `100000` | `INFRAHUB_LOG_LINES` |
+| `--include-backup` | Also create a backup using the standard backup behavior | `false` | `INFRAHUB_INCLUDE_BACKUP` |
+| `--include-queries` | Include database query logs (may contain customer data) | `false` | `INFRAHUB_INCLUDE_QUERIES` |
+| `--benchmark` | Run the OpsMill benchmark and include its results (requires image download; skipped with a warning if unavailable) | `false` | `INFRAHUB_BENCHMARK` |
+
+**Examples:**
+
+```bash
+# Basic collection
+infrahub-collect create
+
+# Target a specific Kubernetes namespace
+infrahub-collect create --k8s-namespace=infrahub-prod
+
+# Collect with more log history
+infrahub-collect create --log-lines=500000
+
+# Collect logs and a backup in one run
+infrahub-collect create --include-backup
+
+# Performance investigation with benchmark
+infrahub-collect create --benchmark
+```
+
+**Output:**
+
+A single archive named `support_bundle_<timestamp>.tar.gz` in the output directory. Inside the archive, all files live under a top-level `bundle/` directory, with a `bundle_information.json` manifest recording an explicit outcome for every collector.
+
+**Collectors:**
+
+| Collector | What it gathers |
+|-----------|-----------------|
+| Service logs | Container logs for every Infrahub service, all replicas, plus previous-container logs for restarted pods |
+| Database logs | Neo4j server logs (`neo4j.log`, `debug.log`); full log directory with `--include-queries` |
+| Message-queue status | RabbitMQ queues, exchanges, bindings, connections, channels, and status |
+| Cache status | Redis info, client list, configuration, slow log, and database size |
+| Task-worker state | Prefect worker status, one directory per replica |
+| Task-manager state | Work pools, work queues, recent flow runs, events, and automations |
+| Server info | Versions, installed packages, API information/configuration/schema, masked environment variables |
+| Container metrics | Resource usage via `docker compose stats` or `kubectl top` |
+| Backup (opt-in) | Backup produced by the standard backup behavior (`--include-backup`) |
+| Benchmark (opt-in) | OpsMill benchmark results (`--benchmark`) |
+
+### Environment and utility commands
+
+`infrahub-collect` provides the same `environment detect`, `environment list`, and `version` commands as `infrahub-backup`, with identical behavior.
 
 ## Configuration precedence
 

@@ -1,0 +1,266 @@
+---
+title: Collect a troubleshooting bundle
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Use `infrahub-collect` to gather everything OpsMill support needs to investigate an issue — service logs, diagnostic status, configuration, and metrics — into a single local archive. Run it when support asks for logs, or to attach diagnostic data to a support request. The same command produces the same bundle on Docker Compose and Kubernetes deployments.
+
+:::info
+Collection is strictly read-only. Unlike `infrahub-backup create`, the collect command never stops, restarts, or scales any container or pod, so it is safe to run against a production instance at any time — including while the instance is degraded.
+:::
+
+:::note Collect or back up?
+A troubleshooting bundle contains diagnostics for support to read; a [backup](./backup-instance.mdx) is a restorable snapshot of your data. When support asks for both, run `infrahub-collect create --include-backup` to produce them in one run.
+:::
+
+## Prerequisites
+
+Before collecting a bundle:
+
+<Tabs>
+<TabItem value="docker" label="Docker Compose" default>
+
+- The `infrahub-collect` binary is installed ([installation guide](./install-collect.mdx))
+- Docker and Docker Compose are available to your user
+- The Infrahub Compose project is running (fully or partially)
+
+</TabItem>
+<TabItem value="kubernetes" label="Kubernetes">
+
+- The `infrahub-collect` binary is installed ([installation guide](./install-collect.mdx))
+- `kubectl` is configured with access to the cluster running Infrahub
+- Your role can read pod logs and execute commands in pods (`pods/log` and `pods/exec`); no write or scale permissions are needed
+
+</TabItem>
+</Tabs>
+
+The binary is self-contained and collection works fully offline: it uses your existing Docker or kubectl access and performs no network access beyond your deployment itself.
+
+## Step 1: Verify environment detection
+
+Confirm the tool can find your Infrahub deployment:
+
+```bash
+infrahub-collect environment detect
+```
+
+The tool auto-detects Docker Compose projects and Kubernetes namespaces containing Infrahub. To list every deployment it detects:
+
+```bash
+infrahub-collect environment list
+```
+
+## Step 2: Create the bundle
+
+<Tabs>
+<TabItem value="docker" label="Docker Compose" default>
+
+For a single Infrahub project, run:
+
+```bash
+infrahub-collect create
+```
+
+If several Infrahub projects run on the same host, target one explicitly:
+
+```bash
+infrahub-collect create --project=infrahub-production
+```
+
+</TabItem>
+<TabItem value="kubernetes" label="Kubernetes">
+
+If a single namespace contains Infrahub, run:
+
+```bash
+infrahub-collect create
+```
+
+To target a specific namespace:
+
+```bash
+infrahub-collect create --k8s-namespace=infrahub-prod
+```
+
+On Kubernetes, the bundle includes logs from **every replica** of each service, and for pods that crashed and restarted it also captures the previous container's logs — often exactly where the error is.
+
+</TabItem>
+</Tabs>
+
+By default the bundle is written to `./infrahub_bundles`. Use `--output-dir` to choose another location:
+
+```bash
+infrahub-collect create --output-dir=/tmp/support
+```
+
+## Step 3: Monitor collection progress
+
+The command streams progress as each collector runs:
+
+```text
+INFO[0000] Detecting deployment environment...
+INFO[0000] Kubernetes environment detected (namespace: infrahub-prod)
+INFO[0000] Creating collection ID: 20260702_141530
+INFO[0001] Collecting logs: infrahub-server (2 replicas)
+INFO[0004] Collecting logs: task-worker (3 replicas, 1 restarted - including previous logs)
+INFO[0009] Collecting database logs...
+INFO[0012] Collecting message-queue status...
+INFO[0013] Collecting cache status...
+INFO[0014] Collecting task-manager state...
+INFO[0016] Collecting server info...
+INFO[0017] Collecting container metrics...
+INFO[0018] Creating compressed archive...
+INFO[0021] Bundle created: infrahub_bundles/support_bundle_20260702_141530.tar.gz
+```
+
+If a service is down or unreachable, collection continues with the remaining services and records the failure:
+
+```text
+WARN[0013] Collector failed: cache status (container not running) - continuing
+```
+
+A partial bundle is still a useful bundle — a degraded instance is precisely when you need one.
+
+## Step 4: Verify the bundle
+
+Check the archive and review what was collected:
+
+```bash
+# Verify archive integrity
+tar -tzf infrahub_bundles/support_bundle_20260702_141530.tar.gz > /dev/null && echo "Archive is valid"
+
+# View the collection manifest
+tar -xzOf infrahub_bundles/support_bundle_20260702_141530.tar.gz bundle/bundle_information.json | jq '.'
+```
+
+The manifest records what was attempted and what succeeded:
+
+```json
+{
+  "manifest_version": 2026070200,
+  "collect_id": "20260702_141530",
+  "created_at": "2026-07-02T14:15:30Z",
+  "tool_version": "1.2.0",
+  "infrahub_version": "1.5.2",
+  "environment": "kubernetes",
+  "log_lines": 100000,
+  "collectors": [
+    {"name": "logs/infrahub-server", "status": "success"},
+    {"name": "logs/task-worker", "status": "success"},
+    {"name": "cache-status", "status": "failed", "reason": "container not running"},
+    {"name": "benchmark", "status": "skipped", "reason": "not requested"}
+  ]
+}
+```
+
+The bundle layout is identical on Docker Compose and Kubernetes. Inside the archive, all files live under a top-level `bundle/` directory:
+
+- `bundle_information.json` - Collection manifest
+- `logs/<service>/` - Container logs, one file per replica (plus `*.previous.log` for restarted pods)
+- `database/` - Neo4j server logs
+- `message-queue/` - RabbitMQ queues, exchanges, connections, and status
+- `cache/` - Redis info, clients, configuration, and slow log
+- `task-worker/` - Task worker state, one directory per replica
+- `task-manager/` - Work pools, work queues, recent flow runs, events, and automations
+- `server/` - Version, installed packages, API information, configuration, schema, environment variables
+- `metrics/` - Container resource metrics
+
+:::warning Review before sharing
+Masking is based on key names: environment variables and configuration keys containing `password`, `secret`, `token`, or `key` are replaced with `********` before they are written to the bundle. Secrets stored under other key names are not detected. Service logs are collected as-is, and database query logs (`--include-queries`) can contain customer data. Review the bundle contents before sharing.
+:::
+
+## Step 5: Share the bundle with support
+
+Send the archive to OpsMill support through your usual support channel. The bundle is a plain local file, so environments with restricted egress can transfer it through whatever mechanism their security policy allows.
+
+## Advanced usage
+
+### Include a backup for issue reproduction
+
+Support often asks for a backup alongside logs so they can reproduce your issue locally. Create both in one run:
+
+```bash
+infrahub-collect create --include-backup
+```
+
+This runs the standard `infrahub-backup` logic and records the backup in the bundle manifest.
+
+:::warning
+Unlike log collection, the backup step follows the normal backup behavior for your deployment, which can include stopping application containers while the snapshot is taken. Plan for a short interruption, or skip `--include-backup` and create the backup separately during a maintenance window.
+:::
+
+### Include database query logs
+
+Query logs can help diagnose slow or failing database operations, but they may contain customer data, so they are excluded by default:
+
+```bash
+infrahub-collect create --include-queries
+```
+
+### Adjust the log volume limit
+
+By default, collection captures the most recent 100,000 log lines per container. Raise or lower the limit as needed:
+
+```bash
+# Collect more history for a long-running issue
+infrahub-collect create --log-lines=500000
+
+# Or via environment variable
+export INFRAHUB_LOG_LINES=500000
+infrahub-collect create
+```
+
+The effective limit is recorded in the manifest, so support knows whether logs were truncated.
+
+### Run a performance benchmark
+
+For performance investigations, support may ask you to include a benchmark run:
+
+```bash
+infrahub-collect create --benchmark
+```
+
+The benchmark requires downloading the OpsMill benchmark container image and generates load against your instance. If the image cannot be pulled — for example in an air-gapped environment — the benchmark is skipped with a warning and the rest of the collection completes normally.
+
+## Troubleshoot collection
+
+### No deployment detected
+
+If `infrahub-collect create` reports that no environment was found, list what the tool can see:
+
+```bash
+infrahub-collect environment list
+```
+
+On Docker Compose, confirm the project is running with `docker compose ls`; the project name must contain `infrahub`, or you must name it with `--project`. On Kubernetes, the namespace is discovered through the `app.kubernetes.io/name=infrahub` label; for deployments with custom labels, name the namespace with `--k8s-namespace`.
+
+### Permission denied on Kubernetes
+
+Log collection needs the `pods/log` permission and the status collectors need `pods/exec`. If your role lacks one of them, the affected collectors are recorded as failed in the manifest. Ask your cluster administrator for read access to both — collection needs no write or scale permissions.
+
+### Docker or kubectl not found
+
+The tool depends on the Docker CLI or kubectl being installed and configured on the machine where it runs. When neither is usable, the command fails immediately and the error names the missing CLI.
+
+### Individual collectors failed
+
+Collector failures on a degraded deployment are expected — a stopped cache container cannot answer status queries. The command still exits successfully, and the manifest records each failure with a reason. Send the partial bundle as-is; support reads the manifest first.
+
+## Validation
+
+Confirm your collection works:
+
+- [ ] `infrahub-collect environment detect` finds your deployment
+- [ ] Bundle archive is created and passes the integrity check
+- [ ] Manifest lists an explicit outcome for every collector
+- [ ] Logs are present for every service replica
+- [ ] Masked environment output contains no plaintext secrets
+
+## Related resources
+
+- [Install Infrahub Collect](./install-collect.mdx)
+- [Back up your Infrahub instance](./backup-instance.mdx)
+- [CLI command reference](../reference/commands.mdx)
+- [Configuration reference](../reference/configuration.mdx)

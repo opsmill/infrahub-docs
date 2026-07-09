@@ -2,7 +2,7 @@
 title: Configuration reference
 ---
 
-Complete reference for configuring Infrahub Backup through environment variables and runtime flags.
+Complete reference for configuring the Infrahub Ops CLI tools through environment variables and runtime flags.
 
 ## Configuration methods
 
@@ -19,6 +19,7 @@ Tools can be configured through these methods, applied in precedence order:
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
 | `INFRAHUB_BACKUP_DIR` | Directory for storing backup files | `./infrahub_backups` | `/data/backups` |
+| `INFRAHUB_OUTPUT_DIR` | Directory for storing troubleshooting bundles | `./infrahub_bundles` | `/data/bundles` |
 | `INFRAHUB_LOG_FORMAT` | Output format for logs | `text` | `json` |
 
 ### Docker compose configuration
@@ -59,6 +60,15 @@ Tools can be configured through these methods, applied in precedence order:
 |------|-------------|
 | `--force` | Force backup creation even if tasks are running |
 | `--neo4jmetadata` | Neo4j metadata to include (all, none, users, roles) |
+
+### Collect command flags
+
+| Flag | Environment Override | Description |
+|------|---------------------|-------------|
+| `--log-lines` | `INFRAHUB_LOG_LINES` | Maximum log lines collected per container (default `100000`) |
+| `--include-backup` | `INFRAHUB_INCLUDE_BACKUP` | Also create a backup during collection |
+| `--include-queries` | `INFRAHUB_INCLUDE_QUERIES` | Include database query logs in the bundle |
+| `--benchmark` | `INFRAHUB_BENCHMARK` | Run the OpsMill benchmark and include its results |
 
 ## Auto-detection behavior
 
@@ -159,3 +169,4 @@ infrahub-backup create --neo4jmetadata=all
 
 - [CLI command reference](./commands.mdx)
 - [Install Infrahub Backup](../guides/install.mdx)
+- [Install Infrahub Collect](../guides/install-collect.mdx)

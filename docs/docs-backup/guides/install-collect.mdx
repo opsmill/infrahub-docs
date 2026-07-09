@@ -1,0 +1,177 @@
+---
+title: Install Infrahub Collect
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+This guide shows you how to install Infrahub Collect on your system.
+
+## Prerequisites
+
+Before installing Infrahub Collect, ensure you have:
+
+**For Docker deployments:**
+
+- Administrative or sudo access on your system
+- Docker with Docker Compose installed
+
+**For Kubernetes deployments:**
+
+- Administrative or sudo access on your system
+- kubectl configured with permissions to read pod logs and execute commands in pods (`pods/log` and `pods/exec`) in the Infrahub namespace
+
+**If building from source:**
+
+- Git and network access to clone the repository
+- Go 1.21 or later installed
+
+## Installation methods
+
+<Tabs>
+<TabItem value="direct" label="Direct Download" default>
+
+### Download the pre-built binary
+
+Download the pre-built binary directly:
+
+```bash
+# Download the appropriate binary for your system
+curl https://infrahub.opsmill.io/ops/$(uname -s)/$(uname -m)/infrahub-collect -o infrahub-collect
+
+# Make it executable
+chmod +x infrahub-collect
+
+# Move to a directory in your PATH (optional)
+sudo mv infrahub-collect /usr/local/bin/
+```
+
+</TabItem>
+<TabItem value="manual" label="Manual Selection">
+
+### Select and download a specific version
+
+If you need a specific version or architecture, manually select the appropriate binary:
+
+1. Identify your system architecture:
+
+   ```bash
+   uname -s  # Operating system (Linux/Darwin)
+   uname -m  # Architecture (x86_64/aarch64)
+   ```
+
+2. Download the matching binary:
+   - **Linux AMD64**: `curl -L https://infrahub.opsmill.io/ops/Linux/x86_64/infrahub-collect -o infrahub-collect`
+   - **Linux ARM64**: `curl -L https://infrahub.opsmill.io/ops/Linux/aarch64/infrahub-collect -o infrahub-collect`
+   - **macOS AMD64**: `curl -L https://infrahub.opsmill.io/ops/Darwin/x86_64/infrahub-collect -o infrahub-collect`
+   - **macOS ARM64**: `curl -L https://infrahub.opsmill.io/ops/Darwin/arm64/infrahub-collect -o infrahub-collect`
+
+3. Make executable and optionally install system-wide:
+
+   ```bash
+   chmod +x infrahub-collect
+   sudo mv infrahub-collect /usr/local/bin/  # Optional
+   ```
+
+</TabItem>
+<TabItem value="source" label="Build from Source">
+
+### Build from source code
+
+To install Infrahub Collect, build from source:
+
+1. Install Go 1.21 or later:
+
+   ```bash
+   # Check if Go is installed
+   go version
+   ```
+
+2. Clone the repository:
+
+   ```bash
+   git clone https://github.com/opsmill/infrahub-ops-cli.git
+   cd infrahub-ops-cli
+   ```
+
+3. Build the binaries:
+
+   ```bash
+   make build
+   ```
+
+4. Install to your PATH:
+
+   ```bash
+   sudo cp bin/infrahub-collect /usr/local/bin/
+   ```
+
+</TabItem>
+</Tabs>
+
+The same binary collects from Docker Compose and Kubernetes deployments — there is no separate in-cluster installation. On Kubernetes, the tool runs from your workstation (or a CI runner) and reaches the cluster through kubectl.
+
+## Verify installation
+
+After installing the CLI, verify it is working correctly:
+
+```bash
+# Check versions
+infrahub-collect version
+
+# Verify environment detection
+infrahub-collect environment detect
+
+# Display help
+infrahub-collect --help
+```
+
+Expected output:
+
+```bash
+Version: [git ref]
+```
+
+## Configure environment
+
+Infrahub Collect uses environment variables for configuration. Set these based on your deployment:
+
+### Docker Compose deployments
+
+```bash
+# Optional: Target a specific project
+export INFRAHUB_PROJECT=infrahub-production
+
+# Optional: Custom bundle location
+export INFRAHUB_OUTPUT_DIR=/data/bundles/infrahub
+```
+
+### Kubernetes deployments
+
+```bash
+# Set the namespace
+export INFRAHUB_K8S_NAMESPACE=infrahub
+
+# Set kubeconfig if not default
+export KUBECONFIG=/path/to/kubeconfig
+```
+
+## Validation
+
+Confirm the CLI can connect to your Infrahub instance:
+
+```bash
+# List available deployments
+infrahub-collect environment list
+
+# Test environment detection
+infrahub-collect environment detect
+```
+
+If these commands succeed, installation is complete.
+
+## Related resources
+
+- [Collect a troubleshooting bundle](./collect-troubleshooting-bundle.mdx)
+- [CLI command reference](../reference/commands.mdx)
+- [Configuration reference](../reference/configuration.mdx)
