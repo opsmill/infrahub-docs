@@ -176,6 +176,36 @@ infrahub-backup version
 Version: 1.0.0
 ```
 
+#### update
+
+Updates the running binary to a newer release. Downloads the matching artifact
+from GitHub Releases, verifies its SHA-256 checksum, and replaces the binary
+atomically. Available on both `infrahub-backup` and `infrahub-collect`.
+
+**Syntax:**
+
+```bash
+infrahub-backup update [flags]
+```
+
+**Flags:**
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--check` | Report whether an update is available without installing it | `false` |
+| `--yes, -y` | Skip the confirmation prompt (required for non-interactive use) | `false` |
+| `--version <tag>` | Install a specific release (e.g. `v1.7.2`) instead of the latest | latest |
+
+**Environment variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `GITHUB_TOKEN` / `GH_TOKEN` | Optional GitHub token to raise the API rate limit on CI/shared IPs. Never required for normal use. |
+
+Self-update is refused for binaries installed via Homebrew or running inside a
+container image, for development builds, and when the binary location is not
+writable. See [How to update the CLI](../guides/self-update.mdx).
+
 ## infrahub-collect
 
 ### Command structure
@@ -257,7 +287,7 @@ A single archive named `support_bundle_<timestamp>.tar.gz` in the output directo
 
 ### Environment and utility commands
 
-`infrahub-collect` provides the same `environment detect`, `environment list`, and `version` commands as `infrahub-backup`, with identical behavior.
+`infrahub-collect` provides the same `environment detect`, `environment list`, `version`, and `update` commands as `infrahub-backup`, with identical behavior. See [`update`](#update) for the self-update flags and refusal cases.
 
 ## Configuration precedence
 

@@ -33,6 +33,7 @@ const sidebars: SidebarsConfig = {
             'guides/collect-troubleshooting-bundle',
           ],
         },
+        'guides/self-update',
       ],
     },
     {

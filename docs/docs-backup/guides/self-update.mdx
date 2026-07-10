@@ -1,0 +1,114 @@
+---
+title: How to update the CLI
+---
+
+This guide shows you how to update the `infrahub-backup` and `infrahub-collect`
+binaries to a newer release using the built-in `update` command, so you no longer
+need to download and replace the binary by hand.
+
+## Prerequisites
+
+- A binary you installed by direct download (not via Homebrew or a container image).
+- Network access to GitHub.
+- Permission to write the binary's location (use `sudo` if it lives in a system path such as `/usr/local/bin`).
+
+The same `update` command is available on both `infrahub-backup` and
+`infrahub-collect`; each updates the binary you invoke. The examples below use
+`infrahub-backup`.
+
+## Check for an update
+
+To see whether a newer version is available without changing anything on disk:
+
+```bash
+infrahub-backup update --check
+```
+
+You will see one of:
+
+```bash
+update available: v1.7.3 → v1.8.0 (https://github.com/opsmill/infrahub-backup/releases/tag/v1.8.0)
+# or
+already up to date (v1.8.0)
+```
+
+## Update to the latest version
+
+```bash
+infrahub-backup update
+```
+
+The command shows the current and target versions and asks for confirmation
+before replacing the binary. On success it prints:
+
+```bash
+updated v1.7.3 → v1.8.0
+```
+
+The download is verified against the release's published SHA-256 checksum and the
+binary is replaced atomically: if anything fails, your existing working binary is
+left untouched.
+
+## Update without prompting (CI and scripts)
+
+For unattended use, skip the confirmation prompt with `--yes`:
+
+```bash
+infrahub-backup update --yes
+```
+
+:::note
+In a non-interactive session (no terminal attached), the command refuses to run
+without `--yes` so it never blocks waiting for input.
+:::
+
+## Install a specific version
+
+To pin to or roll back to a specific release:
+
+```bash
+infrahub-backup update --version v1.7.2 --yes
+```
+
+## Avoid GitHub rate limits
+
+The command uses the public GitHub API, which is rate-limited for unauthenticated
+requests (60 per hour per IP). On shared CI runners or over SSH you can raise the
+limit by exporting a token:
+
+```bash
+export GITHUB_TOKEN=ghp_...   # or GH_TOKEN
+infrahub-backup update --yes
+```
+
+A token is never required for normal interactive use.
+
+## When self-update is declined
+
+The command refuses to replace the binary in cases where doing so would be
+incorrect, and points you to the right path instead:
+
+| Message | What to do instead |
+|---------|--------------------|
+| managed by Homebrew | `brew upgrade infrahub-backup` |
+| running inside a container | Pull a newer image tag |
+| development build | Install a released binary |
+| permission denied | Re-run with `sudo`, or as a user who can write the binary |
+
+:::note
+On Windows, a freshly downloaded binary may be flagged by Windows Defender. If
+this happens, allow the file in Defender and re-run the command.
+:::
+
+## Validation
+
+Confirm the new version is in place:
+
+```bash
+infrahub-backup version
+```
+
+## Related resources
+
+- [How to install Infrahub Backup](./install.mdx)
+- [CLI command reference](../reference/commands.mdx)
