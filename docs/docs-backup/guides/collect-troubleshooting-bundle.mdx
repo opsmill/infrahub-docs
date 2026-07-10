@@ -145,6 +145,11 @@ The manifest records what was attempted and what succeeded:
   "tool_version": "1.2.0",
   "infrahub_version": "1.5.2",
   "environment": "kubernetes",
+  "helm": {
+    "release_name": "infrahub",
+    "chart": "infrahub",
+    "chart_version": "1.2.3"
+  },
   "log_lines": 100000,
   "collectors": [
     {"name": "logs/infrahub-server", "status": "success"},
