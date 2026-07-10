@@ -222,7 +222,7 @@ For performance investigations, support may ask you to include a benchmark run:
 infrahub-collect create --benchmark
 ```
 
-The benchmark requires downloading the OpsMill benchmark container image and generates load against your instance. If the image cannot be pulled — for example in an air-gapped environment — the benchmark is skipped with a warning and the rest of the collection completes normally.
+The benchmark requires downloading the OpsMill benchmark container image and measures whether the host meets Infrahub's resource requirements — disk IOPS, memory, and single-core CPU — rather than generating load against your instance. If the image cannot be pulled — for example in an air-gapped environment — the benchmark is skipped with a warning and the rest of the collection completes normally.
 
 ## Troubleshoot collection
 

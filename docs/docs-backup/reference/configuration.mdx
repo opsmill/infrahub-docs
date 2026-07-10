@@ -44,6 +44,12 @@ Tools can be configured through these methods, applied in precedence order:
 |----------|-------------|---------|---------|
 | `PREFECT_API_DATABASE_CONNECTION_URL` | PostgreSQL connection string | Auto-detect | `postgresql://user:pass@localhost/prefect` |
 
+### Collect configuration
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `INFRAHUB_BENCHMARK_IMAGE` | Container image used by the opt-in `--benchmark` run | `registry.opsmill.io/opsmill/bench` | `registry.example.com/opsmill/bench` |
+
 ## Command-line flag reference
 
 ### Global flags
