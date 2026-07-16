@@ -25,7 +25,7 @@ Each bundle is a single `tar.gz` archive. Inside, every file lives under a top-l
 | Message queue | RabbitMQ queues, exchanges, bindings, connections, and status |
 | Cache | Redis info, client list, configuration, and slow log |
 | Task worker | Prefect worker state, one directory per replica |
-| Task manager | Work pools, work queues, recent flow runs, events, and automations |
+| Task manager | Work pools, work queues, recent flow runs, the pending and running flow and task runs, events, and automations |
 | Server | Version, installed packages, API information, configuration, schema, and masked environment variables |
 | Metrics | Container resource usage |
 | Backup (opt-in) | A standalone backup produced by the standard backup behavior and referenced in the manifest, not embedded in the archive (`--include-backup`) |
