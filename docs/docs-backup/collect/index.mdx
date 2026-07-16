@@ -1,0 +1,38 @@
+---
+title: Infrahub Collect
+---
+
+Use Infrahub Collect to gather everything OpsMill support needs to investigate an issue — service logs, diagnostic status, configuration, and metrics — into a single local archive. Run it when support asks for logs, or to attach diagnostic data to a support request. The same command produces the same bundle on Docker Compose and Kubernetes.
+
+## Safe to run at any time
+
+Collection is strictly read-only. Unlike `infrahub-backup create`, the collect command never stops, restarts, or scales any container or pod, so it is safe to run against a production instance at any time — including while the instance is degraded. If a service is down, collection continues with the rest and records the failure in the manifest. A partial bundle is still a useful bundle — a degraded instance is precisely when you need one.
+
+The binary is self-contained. By default, collection works offline: it uses your existing Docker or kubectl access and performs no network access beyond the deployment itself. The one exception is the opt-in `--benchmark`, which downloads a benchmark image.
+
+## Collect or back up?
+
+A troubleshooting bundle contains diagnostics for support to read; a [backup](../backup/create.mdx) is a restorable snapshot of your data. They are separate operations with different safety profiles — collection is read-only, while a backup can stop containers while the snapshot is taken. When support asks for both, run `infrahub-collect create --include-backup` to produce them in one run.
+
+## What a bundle contains
+
+Each bundle is a single `tar.gz` archive. Inside, every file lives under a top-level `bundle/` directory, alongside a `bundle_information.json` manifest that records an explicit outcome — success, failed, or skipped — for every collector, so support can see what was captured and what was not.
+
+| Collector | What it gathers |
+|---|---|
+| Service logs | Container logs for every service and replica, plus previous-container logs for restarted pods |
+| Database | Neo4j server logs (full log directory with `--include-queries`) |
+| Message queue | RabbitMQ queues, exchanges, bindings, connections, and status |
+| Cache | Redis info, client list, configuration, and slow log |
+| Task worker | Prefect worker state, one directory per replica |
+| Task manager | Work pools, work queues, recent flow runs, events, and automations |
+| Server | Version, installed packages, API information, configuration, schema, and masked environment variables |
+| Metrics | Container resource usage |
+| Backup (opt-in) | A standalone backup produced by the standard backup behavior and referenced in the manifest, not embedded in the archive (`--include-backup`) |
+| Benchmark (opt-in) | Host resource benchmark results (`--benchmark`) |
+
+The layout is identical on Docker Compose and Kubernetes.
+
+## Review before sharing
+
+Masking is based on key names: environment variables and configuration keys containing `password`, `secret`, `token`, or `key` are replaced with `********` before they are written to the bundle. Secrets stored under other key names are not detected. Service logs are collected as-is, and database query logs (`--include-queries`) can contain customer data. Review the bundle contents before sharing it.

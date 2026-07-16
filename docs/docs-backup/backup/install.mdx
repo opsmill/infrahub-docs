@@ -5,7 +5,7 @@ title: Install Infrahub Backup
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This guide shows you how to install Infrahub Backup on your system.
+Install the `infrahub-backup` CLI on a Docker Compose or Kubernetes deployment, or build it from source.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ Before installing Infrahub Backup, ensure you have:
 **If building from source:**
 
 - Git and network access to clone the repository
-- Go 1.21 or later installed
+- Go 1.25 or later installed
 
 ## Installation methods
 
@@ -89,7 +89,7 @@ If you need a specific version or architecture, manually select the appropriate 
 
 To install Infrahub Backup, build from source:
 
-1. Install Go 1.21 or later:
+1. Install Go 1.25 or later:
 
    ```bash
    # Check if Go is installed
@@ -322,6 +322,6 @@ For Docker deployments, you can run scheduled backups using a systemd service:
 
 ## Related resources
 
-- [Getting started tutorial](../tutorials/getting-started.mdx)
+- [Get started tutorial](../tutorials/getting-started.mdx)
 - [Configuration reference](../reference/configuration.mdx)
-- [Back up your Infrahub instance](./backup-instance.mdx)
+- [Back up your Infrahub instance](./create.mdx)

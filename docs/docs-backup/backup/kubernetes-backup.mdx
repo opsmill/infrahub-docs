@@ -5,7 +5,7 @@ title: Back up Infrahub on Kubernetes
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This guide walks you through backing up your Infrahub instance running on Kubernetes using the `infrahub-backup` Helm chart. If you deploy Infrahub through GitOps tools like ArgoCD or Flux and don't have direct kubectl access, this approach lets you manage backups declaratively through Helm values.
+Back up an Infrahub instance running on Kubernetes with the `infrahub-backup` Helm chart. If you deploy Infrahub through GitOps tools like ArgoCD or Flux without direct kubectl access, manage backups declaratively through Helm values.
 
 ## Why use the Helm chart for backups
 
@@ -383,4 +383,4 @@ Confirm your backup configuration works:
 ## Related resources
 
 - [Restore Infrahub on Kubernetes](./kubernetes-restore.mdx)
-- [Back up your Infrahub instance (CLI)](./backup-instance.mdx)
+- [Back up your Infrahub instance (CLI)](./create.mdx)

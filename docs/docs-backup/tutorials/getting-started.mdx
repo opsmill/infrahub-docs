@@ -5,18 +5,7 @@ title: Get started with Infrahub Backup
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This tutorial walks you through your first experience with Infrahub Backup, teaching you the fundamentals by creating a backup of your Infrahub instance and then restoring it. By the end of this tutorial, you'll understand the basic workflow and be confident in using `infrahub-backup` for essential maintenance tasks.
-
-## What you'll learn
-
-In this tutorial, you'll:
-
-- Install infrahub-backup on your system
-- Detect your Infrahub deployment environment
-- Create your first backup
-- Verify the backup was successful
-- Capture a snapshot of artifact storage alongside database backups
-- Restore from the backup you created
+By the end of this tutorial you will have installed `infrahub-backup`, detected your deployment environment, created and verified your first backup — including a snapshot of artifact storage — and restored from it. That is the core maintenance workflow for an Infrahub instance on Docker Compose.
 
 ## Prerequisites
 
@@ -178,14 +167,14 @@ Confirm your Infrahub instance is running correctly:
 docker compose ps
 
 # Test Infrahub connectivity (adjust URL as needed)
-curl -I http://localhost:8080
+curl -I http://localhost:8000
 ```
 
 All containers should be in the "Up" state, and the HTTP request should return a successful response.
 
 ## What you've learned
 
-Congratulations! You've completed your first backup and restore cycle with Infrahub Backup. You now know how to:
+You've completed a full backup and restore cycle. You now know how to:
 
 - Install and verify infrahub-backup
 - Detect your deployment environment
@@ -198,8 +187,8 @@ Congratulations! You've completed your first backup and restore cycle with Infra
 
 Now that you understand the basics, explore:
 
-- [Back up your Infrahub instance](../guides/backup-instance.mdx)
-- [Restore from a backup](../guides/restore-backup.mdx)
+- [Back up your Infrahub instance](../backup/create.mdx)
+- [Restore from a backup](../backup/restore.mdx)
 
 ## Troubleshooting
 

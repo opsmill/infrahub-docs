@@ -5,15 +5,7 @@ title: Collect a troubleshooting bundle
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Use `infrahub-collect` to gather everything OpsMill support needs to investigate an issue — service logs, diagnostic status, configuration, and metrics — into a single local archive. Run it when support asks for logs, or to attach diagnostic data to a support request. The same command produces the same bundle on Docker Compose and Kubernetes deployments.
-
-:::info
-Collection is strictly read-only. Unlike `infrahub-backup create`, the collect command never stops, restarts, or scales any container or pod, so it is safe to run against a production instance at any time — including while the instance is degraded.
-:::
-
-:::note Collect or back up?
-A troubleshooting bundle contains diagnostics for support to read; a [backup](./backup-instance.mdx) is a restorable snapshot of your data. When support asks for both, run `infrahub-collect create --include-backup` to produce them in one run.
-:::
+Collect a troubleshooting bundle from an Infrahub deployment and share it with OpsMill support. Collection is read-only and safe to run at any time, including while the instance is degraded. See [Infrahub Collect](./index.mdx) for what a bundle contains and how secrets are masked. The same command produces the same bundle on Docker Compose and Kubernetes.
 
 ## Prerequisites
 
@@ -22,21 +14,21 @@ Before collecting a bundle:
 <Tabs>
 <TabItem value="docker" label="Docker Compose" default>
 
-- The `infrahub-collect` binary is installed ([installation guide](./install-collect.mdx))
+- The `infrahub-collect` binary is installed ([installation guide](./install.mdx))
 - Docker and Docker Compose are available to your user
 - The Infrahub Compose project is running (fully or partially)
 
 </TabItem>
 <TabItem value="kubernetes" label="Kubernetes">
 
-- The `infrahub-collect` binary is installed ([installation guide](./install-collect.mdx))
+- The `infrahub-collect` binary is installed ([installation guide](./install.mdx))
 - `kubectl` is configured with access to the cluster running Infrahub
 - Your role can read pod logs and execute commands in pods (`pods/log` and `pods/exec`); no write or scale permissions are needed
 
 </TabItem>
 </Tabs>
 
-The binary is self-contained and collection works fully offline: it uses your existing Docker or kubectl access and performs no network access beyond your deployment itself.
+The binary is self-contained and collection works offline by default: it uses your existing Docker or kubectl access and performs no network access beyond your deployment itself. The one exception is the opt-in `--benchmark`, which downloads a benchmark image.
 
 ## Step 1: Verify environment detection
 
@@ -265,7 +257,7 @@ Confirm your collection works:
 
 ## Related resources
 
-- [Install Infrahub Collect](./install-collect.mdx)
-- [Back up your Infrahub instance](./backup-instance.mdx)
+- [Install Infrahub Collect](./install.mdx)
+- [Back up your Infrahub instance](../backup/create.mdx)
 - [CLI command reference](../reference/commands.mdx)
 - [Configuration reference](../reference/configuration.mdx)

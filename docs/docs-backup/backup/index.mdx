@@ -1,0 +1,52 @@
+---
+title: Infrahub Backup
+---
+
+Use Infrahub Backup to create and restore verifiable recovery points for an Infrahub deployment. Run it as a CLI against Docker Compose, or as a Helm chart on Kubernetes, to capture the graph database and the task-manager database as a single archive you can restore from later. Artifact storage lives outside those databases, so you snapshot it as a separate, coordinated step to keep a recovery complete.
+
+## Why reliable backups matter
+
+Infrahub keeps critical infrastructure state across several systems: the Neo4j graph database, the PostgreSQL database behind the task manager, and external artifact storage. If any piece is lost or corrupted, you can end up with drifted configuration, orphaned tasks, or a deployment that no longer starts. Regulatory and business-continuity requirements often call for auditable recovery procedures, so ad-hoc database dumps are rarely enough — you need consistent, verifiable recovery points.
+
+## How it works
+
+Infrahub Backup coordinates backup and restore across deployment targets. During a backup it captures each database with the correct credentials and packages everything so a restore is deterministic. Enterprise deployments are backed up online, with no downtime; Community Edition is dumped offline, so the tool first stops the Infrahub services and restarts them once the snapshot is complete. During a restore it brings services back in dependency order, reapplies the data, and records logs so you can confirm the operation succeeded. The CLI runs the provider-specific Docker or Kubernetes commands for you and sequences each step.
+
+On Kubernetes, the `infrahub-backup` Helm chart manages backups declaratively through your existing GitOps pipeline. Schedule backups with a CronJob, push archives to S3-compatible storage, and run restores — all without direct kubectl access.
+
+## High availability
+
+Infrahub Backup supports high availability (HA) deployments on both Kubernetes and Docker Compose:
+
+- **Kubernetes**: HA PostgreSQL is supported through [CloudNativePG](https://cloudnative-pg.io/) only. The tool detects the primary pod and targets it during backup and restore — no extra configuration needed.
+- **Docker Compose**: HA setups require stopping the `task-manager` and `task-manager-background-svc` containers before a restore, to keep them from accessing the database while data is replaced. See [Restore from a backup](./restore.mdx#docker-high-availability-deployments).
+
+## Community edition support
+
+Infrahub Backup works with Infrahub Community Edition as well as Enterprise deployments. A backup against Community Edition stops the Infrahub service while the snapshot is taken, so plan for a short interruption. A restore must target the same edition that produced the backup — Enterprise backups cannot be restored to Community Edition.
+
+## Best practices
+
+### Schedule regular backups
+
+- On Kubernetes, enable the `infrahub-backup` Helm chart in CronJob mode for automated, declarative scheduling that fits your GitOps workflow.
+- On Docker Compose, automate backups with cron, systemd timers, or CI workflows; daily is a good baseline, with more frequent snapshots for high-change environments.
+- Configure S3-compatible storage to push backups off-cluster, and apply bucket lifecycle policies for retention.
+- Rotate archives with a retention policy that matches your recovery point objectives, and replicate critical backups to an off-site location.
+- Monitor backup jobs and alert on failure — silent backup gaps are often noticed only when it is too late.
+
+### Run regular restore tests
+
+- Restore into a disposable environment at least monthly to confirm that credentials, network access, and storage quotas are still correct.
+- Track how long a restore takes and compare it to your recovery time objectives; tune the schedule or resource sizing if the gap widens.
+- Document each drill, including any manual steps you find, and fold the lessons back into your runbooks.
+
+### Validate backups after major Infrahub upgrades
+
+- After every major Infrahub version upgrade, capture a fresh backup and run a full restore rehearsal.
+- Watch for schema migrations or new services introduced by the upgrade that need additional credentials, storage buckets, or automation hooks.
+- Keep the validation artifacts — logs, checksums, and timelines — so you can demonstrate post-upgrade recoverability during audits.
+
+## Learn by doing
+
+New to the tool? The [Get started tutorial](../tutorials/getting-started.mdx) covers a full backup and restore cycle on a Docker Compose deployment.

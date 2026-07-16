@@ -2,79 +2,16 @@
 title: Infrahub Backup
 ---
 
-## Overview
+The Infrahub Ops CLI provides command-line tools for operating and maintaining an Infrahub deployment:
 
-### Why reliable backups matter
+- **[Infrahub Backup](./backup/index.mdx)** — create and restore complete, verifiable recovery points on Docker Compose or Kubernetes.
+- **[Infrahub Collect](./collect/index.mdx)** — gather logs, diagnostics, and metrics into a single archive for OpsMill support.
 
-Infrahub stores critical state for your infrastructure in multiple systems: the Neo4j graph database, the PostgreSQL database that powers the task manager, and external artifact storage. If any piece is lost or corrupted, you can end up with drifted configurations, orphaned tasks, or a completely unusable deployment. Regulatory requirements and business continuity plans often demand auditable recovery procedures, so "having some dumps around" is rarely enough—you need consistent, verifiable recovery points.
+Both binaries share the same environment detection, configuration, and self-update mechanism.
 
-### How the tool keeps environments recoverable
+## Where to start
 
-Infrahub Backup orchestrates backup and restore workflows across deployment targets. It coordinates quiescing and snapshotting services, pulls data out with the right credentials, and packages everything so restores are deterministic. During restore, the tool brings services back in dependency order, reapplies data, and captures logs so you can prove the operation succeeded. Whether you install with Docker Compose, Kubernetes, or a bespoke stack, the CLI abstracts away provider-specific commands and ensures each step runs in a supported sequence.
-
-For Kubernetes deployments, the `infrahub-backup` Helm chart provides a declarative way to manage backups through your existing GitOps pipeline. Enable scheduled backups via CronJob, push artifacts to S3-compatible storage, and perform restores—all without requiring direct kubectl access.
-
-### High availability support
-
-Infrahub Backup supports high availability (HA) deployments on both Kubernetes and Docker Compose:
-
-- **Kubernetes**: HA PostgreSQL is supported via [CloudNativePG](https://cloudnative-pg.io/) only. The tool automatically detects and targets the primary pod during backup and restore — no additional configuration is needed.
-- **Docker Compose**: HA setups require stopping the `task-manager` and `task-manager-background-svc` containers before running a restore to prevent database accesses during the process. See [Restore from a backup](./guides/restore-backup.mdx#docker-high-availability-deployments) for details.
-
-### Community edition support
-
-The CLI supports Infrahub Community Edition in addition to Enterprise deployments. When you run a backup against Community Edition, the tool stops the Infrahub service while the snapshot is captured, so plan for temporary downtime. Restores must target the same edition that generated the backup—Enterprise backups cannot be applied to Community Edition instances.
-
-### Best practices
-
-#### Schedule regular backups
-
-- For Kubernetes deployments, enable the `infrahub-backup` Helm chart with CronJob mode for fully automated, declarative backup scheduling integrated with your GitOps workflow.
-- For Docker Compose deployments, automate backups via cron, systemd timers, or CI workflows; daily is a good baseline, with more frequent snapshots for high-change environments.
-- Configure S3-compatible storage to automatically push backups off-cluster and apply bucket lifecycle policies for retention management.
-- Rotate backup artifacts with a retention policy that matches your recovery point objectives, and replicate critical backups to an off-site location.
-- Monitor backup jobs and alert on failures—silent backup gaps often surface only when it is too late.
-
-#### Run regular restore tests
-
-- Practice restores in a disposable environment at least monthly to confirm that credentials, network access, and storage quotas are still correct.
-- Track the time required to restore and compare it to your recovery time objectives; tune the schedule or resource sizing if the gap widens.
-- Document each drill, including any manual steps uncovered, and fold the lessons back into your runbooks so production incidents are predictable.
-
-#### Validate backups after major Infrahub upgrades
-
-- Every time you perform a major Infrahub version upgrade, capture a fresh backup immediately afterward and run a full restore rehearsal.
-- Watch for schema migrations or new services introduced by the upgrade that might require additional credentials, storage buckets, or hooks in your automation.
-- Keep the validation artifacts—logs, checksums, and timelines—so you can prove post-upgrade recoverability during audits.
-
-## Getting started
-
-### Tutorials
-
-Learn the fundamentals through hands-on exercises:
-
-- [Getting started with the tool](./tutorials/getting-started.mdx) - Your first backup and restore operation
-
-### How-to guides
-
-Accomplish specific tasks:
-
-#### Infrahub Backup
-
-- [Install Infrahub Backup](./guides/install.mdx) - Install the backup tool on your system
-- [Back up your Infrahub instance](./guides/backup-instance.mdx) - Create comprehensive backups
-- [Restore from a backup](./guides/restore-backup.mdx) - Restore your instance from a backup file
-- [Back up Infrahub on Kubernetes](./guides/kubernetes-backup.mdx) - Back up using the Helm chart
-- [Restore Infrahub on Kubernetes](./guides/kubernetes-restore.mdx) - Restore using the Helm chart
-
-#### Infrahub Collect
-
-- [Install Infrahub Collect](./guides/install-collect.mdx) - Install the collect tool on your system
-- [Collect a troubleshooting bundle](./guides/collect-troubleshooting-bundle.mdx) - Gather logs and diagnostics for OpsMill support
-
-### Reference
-
-Technical specifications and command details:
-
-- [CLI command reference](./reference/commands.mdx) - Complete list of commands and options
-- [Configuration reference](./reference/configuration.mdx) - Environment variables and settings
+- New to the tools? Start with the [Get started tutorial](./tutorials/getting-started.mdx) for a full backup and restore cycle.
+- Ready to install? See [Install Infrahub Backup](./backup/install.mdx) or [Install Infrahub Collect](./collect/install.mdx).
+- Looking for a flag or environment variable? See the [CLI command reference](./reference/commands.mdx) and [Configuration reference](./reference/configuration.mdx).
+- Keeping binaries up to date? See [Update the CLI](./self-update.mdx).

@@ -5,7 +5,7 @@ title: Restore Infrahub on Kubernetes
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This guide walks you through restoring your Infrahub instance on Kubernetes from a backup stored in S3-compatible storage. The restore process uses the same `infrahub-backup` Helm chart and runs as a Kubernetes Job.
+Restore an Infrahub instance on Kubernetes from a backup stored in S3-compatible storage. The restore runs as a Kubernetes Job through the same `infrahub-backup` Helm chart.
 
 :::warning
 Restoring a backup will overwrite your current Infrahub data. Create a safety backup before proceeding if you need to preserve any recent changes.
@@ -321,4 +321,4 @@ Confirm your restore completed successfully:
 ## Related resources
 
 - [Back up Infrahub on Kubernetes](./kubernetes-backup.mdx)
-- [Restore from a backup (CLI)](./restore-backup.mdx)
+- [Restore from a backup (CLI)](./restore.mdx)
