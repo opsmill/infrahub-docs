@@ -391,6 +391,12 @@ const config: Config = {
               label: "Infrahub Backup",
               docsPluginId: "docs-backup",
             },
+            {
+              type: "doc",
+              docId: "collect/index",
+              label: "Infrahub Collect",
+              docsPluginId: "docs-backup",
+            },
           ],
         },
         {
