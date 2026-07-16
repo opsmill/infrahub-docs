@@ -137,9 +137,10 @@ The manifest records what was attempted and what succeeded:
   "tool_version": "1.2.0",
   "infrahub_version": "1.5.2",
   "environment": "kubernetes",
+  "edition": "enterprise",
   "helm": {
     "release_name": "infrahub",
-    "chart": "infrahub",
+    "chart": "infrahub-enterprise",
     "chart_version": "1.2.3"
   },
   "log_lines": 100000,
@@ -151,6 +152,8 @@ The manifest records what was attempted and what succeeded:
   ]
 }
 ```
+
+The `edition` field reports whether the deployment runs Infrahub Community or Enterprise. On Docker Compose it is classified from the `infrahub-server` container image, and on Kubernetes from the Helm chart name. It is omitted when the edition cannot be determined.
 
 The bundle layout is identical on Docker Compose and Kubernetes. Inside the archive, all files live under a top-level `bundle/` directory:
 
