@@ -23,6 +23,7 @@ Before restoring:
 - The backup was created from the same Infrahub edition (Community or Enterprise)
 - Access to modify Helm values for your Infrahub deployment
 - S3 credentials with read access to the backup bucket
+- Network egress from the restore pod to the Kubernetes API server (see [Network access to the API server](./kubernetes-backup.mdx#network-access-to-the-api-server))
 
 ## Step 1: Identify the backup to restore
 
@@ -283,6 +284,17 @@ kubectl logs -n infrahub -l app.kubernetes.io/name=infrahub-backup
 # - Invalid credentials
 # - Network policy blocking egress
 ```
+
+### Restore hangs or times out
+
+If the restore pod starts but stalls at the service-stop, database, or service-start steps, and the logs show no error, the pod may be unable to reach the Kubernetes API server. The restore relies on the API server's `exec` and `cp` subresources, which are blocked by default-deny egress NetworkPolicies even when RBAC is correct.
+
+```bash
+# Check whether NetworkPolicies restrict egress in the namespace
+kubectl get networkpolicy -n infrahub
+```
+
+If a default-deny egress policy is present, add an egress rule allowing the pod to reach the API server. See [Network access to the API server](./kubernetes-backup.mdx#network-access-to-the-api-server).
 
 ### Checksum validation fails
 

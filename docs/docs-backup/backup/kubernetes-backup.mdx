@@ -340,6 +340,37 @@ The backup process needs these Kubernetes permissions:
 | `statefulsets` | get, patch | Scale down/up during backup |
 | `pods/log` | get | Monitor backup progress |
 
+### Network access to the API server
+
+RBAC grants *authorization*, but the backup Job also needs *network* connectivity to the Kubernetes API server. The tool discovers pods, scales services, and runs commands inside pods through the API server's `exec`, `cp`, and `log` subresources — these operations stream through the API server, not directly between pods. This applies to both the in-band Helm Job and any out-of-band `kubectl` run.
+
+If your cluster enforces default-deny egress with [NetworkPolicies](https://kubernetes.io/docs/concepts/services-networking/network-policies/), add an egress rule that lets the backup pod reach the API server, typically the `kubernetes.default.svc` ClusterIP on port 443 (or your control-plane endpoint):
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: infrahub-backup-apiserver-egress
+  namespace: infrahub
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: infrahub-backup
+  policyTypes:
+    - Egress
+  egress:
+    # Allow the backup pod to reach the Kubernetes API server.
+    # Adjust the port to match your cluster (443 for the in-cluster
+    # service, 6443 for many control-plane endpoints).
+    - ports:
+        - protocol: TCP
+          port: 443
+```
+
+:::warning
+A default-deny egress NetworkPolicy is a common cause of backups that appear to start, then stall at the pod discovery, scale-down, or database steps. If RBAC is correct but `exec`/`cp` operations hang or time out, confirm the backup pod can reach the API server first.
+:::
+
 ### Using an existing ServiceAccount
 
 If your security policy requires using a pre-existing ServiceAccount:
