@@ -385,17 +385,20 @@ const config: Config = {
               label: "Infrahub AI Skills",
               docsPluginId: "docs-ai-skills",
             },
+            // Backup and Collect share the docs-backup plugin and the
+            // infrahubOpsSidebar, so docSidebar/doc navbar items both match the
+            // whole sidebar and highlight together. Use plain links with
+            // activeBaseRegex so each highlights only for its own routes:
+            // everything under /backup/ except /backup/collect/ maps to Backup.
             {
-              type: "docSidebar",
-              sidebarId: "infrahubOpsSidebar",
+              to: "/backup/",
               label: "Infrahub Backup",
-              docsPluginId: "docs-backup",
+              activeBaseRegex: "/backup/(?!collect)",
             },
             {
-              type: "doc",
-              docId: "collect/index",
+              to: "/backup/collect/",
               label: "Infrahub Collect",
-              docsPluginId: "docs-backup",
+              activeBaseRegex: "/backup/collect",
             },
           ],
         },
