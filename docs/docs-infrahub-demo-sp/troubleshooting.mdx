@@ -42,7 +42,7 @@ time.sleep(40)  # change to 60 or more on slow machines
 **Symptom:**
 
 ```text
-RuntimeError: No free physical interface on pe-lon-arista
+RuntimeError: No free physical interface on pe-01
 ```
 
 **Cause:** The `L3VpnGenerator` allocates PE-CE interfaces by picking the
@@ -61,7 +61,7 @@ curl -s -X POST http://localhost:8000/graphql \
         name: {value: \"Ethernet10\"},
         status: {value: \"free\"},
         mtu: {value: 9000},
-        device: {hfid: [\"pe-lon-arista\"]}
+        device: {hfid: [\"pe-01\"]}
       }) { ok object { id } }
     }"
   }'

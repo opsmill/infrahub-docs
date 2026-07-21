@@ -36,9 +36,11 @@ uv run invoke init
 ```
 
 This destroys any prior state, starts the containers, loads the schemas,
-the menu, all bootstrap objects (4 PEs, full backbone, resource pools,
-plus the selected customer-facing dataset), and generates schema
-protocol bindings.
+the menu, all bootstrap objects (resource pools plus the selected dataset —
+its backbone, tenants, and services), and generates schema protocol bindings.
+The backbone ships inside the dataset: the default **financial** dataset loads
+8 Arista cEOS PEs (`pe-01`…`pe-08`) in a partial mesh, while **isp** loads 4
+multi-vendor PEs in a full mesh.
 
 Wait ~30 s after the containers come up before bootstrap runs.
 
@@ -102,7 +104,7 @@ command). `uv run invoke info` prints the resolved values.
 | `INFRAHUB_UI_URL` | `http://localhost:8000` | Used by the Streamlit catalog for "open in Infrahub" links |
 | `INFRAHUB_GIT_LOCAL` | `false` | `true` registers a `CoreRepository` pointed at the bind-mounted `/upstream` (no GitHub clone needed). `false` registers a `CoreReadOnlyRepository` against the public GitHub repository |
 | `INFRAHUB_SERVICE_CATALOG` | `false` | `true` builds + starts the Streamlit sidecar on every `invoke start` / `invoke init` |
-| `INFRAHUB_DATASET` | `financial` | Customer-facing tenant overlay loaded on top of the shared backbone. One subdirectory of `objects/datasets/`. Ships with `financial` (internal bank, 8 division tenants, `trading-floor-vpn`) and `isp` (Lumina Networks pan-European ISP, 8 customer tenants, `kestrel-bank-mpls`) |
+| `INFRAHUB_DATASET` | `financial` | Selects a dataset overlay — one subdirectory of `objects/datasets/`. Each dataset ships its own backbone plus its tenants and services. `financial` (internal bank): 8 Arista cEOS PEs (`pe-01`…`pe-08`) in a partial mesh, 8 division tenants, `trading-floor-vpn`. `isp` (Lumina Networks pan-European ISP): 4 multi-vendor PEs in a full mesh, 8 customer tenants, `kestrel-bank-mpls` |
 | `INFRAHUB_ENTERPRISE` | `false` | `true` streams the Enterprise edition compose file from `https://infrahub.opsmill.io/enterprise/<INFRAHUB_VERSION>` instead of the Community one. Requires an Enterprise license / pull credentials |
 | `INFRAHUB_VERSION` | `stable` | Compose file version tag pulled from `infrahub.opsmill.io` (use `latest`, `stable`, or a specific release like `1.4.0`) |
 | `INFRAHUB_PORT` | `8000` | Override the Infrahub server port |

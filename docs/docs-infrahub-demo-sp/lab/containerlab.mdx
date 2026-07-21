@@ -9,8 +9,17 @@ are substituted, how to deploy, and known limitations.
 
 The containerlab artifact (`clab-mpls-topology`) is generated from Infrahub
 data by the `clab_topology` transform and renders a valid containerlab YAML
-topology. It wires up four PE nodes and two CE nodes for end-to-end L3VPN
-testing.
+topology. It wires up the lab-deployable PE nodes plus the L3VPN CE nodes for
+end-to-end testing. The backbone links are **data-driven** — derived from the
+shared /31 addressing rather than fixed in the template — so the lab tracks
+whatever backbone the active dataset defines.
+
+Which PEs are deployable depends on the dataset:
+
+- **financial** (default) — all 8 PEs are Arista cEOS, so all 8 boot in the lab
+  and all 12 backbone links render.
+- **isp** — only the Arista and Nokia PEs have a lab-runnable image, so 2 PE
+  nodes boot with the single backbone link between them.
 
 The topology is written to `lab/mpls-topology.clab.yml` by
 `invoke lab.deploy` before containerlab brings it up.
@@ -19,12 +28,22 @@ The topology is written to `lab/mpls-topology.clab.yml` by
 
 ## Node map
 
-| Bootstrap PE | Vendor | Containerlab image | Notes |
+A PE is lab-deployable only when its platform carries a `containerlab_os`
+image. Today that means two vendors:
+
+| Vendor | Platform | Containerlab image | Notes |
 |---|---|---|---|
-| `pe-lon-arista` | Arista EOS | `ceos:latest` | Full configuration push via `invoke lab.push-arista` |
-| `pe-fra-cisco` | Cisco IOS-XR | — | Not in lab v1 (out of scope) |
-| `pe-ams-juniper` | Juniper Junos | — | Not in lab v1 (out of scope) |
-| `pe-par-nokia` | Nokia SR OS | SR Linux (`ghcr.io/nokia/srlinux`) | SR Linux used in place of SR OS (see below) |
+| Arista EOS | `arista_eos` | `ceos:latest` | Full configuration push via `invoke lab.push-arista` |
+| Nokia SR OS | `nokia_sros` | SR Linux (`ghcr.io/nokia/srlinux`) | SR Linux used in place of SR OS (see below) |
+| Cisco IOS-XR | `cisco_iosxr` | — | No lab image — omitted from the topology |
+| Juniper Junos | `juniper_junos` | — | No lab image — omitted from the topology |
+
+Which PEs that yields depends on the active dataset:
+
+- **financial** (default) — all 8 PEs (`pe-01`…`pe-08`) are Arista cEOS, so all
+  8 boot in the lab and all 12 backbone links render.
+- **isp** — only `pe-lon-arista` (cEOS) and `pe-par-nokia` (SR Linux) are
+  deployable; `pe-fra-cisco` and `pe-ams-juniper` are omitted.
 
 CE nodes run a generic Linux image (`ghcr.io/hellt/network-multitool`) and
 simulate customer CPE with a loopback address.
@@ -32,6 +51,10 @@ simulate customer CPE with a loopback address.
 ---
 
 ## SR OS → SR Linux substitution
+
+This applies only when the active backbone includes a Nokia PE — i.e. the
+**isp** dataset. The default **financial** backbone is all-Arista, so no
+substitution happens there.
 
 Nokia's containerlab-friendly image is **SR Linux**, not SR OS. SR OS is
 available only with a paid Nokia licence and is not suitable for a public
@@ -66,22 +89,34 @@ Configuration push to the Nokia PE is therefore not available in v1 (see
 uv run invoke lab.deploy
 ```
 
-Expected output:
+Expected output (default **financial** dataset — 8 Arista cEOS PEs plus the four
+`trading-floor-vpn` CE nodes):
 
 ```
 [INFO] Fetching clab-mpls-topology artifact from Infrahub...
 [INFO] Writing lab/mpls-topology.clab.yml
 [INFO] Running: containerlab deploy -t lab/mpls-topology.clab.yml
 ...
-+---+------------------+-----------+------------------------------+
-| # | Name             | Kind      | Image                        |
-+---+------------------+-----------+------------------------------+
-| 1 | pe-lon-arista    | ceos      | ceos:latest                  |
-| 2 | pe-par-nokia-lab | srl       | ghcr.io/nokia/srlinux        |
-| 3 | ce-lon           | linux     | ghcr.io/hellt/network-multitool |
-| 4 | ce-par           | linux     | ghcr.io/hellt/network-multitool |
-+---+------------------+-----------+------------------------------+
++----+---------------------------------+-----------+---------------------------------+
+| #  | Name                            | Kind      | Image                           |
++----+---------------------------------+-----------+---------------------------------+
+| 1  | pe-01                           | ceos      | ceos:latest                     |
+| 2  | pe-02                           | ceos      | ceos:latest                     |
+| 3  | pe-03                           | ceos      | ceos:latest                     |
+| 4  | pe-04                           | ceos      | ceos:latest                     |
+| 5  | pe-05                           | ceos      | ceos:latest                     |
+| 6  | pe-06                           | ceos      | ceos:latest                     |
+| 7  | pe-07                           | ceos      | ceos:latest                     |
+| 8  | pe-08                           | ceos      | ceos:latest                     |
+| 9  | ce-trading-floor-vpn-pe-01      | linux     | ghcr.io/hellt/network-multitool |
+| 10 | ce-trading-floor-vpn-pe-02      | linux     | ghcr.io/hellt/network-multitool |
+| 11 | ce-trading-floor-vpn-pe-03      | linux     | ghcr.io/hellt/network-multitool |
+| 12 | ce-trading-floor-vpn-pe-04      | linux     | ghcr.io/hellt/network-multitool |
++----+---------------------------------+-----------+---------------------------------+
 ```
+
+On the **isp** dataset the same command brings up just `pe-lon-arista`
+(Arista cEOS) and `pe-par-nokia-lab` (Nokia SR Linux), plus its CE nodes.
 
 ---
 
@@ -93,13 +128,16 @@ After the lab is up, push the Arista EOS configuration artifact from Infrahub:
 uv run invoke lab.push-arista
 ```
 
-This fetches the `pe-lon-arista` artifact from Infrahub via the SDK and
-applies it over the containerlab management network using `pyeapi` / SSH.
+This fetches the Arista EOS configuration artifact(s) from Infrahub via the SDK
+and applies them over the containerlab management network using `pyeapi` / SSH.
+On the default **financial** backbone every PE is Arista (`pe-01`…`pe-08`); on
+the **isp** dataset it is the single `pe-lon-arista` node.
 
-The command shows a diff of what changed. Verify with:
+The command shows a diff of what changed. Verify with (financial default —
+substitute `pe-lon-arista` on the isp dataset):
 
 ```bash
-containerlab exec -t lab/mpls-topology.clab.yml --label clab-node-name=pe-lon-arista \
+containerlab exec -t lab/mpls-topology.clab.yml --label clab-node-name=pe-01 \
   --cmd "show bgp vpn-ipv4 summary"
 ```
 
@@ -129,30 +167,31 @@ Shows container health without modifying anything.
 
 containerlab registers each node in its embedded DNS as
 `clab-<lab-name>-<node-name>`. For the bundled MPLS backbone the lab
-name is `mpls-backbone-1`, so the Arista PE is at
-`clab-mpls-backbone-1-pe-lon-arista` and the Nokia PE is at
-`clab-mpls-backbone-1-pe-par-nokia`.
+name is `mpls-backbone-1`, so on the default **financial** dataset the Arista
+PEs are at `clab-mpls-backbone-1-pe-01` … `clab-mpls-backbone-1-pe-08`. On the
+**isp** dataset the Arista PE is `clab-mpls-backbone-1-pe-lon-arista` and the
+Nokia PE is `clab-mpls-backbone-1-pe-par-nokia`.
 
 | Node | Image | User | Password | Notes |
 |---|---|---|---|---|
-| `pe-lon-arista` | Arista cEOS | `admin` | `admin` | Set by our startup-configuration, demo-only |
-| `pe-par-nokia` (CLI) | Nokia SR Linux | `admin` | `NokiaSrl1!` | SR Linux 22.11+ vendor default |
-| `pe-par-nokia` (shell) | Nokia SR Linux | `linuxadmin` | `NokiaSrl1!` | Shell access, same default |
+| Arista PE (`pe-01`…`pe-08` on financial, `pe-lon-arista` on isp) | Arista cEOS | `admin` | `admin` | Set by our startup-configuration, demo-only |
+| `pe-par-nokia` (CLI) — isp only | Nokia SR Linux | `admin` | `NokiaSrl1!` | SR Linux 22.11+ vendor default |
+| `pe-par-nokia` (shell) — isp only | Nokia SR Linux | `linuxadmin` | `NokiaSrl1!` | Shell access, same default |
 | `ce-*` (netshoot) | nicolaka/netshoot | `root` | (none) | Plain Linux containers |
 
 To reach the CLIs:
 
 ```bash
-# Arista — via SSH or docker exec
-ssh admin@clab-mpls-backbone-1-pe-lon-arista
-docker exec -it clab-mpls-backbone-1-pe-lon-arista Cli
+# Arista — via SSH or docker exec (financial default; use pe-lon-arista on isp)
+ssh admin@clab-mpls-backbone-1-pe-01
+docker exec -it clab-mpls-backbone-1-pe-01 Cli
 
-# Nokia SR Linux
+# Nokia SR Linux (isp dataset only)
 ssh admin@clab-mpls-backbone-1-pe-par-nokia
 docker exec -it clab-mpls-backbone-1-pe-par-nokia sr_cli
 
-# CE Linux node
-docker exec -it clab-mpls-backbone-1-ce-trading-floor-vpn-pe-lon-arista bash
+# CE Linux node (financial default)
+docker exec -it clab-mpls-backbone-1-ce-trading-floor-vpn-pe-01 bash
 ```
 
 The cEOS password (`admin`) is set by the startup-configuration we render —

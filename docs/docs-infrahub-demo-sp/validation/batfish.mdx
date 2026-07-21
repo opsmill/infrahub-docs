@@ -15,7 +15,10 @@ For each MPLS backbone, the check:
 1. Fetches the rendered configuration artifact for every PE whose platform is
    in `SUPPORTED_PLATFORMS` (`arista_eos`, `cisco_iosxr`, `juniper_junos`).
    Nokia SR OS and SR Linux are not parsed by Batfish today — they're
-   reported as INFO so the gap is explicit, not invisible.
+   reported as INFO so the gap is explicit, not invisible. On the default
+   **financial** backbone every PE is `arista_eos`, so all 8 are parsed; the
+   **isp** dataset also contributes Cisco and Juniper PEs (and one Nokia PE
+   that surfaces as INFO).
 2. Loads the configs into a temporary Batfish snapshot.
 3. Runs five Batfish questions and maps each answer row to a `Finding`:
 

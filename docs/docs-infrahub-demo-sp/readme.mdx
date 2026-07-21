@@ -87,20 +87,32 @@ Through this demo, you'll gain practical experience with:
 ## Architecture at a glance
 
 Out of the box the **financial** dataset gives you the Sterling Financial MPLS
-backbone with two seeded customer services — one L3VPN, one SD-WAN — wired up
-end to end:
+backbone — eight Arista cEOS PEs (`pe-01`…`pe-08`) in a partial mesh — with two
+seeded customer services — one L3VPN, one SD-WAN — wired up end to end:
 
 ```mermaid
 flowchart TB
-    subgraph backbone["MPLS Backbone — Sterling Financial · AS 65000"]
-        direction LR
-        pe_lon["pe-lon-arista<br/>Arista EOS<br/>10.0.0.1"]
-        pe_fra["pe-fra-cisco<br/>Cisco IOS-XR<br/>10.0.0.2"]
-        pe_ams["pe-ams-juniper<br/>Juniper Junos<br/>10.0.0.3"]
-        pe_par["pe-par-nokia<br/>Nokia SR OS<br/>10.0.0.4"]
-        pe_lon --- pe_fra & pe_ams & pe_par
-        pe_fra --- pe_ams & pe_par
-        pe_ams --- pe_par
+    subgraph backbone["MPLS Backbone — Sterling Financial · AS 65000 · 8× Arista cEOS"]
+        pe01["pe-01 · London<br/>Arista cEOS<br/>10.0.0.1"]
+        pe02["pe-02 · Frankfurt<br/>Arista cEOS<br/>10.0.0.2"]
+        pe03["pe-03 · Amsterdam<br/>Arista cEOS<br/>10.0.0.3"]
+        pe04["pe-04 · Paris<br/>Arista cEOS<br/>10.0.0.4"]
+        pe05["pe-05 · Madrid<br/>Arista cEOS<br/>10.0.0.5"]
+        pe06["pe-06 · Milan<br/>Arista cEOS<br/>10.0.0.6"]
+        pe07["pe-07 · Dublin<br/>Arista cEOS<br/>10.0.0.7"]
+        pe08["pe-08 · Zurich<br/>Arista cEOS<br/>10.0.0.8"]
+        pe01 --- pe02
+        pe02 --- pe03
+        pe03 --- pe04
+        pe04 --- pe05
+        pe05 --- pe06
+        pe06 --- pe07
+        pe07 --- pe08
+        pe08 --- pe01
+        pe01 --- pe05
+        pe02 --- pe06
+        pe03 --- pe07
+        pe04 --- pe08
     end
 
     subgraph l3vpn["L3VPN: trading-floor-vpn — tenant: markets-trading"]
@@ -111,10 +123,10 @@ flowchart TB
         ce_par["Trading Paris<br/>10.200.40.0/24"]
     end
 
-    pe_lon -. "VRF · eBGP" .-> ce_lon
-    pe_fra -. "VRF · eBGP" .-> ce_fra
-    pe_ams -. "VRF · eBGP" .-> ce_ams
-    pe_par -. "VRF · eBGP" .-> ce_par
+    pe01 -. "VRF · eBGP" .-> ce_lon
+    pe02 -. "VRF · eBGP" .-> ce_fra
+    pe03 -. "VRF · eBGP" .-> ce_ams
+    pe04 -. "VRF · eBGP" .-> ce_par
 
     subgraph sdwan["SD-WAN: treasury-branch-sdwan — tenant: treasury-ops · hub-spoke · Cisco Viptela"]
         direction LR
@@ -128,25 +140,32 @@ flowchart TB
     classDef pe fill:#1ba0d7,stroke:#0a7ba5,color:#fff
     classDef ce fill:#A9DFBF,stroke:#5d8d6f
     classDef edge fill:#FFE7BA,stroke:#a8772f
-    class pe_lon,pe_fra,pe_ams,pe_par pe
+    class pe01,pe02,pe03,pe04,pe05,pe06,pe07,pe08 pe
     class ce_lon,ce_fra,ce_ams,ce_par ce
     class hub_lon,sp_fra,sp_ams edge
 ```
 
-**Backbone** — Four PE routers, one per vendor, full-mesh iBGP/VPNv4, ISIS for
-underlay reachability, LDP for label distribution.
+**Backbone** — Eight PE routers, all Arista cEOS (`pe-01`…`pe-08`), in eight
+EMEA sites. The topology is a partial mesh — an eight-node ring plus four
+cross-chords, giving 12 backbone p2p links with every PE at degree 3 — over a
+full iBGP/VPNv4 mesh, ISIS for underlay reachability, and LDP for label
+distribution. (The **isp** dataset instead ships a four-PE, one-per-vendor
+backbone — see below.)
 
 **L3VPN service (`trading-floor-vpn`)** — Tenant `markets-trading`, four sites
-(one per PE) with eBGP PE-CE sessions and one /24 customer subnet per site in
+on `pe-01` (London), `pe-02` (Frankfurt), `pe-03` (Amsterdam) and `pe-04`
+(Paris) with eBGP PE-CE sessions and one /24 customer subnet per site in
 the `10.200.0.0/16` supernet.
 
 **SD-WAN service (`treasury-branch-sdwan`)** — Tenant `treasury-ops`, hub-spoke
 on Cisco Viptela cEdge-1000 edges at London (hub), Frankfurt and Amsterdam
 (spokes); LAN subnets in the `10.250.0.0/16` supernet.
 
-An alternate **isp** dataset (Lumina Networks pan-European ISP, eight customer
-tenants, a different default L3VPN and SD-WAN) is available via the
-`INFRAHUB_DATASET` env var.
+An alternate **isp** dataset (Lumina Networks pan-European ISP) ships its own
+backbone — four PEs, one per vendor (`pe-lon-arista`, `pe-fra-cisco`,
+`pe-ams-juniper`, `pe-par-nokia`), full-mesh iBGP over six p2p links — plus
+eight customer tenants and a different default L3VPN and SD-WAN. Select it via
+the `INFRAHUB_DATASET` env var.
 
 ## Key features demonstrated
 
@@ -172,7 +191,9 @@ group so the artifact pipeline targets it.
 A single schema drives six Jinja2 templates: Arista EOS, Cisco IOS-XR, Juniper
 Junos, Nokia SR OS / SR Linux, Cisco Viptela cEdge (IOS-XE SD-WAN), and Versa
 VOS (FlexVNF). Each PE or edge ends up with a `text/plain` configuration artifact
-keyed by `name__value`, ready to feed into a CI/CD push.
+keyed by `name__value`, ready to feed into a CI/CD push. The default **financial**
+backbone is all-Arista, so it exercises only the Arista EOS template; the **isp**
+dataset, with one PE per vendor, exercises the full per-vendor set.
 
 ### Branch-based workflows
 
@@ -183,8 +204,11 @@ artifacts so the diff is meaningful, and opens a `CoreProposedChange` against
 
 ### Containerlab integration
 
-The `clab-mpls-topology` artifact emits a containerlab YAML wiring the four
-PEs (with Nokia SR OS substituted to SR Linux for the lab image). See the
+The `clab-mpls-topology` artifact emits a containerlab YAML wiring the
+lab-deployable PEs and their backbone links, derived from the shared /31
+addressing. For the default **financial** backbone that's all eight Arista
+cEOS PEs and all 12 backbone links; for the **isp** dataset it's the Arista
+and Nokia PEs (Nokia SR OS substituted to SR Linux for the lab image). See the
 **[containerlab guide](./lab/containerlab.mdx)**.
 
 ## Community and support

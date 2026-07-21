@@ -29,10 +29,15 @@ Schema definition  →  Bootstrap data  →  Generators  →  Transforms  →  A
 
 ## Backbone
 
-The MPLS backbone is **static demo data**: 4 PEs (one per vendor) with a
-pre-built full iBGP mesh, ISIS L2, and LDP. This keeps the demo focused on
-the L3VPN-as-a-service story. To add or move PEs, edit `objects/60_backbone.yml`
-by hand and rerun `invoke bootstrap`.
+The MPLS backbone is **static demo data** and is dataset-specific — each
+dataset ships its own backbone. The default **financial** dataset has 8 PEs,
+all Arista cEOS (`pe-01`…`pe-08`), in a partial mesh (an 8-node ring plus four
+cross-chords = 12 p2p links, every PE at degree 3) over a full iBGP mesh. The
+**isp** dataset has 4 PEs, one per vendor, in a full mesh (6 p2p links). Both
+run ISIS L2 for the underlay and LDP for label distribution. This keeps the
+demo focused on the L3VPN-as-a-service story. To add or move PEs, edit
+`objects/datasets/<dataset>/60_backbone.yml` (and `70_topology.yml` for the
+p2p links) by hand and rerun `invoke bootstrap`.
 
 ## L3VPN service flow
 
@@ -41,12 +46,17 @@ When an operator creates an L3VPN through the Streamlit catalog:
 1. The catalog allocates a `vpn_id` from the `vpn_id_pool` number pool.
 2. It opens a feature branch and creates `ServiceL3Vpn` + one or more
    `ServiceL3VpnSite` objects.
-3. It opens a `CoreProposedChange` targeting `main`.
-4. Infrahub runs the `L3VpnGenerator`, which materialises the VRF,
-   route targets, PE-CE interfaces, IP addresses, and an eBGP session
-   if the routing protocol is set to `ebgp`.
-5. The proposed-change checks run in the pipeline — any failure blocks the merge.
-6. Per-vendor configuration artifacts are rendered by the transform layer.
+3. It adds the `ServiceL3Vpn` to the `l3vpns` group. A group-membership
+   trigger (`objects/events/00_triggers.yml`) fires `L3VpnGenerator` **on the
+   branch**, which materialises the VRF, route targets, PE-CE interfaces, IP
+   addresses, and an eBGP session if the routing protocol is set to `ebgp`.
+   The generator runs event-driven rather than in the proposed-change pipeline
+   (`execute_in_proposed_change: false`) so its data lands before artifacts
+   render — otherwise the pipeline races and the configuration diff comes out empty.
+4. Once the generator finishes, per-PE configuration artifacts are rendered by
+   the transform layer against the now-complete branch data.
+5. The catalog opens a `CoreProposedChange` targeting `main`.
+6. The proposed-change checks run in the pipeline — any failure blocks the merge.
 7. The operator reviews the diff in the Infrahub UI and merges.
 
 See [services/l3vpn](./services/l3vpn.mdx) for the full service reference.
@@ -66,6 +76,10 @@ fragment. The mapping is:
 | Nokia SR OS | `transforms/pe_nokia_sros.py` | `templates/pe_nokia_sros.j2` |
 | Containerlab | `transforms/clab_topology.py` | `templates/clab_topology.j2` |
 
+All four per-vendor PE transforms are still in play: the **isp** dataset has one
+PE per vendor and exercises all of them. The default **financial** backbone is
+all-Arista, so it only renders through `pe_arista_eos`.
+
 ## Checks
 
 Five checks gate the proposed-change pipeline:
@@ -75,7 +89,7 @@ Five checks gate the proposed-change pipeline:
 | `l3vpn_overlap` | No duplicate VPN IDs across active L3VPNs |
 | `l3vpn_site_subnet` | Customer subnet is reachable / not already allocated in the same VRF |
 | `pe_interface_alloc` | The nominated PE interface is free (status = `free`) |
-| `backbone_session_count` | Every PE has at least 3 iBGP sessions (full mesh invariant) |
+| `backbone_session_count` | Every PE has its full-mesh complement of N−1 iBGP sessions (N = PE count: 7 each for the 8-PE financial backbone, 3 each for the 4-PE isp backbone) |
 | `batfish_backbone` | Batfish-driven static validation of rendered backbone configs (parse status, undefined references, BGP session compatibility, IS-IS adjacency mesh). See [Batfish validation](./validation/batfish.mdx). |
 
 ## Per-vendor interface name macros
