@@ -78,6 +78,8 @@ const config: Config = {
     ],
   ],
   plugins: [
+    // Scans release-notes frontmatter into global data for <ReleaseFeed/>.
+    './plugins/release-notes-data',
     [
       '@docusaurus/plugin-client-redirects',
       {
