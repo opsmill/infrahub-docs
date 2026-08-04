@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
         'backup/install',
         'backup/create',
         'backup/restore',
+        'backup/retention',
         'backup/kubernetes-backup',
         'backup/kubernetes-restore',
       ],

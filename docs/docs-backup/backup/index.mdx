@@ -32,7 +32,7 @@ Infrahub Backup works with Infrahub Community Edition as well as Enterprise depl
 - On Kubernetes, enable the `infrahub-backup` Helm chart in CronJob mode for automated, declarative scheduling that fits your GitOps workflow.
 - On Docker Compose, automate backups with cron, systemd timers, or CI workflows; daily is a good baseline, with more frequent snapshots for high-change environments.
 - Configure S3-compatible storage to push backups off-cluster, and apply bucket lifecycle policies for retention.
-- Rotate archives with a retention policy that matches your recovery point objectives, and replicate critical backups to an off-site location.
+- Rotate archives with a [retention policy](./retention.mdx) that matches your recovery point objectives, and replicate critical backups to an off-site location.
 - Monitor backup jobs and alert on failure — silent backup gaps are often noticed only when it is too late.
 
 ### Run regular restore tests

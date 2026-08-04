@@ -22,6 +22,15 @@ Tools can be configured through these methods, applied in precedence order:
 | `INFRAHUB_OUTPUT_DIR` | Directory for storing troubleshooting bundles | `./infrahub_bundles` | `/data/bundles` |
 | `INFRAHUB_LOG_FORMAT` | Output format for logs | `text` | `json` |
 
+### Retention configuration
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `INFRAHUB_RETENTION_DAYS` | Keep backups newer than N days (N >= 1, unset to disable) | unset | `30` |
+| `INFRAHUB_RETENTION_COUNT` | Keep the N most recent backups (N >= 1, unset to disable) | unset | `60` |
+
+Both rules combine as a union, and the most recent backup at each location always survives. A value that is not a whole number of at least 1 — including an explicit `0` — is a validation error that aborts the run rather than disabling the rule; a variable that is present but empty counts as unset. See [Manage backup retention](../backup/retention.mdx).
+
 ### Docker compose configuration
 
 | Variable | Description | Default | Example |
@@ -66,6 +75,8 @@ Tools can be configured through these methods, applied in precedence order:
 |------|-------------|
 | `--force` | Force backup creation even if tasks are running |
 | `--neo4jmetadata` | Neo4j metadata to include (all, none, users, roles) |
+| `--retention-days` | Prune backups older than N days after a successful backup |
+| `--retention-count` | Keep only the N most recent backups after a successful backup |
 
 ### Collect command flags
 

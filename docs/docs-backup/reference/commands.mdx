@@ -50,6 +50,8 @@ infrahub-backup create [flags]
 | `--s3-upload` | Upload backup to S3 after creation | `false` | `INFRAHUB_S3_UPLOAD` |
 | `--s3-keep-local` | Keep local backup file after S3 upload | `false` | `INFRAHUB_S3_KEEP_LOCAL` |
 | `--sleep` | Sleep duration after backup for manual file transfer | `0` | `INFRAHUB_SLEEP` |
+| `--retention-days <n>` | After a successful backup, prune backups older than N days (N >= 1, omit to disable) | unset | `INFRAHUB_RETENTION_DAYS` |
+| `--retention-count <n>` | After a successful backup, keep only the N most recent backups (N >= 1, omit to disable) | unset | `INFRAHUB_RETENTION_COUNT` |
 
 **Neo4j metadata options:**
 
@@ -78,7 +80,12 @@ infrahub-backup create --s3-upload --s3-bucket my-backups --s3-keep-local
 
 # Create a redacted backup (replaces all attribute values with random UUIDs)
 infrahub-backup create --redact --force
+
+# Backup, then prune archives outside the retention policy
+infrahub-backup create --retention-days 30 --retention-count 60
 ```
+
+Retention runs only after the backup fully succeeds, and it never prompts. The local backup directory is always evaluated; the S3 prefix is evaluated when the same run uploaded to it. See [Manage backup retention](../backup/retention.mdx).
 
 #### restore
 
@@ -119,6 +126,64 @@ infrahub-backup restore --s3-endpoint http://minio.local:9000 s3://my-backups/in
 # Restore when the task manager database was excluded from the backup
 infrahub-backup restore infrahub_backup_20251022_120000.tar.gz --exclude-taskmanager
 ```
+
+#### prune
+
+Applies a retention policy to existing backups without creating a new one. At least one retention rule is required.
+
+**Syntax:**
+
+```bash
+infrahub-backup prune (--retention-days <n> | --retention-count <n>) [flags]
+```
+
+**Flags:**
+
+| Flag | Description | Default | Environment Variable |
+|------|-------------|---------|---------------------|
+| `--retention-days <n>` | Delete backups older than N days (N >= 1) | unset | `INFRAHUB_RETENTION_DAYS` |
+| `--retention-count <n>` | Keep only the N most recent backups (N >= 1) | unset | `INFRAHUB_RETENTION_COUNT` |
+| `--dry-run` | List exactly what a real run would delete, delete nothing, and never prompt | `false` | - |
+| `--force` | Skip the confirmation prompt (for non-interactive and scripted use) | `false` | - |
+| `--s3` | Also prune backups under the configured S3 bucket/prefix | `false` | - |
+
+Flags and environment variables are the only channels that configure retention; the flag wins where both supply a rule. Any value either channel supplies that is not a whole number of at least 1 — including an explicit `0` — is a validation error that aborts the run. A variable that is present but empty counts as unset.
+
+`--dry-run`, `--force`, and `--s3` are per-invocation switches with no environment variable behind them.
+
+**Examples:**
+
+```bash
+# Preview what a 7-day policy would delete
+infrahub-backup prune --retention-days 7 --dry-run
+
+# Keep the 30 most recent backups, asking for confirmation first
+infrahub-backup prune --retention-count 30
+
+# Non-interactive prune of both the local directory and the bucket
+infrahub-backup prune --retention-days 30 --s3 --force
+```
+
+**Behavior:**
+
+- The rules combine as a union: a backup survives if either rule claims it.
+- The most recent backup at each location always survives; there is no override.
+- The local directory and the S3 prefix are evaluated independently. S3 is never touched without `--s3`.
+- A backup's age comes from the timestamp in its filename, read in the local time of the host running the command, with a day measured as a fixed 24 hours.
+- The set previewed and confirmed is exactly the set deleted: candidates are selected once, and nothing is listed again after the confirmation. A candidate that had already vanished counts as satisfied, not as a failure.
+- Without `--force`, a run whose standard input is not a terminal refuses to delete anything.
+- Without `--force`, a run that cannot list one of its locations exits before the confirmation and deletes nothing at any location. With `--force`, every location that could be listed is still pruned.
+- `--dry-run` with `--force` is rejected as contradictory.
+
+**Exit codes:**
+
+| Outcome | Exit code |
+|---------|-----------|
+| Pruned successfully, dry run, nothing to prune, or prompt declined | `0` |
+| Validation error (no rule, value below 1, contradictory flags, `plakar` backend) | non-zero |
+| A location could not be listed, without `--force` — nothing deleted anywhere, no confirmation asked | non-zero |
+| A location failed, with `--force` — every other location is still pruned | non-zero |
+| A deletion failed after a complete preview — the remaining candidates are still attempted | non-zero |
 
 ### Environment commands
 

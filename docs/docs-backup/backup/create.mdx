@@ -200,8 +200,19 @@ crontab -e
 0 2 * * * /usr/local/bin/infrahub-backup create >> /var/log/infrahub-backup.log 2>&1
 
 # With retention management (keep 7 days)
-0 2 * * * /usr/local/bin/infrahub-backup create && find /path/to/backups -name "*.tar.gz" -mtime +7 -delete
+0 2 * * * /usr/local/bin/infrahub-backup create --retention-days 7 >> /var/log/infrahub-backup.log 2>&1
 ```
+
+### Bound the backup directory with a retention policy
+
+Pass `--retention-days` or `--retention-count` to delete out-of-policy archives after a successful backup, so a schedule cannot fill its disk:
+
+```bash
+# Keep 7 days of archives, and never fewer than the 14 most recent
+infrahub-backup create --retention-days 7 --retention-count 14
+```
+
+The rules combine as a union, the most recent archive at each location always survives, and the local directory and the S3 prefix are evaluated separately. Preview any policy with `infrahub-backup prune --dry-run` before relying on it. See [Manage backup retention](./retention.mdx) for the full semantics, the permissions S3 pruning requires, and the standalone `prune` command.
 
 ### Backup with notification
 
@@ -322,4 +333,5 @@ Confirm your backup strategy works:
 ## Related resources
 
 - [Restore from a backup](./restore.mdx)
+- [Manage backup retention](./retention.mdx)
 - [CLI command reference](../reference/commands.mdx)
