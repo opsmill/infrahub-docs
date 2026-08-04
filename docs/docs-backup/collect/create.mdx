@@ -167,6 +167,8 @@ The bundle layout is identical on Docker Compose and Kubernetes. Inside the arch
 - `server/` - Version, installed packages, API information, configuration, schema, worker schema-sync status (`infrahub_status.json`), environment variables
 - `metrics/` - Container resource metrics
 
+Each file holds the output of the command that produced it and nothing else, so a `.json` file always parses. When a command fails, its file is absent and a sibling `<name>.err.txt` records what ran, how it failed, and what the command reported — for example `task-manager/flow-runs.err.txt` in place of `flow-runs.json`. The manifest lists the same failure as a reason on the collector.
+
 :::warning Review before sharing
 Masking is based on key names: environment variables and configuration keys containing `password`, `secret`, `token`, or `key` are replaced with `********` before they are written to the bundle. Secrets stored under other key names are not detected. Service logs are collected as-is, and database query logs (`--include-queries`) can contain customer data. Review the bundle contents before sharing.
 :::
