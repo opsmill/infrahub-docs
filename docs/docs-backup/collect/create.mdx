@@ -164,7 +164,7 @@ The bundle layout is identical on Docker Compose and Kubernetes. Inside the arch
 - `cache/` - Redis info, clients, configuration, and slow log
 - `task-worker/` - Task worker state, one directory per replica
 - `task-manager/` - Work pools, work queues, recent flow runs, the pending and running flow and task runs, events, and automations
-- `server/` - Version, installed packages, API information, configuration, schema, environment variables
+- `server/` - Version, installed packages, API information, configuration, schema, worker schema-sync status (`infrahub_status.json`), environment variables
 - `metrics/` - Container resource metrics
 
 :::warning Review before sharing
