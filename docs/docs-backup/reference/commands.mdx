@@ -89,17 +89,18 @@ Retention runs only after the backup fully succeeds, and it never prompts. The l
 
 #### restore
 
-Restores Infrahub from a backup file or S3 URI.
+Restores Infrahub from a backup file, an S3 URI, or the most recent backup in a location.
 
 **Syntax:**
 
 ```bash
 infrahub-backup restore <backup-file|s3-uri>
+infrahub-backup restore --latest [--s3]
 ```
 
 **Arguments:**
 
-- `<backup-file|s3-uri>` - Path to backup archive or S3 URI (required)
+- `<backup-file|s3-uri>` - Path to backup archive or S3 URI, required unless `--latest` is passed
   - Local file: `infrahub_backup_20250929_143022.tar.gz`
   - S3 URI: `s3://bucket/prefix/infrahub_backup_20250929_143022.tar.gz`
 
@@ -107,15 +108,31 @@ infrahub-backup restore <backup-file|s3-uri>
 
 | Flag | Description | Default |
 |------|-------------|---------|
+| `--latest` | Restore the most recent backup instead of naming an archive; mutually exclusive with the argument | `false` |
+| `--s3` | With `--latest`: choose from the configured S3 bucket and prefix instead of the local backup directory | `false` |
 | `--exclude-taskmanager` | Skip restoring the task manager database even if the dump is present | `false` |
 | `--migrate-format` | Run Neo4j database format migration after restore | `false` |
+| `--sleep <duration>` | Wait this long before the restore begins, for manual file transfer | `0` |
+| `--decrypt-key <path>` | Private key PEM file for decrypting an encrypted backup | - |
 | `--reset-deployment-id` | Generate a new Root node UUID after restore to detach this instance from the source deployment ID | `false` |
+
+`--latest` and `--s3` are per-invocation switches with no environment variable behind them: a persistent `--latest` would turn a mistyped `restore` into a data-overwriting default, and a persistent `--s3` would silently move the location every restore reads.
+
+`--latest` ranks archives exactly as retention does — by the timestamp embedded in the name, newest first, ties broken by name descending — and only names matching `infrahub_backup_<YYYYMMDD_HHMMSS>.tar.gz[.enc]` take part. Exactly one location is consulted per run, and the two are never merged.
+
+The run exits non-zero without touching the deployment when the selected location holds no archives, when the newest archive is encrypted and no `--decrypt-key` was passed, when `--latest` is combined with an archive name, or when `--s3` is passed without `--latest`. `--latest` never falls back to an older archive. See [Restore from a backup](../backup/restore.mdx).
 
 **Examples:**
 
 ```bash
 # Restore from local file
 infrahub-backup restore infrahub_backup_20250929_143022.tar.gz
+
+# Restore the newest archive in the backup directory
+infrahub-backup restore --latest
+
+# Restore the newest archive in the configured bucket and prefix
+infrahub-backup restore --latest --s3 --s3-bucket my-backups --s3-prefix infrahub/prod
 
 # Restore from S3
 infrahub-backup restore s3://my-backups/infrahub/prod/infrahub_backup_20250929_143022.tar.gz

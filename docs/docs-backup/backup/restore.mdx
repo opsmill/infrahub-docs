@@ -119,6 +119,80 @@ infrahub-backup restore s3://my-backups/infrahub/prod/infrahub_backup_20250929_1
 The backup is downloaded to the local backup directory before restoration. The downloaded file is automatically cleaned up after the restore completes.
 :::
 
+### Restore the most recent backup
+
+If you do not want to name an archive — for example from a scheduled job, which cannot know a filename in advance — pass `--latest` instead of a file:
+
+```bash
+infrahub-backup restore --latest
+```
+
+`--latest` lists the configured backup directory, ranks the archives it finds, and restores the newest one. To rank archives in the configured S3 bucket and prefix instead, add `--s3`:
+
+```bash
+infrahub-backup restore --latest --s3 --s3-bucket my-backups --s3-prefix infrahub/prod
+```
+
+Exactly one location is consulted per run. With `--s3` the local backup directory is never read; without it the bucket is never read. The two are never merged, and there is no fallback from one to the other.
+
+Everything else about the restore is unchanged: `--latest` only decides which archive is used. Metadata validation, checksum verification, and the container stop and start sequence all behave exactly as they do when you name an archive, and every other `restore` flag composes with `--latest`.
+
+#### How the newest archive is chosen
+
+`--latest` ranks archives exactly as the retention policy ranks them:
+
+- Only names matching `infrahub_backup_<YYYYMMDD_HHMMSS>.tar.gz`, optionally with an `.enc` suffix, take part. Anything else in the directory or under the prefix — unrelated files, partial uploads, foreign names — is ignored.
+- Archives are ordered by the timestamp embedded in the name, newest first, with ties broken by name in descending order.
+
+Because the ordering is shared with retention, the archive `--latest` restores is always one that retention's "the most recent backup at each location always survives" rule protects. See [Manage backup retention](./retention.mdx).
+
+Before the restore begins, the run reports what it selected and where it came from:
+
+```text
+INFO[0000] Restoring latest backup infrahub_backup_20250929_143022.tar.gz from local:/opt/infrahub_backups
+```
+
+The location reads `local:<directory>` for the backup directory and `s3://<bucket>/<prefix>` for a bucket. That single line is what makes an unattended restore auditable from captured output alone, without access to the machine that ran it.
+
+#### When `--latest` refuses to run
+
+`--latest` fails rather than guessing, and it never falls back to an older archive:
+
+| Situation | Result |
+|------|-------------|
+| No matching archives in the selected location | Non-zero exit naming the location that was listed. This is the expected state before the first backup runs. |
+| The newest archive is encrypted and no `--decrypt-key` was passed | Non-zero exit naming the archive. The check runs before the `--sleep` wait, before any download, and before any container is stopped. |
+| Both `--latest` and an archive name are passed | Non-zero exit. The two are mutually exclusive. |
+| `--s3` is passed without `--latest` | Non-zero exit. To restore one exact remote archive, pass its `s3://` URI as the argument instead. |
+
+Restoring whichever archive happens to be readable would leave a deployment holding stale data while reporting success. On a schedule nobody watches, that is worse than a job that visibly fails.
+
+:::info
+Because the selection happens before the `--sleep` wait, an archive transferred into place during the sleep is not considered by `--latest`. The wait exists so that a *named* file can be transferred in; with `--latest` the choice has already been made.
+:::
+
+:::info
+With `--latest --s3` the selected object is downloaded to a temporary file inside the backup directory and removed afterwards. A local archive sharing the selected object's name — what `create --s3-upload --s3-keep-local` leaves behind — is never overwritten and never deleted.
+:::
+
+#### Refresh staging from production on a schedule
+
+To keep a staging deployment on the newest production backup, run `restore --latest --s3` against the bucket production uploads to. Because no filename is involved, the job is stable across every backup production takes:
+
+```bash
+# /etc/cron.d/infrahub-staging-sync
+# Refresh staging from the newest production backup, nightly at 03:00.
+INFRAHUB_S3_BUCKET=my-backups
+INFRAHUB_S3_PREFIX=infrahub/prod
+0 3 * * * root /usr/local/bin/infrahub-backup restore --latest --s3 --project infrahub-staging --reset-deployment-id >> /var/log/infrahub-staging-sync.log 2>&1
+```
+
+Add `--reset-deployment-id` as shown, so the refreshed staging instance does not report the production deployment ID. Capture the job's output: the selection line above is the record of which production backup staging is currently running.
+
+:::danger
+A scheduled restore replaces all data in the deployment it targets. Confirm that `--project` — or the environment the job runs in — points at the deployment you intend to overwrite before enabling the schedule, and keep the production deployment out of reach of the job entirely.
+:::
+
 ### Restore to specific project
 
 If you have multiple Infrahub projects:
