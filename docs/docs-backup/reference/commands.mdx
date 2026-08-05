@@ -106,17 +106,19 @@ infrahub-backup restore --latest [--s3]
 
 **Flags:**
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `--latest` | Restore the most recent backup instead of naming an archive; mutually exclusive with the argument | `false` |
-| `--s3` | With `--latest`: choose from the configured S3 bucket and prefix instead of the local backup directory | `false` |
-| `--exclude-taskmanager` | Skip restoring the task manager database even if the dump is present | `false` |
-| `--migrate-format` | Run Neo4j database format migration after restore | `false` |
-| `--sleep <duration>` | Wait this long before the restore begins, for manual file transfer | `0` |
-| `--decrypt-key <path>` | Private key PEM file for decrypting an encrypted backup | - |
-| `--reset-deployment-id` | Generate a new Root node UUID after restore to detach this instance from the source deployment ID | `false` |
+| Flag | Description | Default | Environment Variable |
+|------|-------------|---------|---------------------|
+| `--latest` | Restore the most recent backup instead of naming an archive; mutually exclusive with the argument | `false` | - |
+| `--s3` | With `--latest`: choose from the configured S3 bucket and prefix instead of the local backup directory | `false` | - |
+| `--exclude-taskmanager` | Skip restoring the task manager database even if the dump is present | `false` | - |
+| `--migrate-format` | Run Neo4j database format migration after restore | `false` | - |
+| `--sleep <duration>` | Wait this long before the restore begins, for manual file transfer | `0` | - |
+| `--decrypt-key <path>` | Private key PEM file for decrypting an encrypted backup | - | `INFRAHUB_DECRYPT_KEY` |
+| `--reset-deployment-id` | Generate a new Root node UUID after restore to detach this instance from the source deployment ID | `false` | `INFRAHUB_RESET_DEPLOYMENT_ID` |
 
-`--latest` and `--s3` are per-invocation switches with no environment variable behind them: a persistent `--latest` would turn a mistyped `restore` into a data-overwriting default, and a persistent `--s3` would silently move the location every restore reads.
+`--decrypt-key` and `--reset-deployment-id` also read their variable, with the flag winning where both supply a value — which is what lets a scheduled restore configured entirely through the environment decrypt an archive. The remaining flags are command-line only: a persistent `--latest` would turn a mistyped `restore` into a data-overwriting default, a persistent `--s3` would silently move the location every restore reads, and `INFRAHUB_SLEEP` configures `create`'s `--sleep`, not this one.
+
+An encrypted archive is decrypted into a temporary file beside it, which is removed when the run ends. Both the archive and any other archive in the directory are left untouched, including a plain archive of the same timestamp.
 
 `--latest` ranks archives exactly as retention does — by the timestamp embedded in the name, newest first, ties broken by name descending — and only names matching `infrahub_backup_<YYYYMMDD_HHMMSS>.tar.gz[.enc]` take part. Exactly one location is consulted per run, and the two are never merged.
 
