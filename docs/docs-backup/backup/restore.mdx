@@ -193,6 +193,8 @@ Add `--reset-deployment-id` as shown, so the refreshed staging instance does not
 A scheduled restore replaces all data in the deployment it targets. Confirm that `--project` — or the environment the job runs in — points at the deployment you intend to overwrite before enabling the schedule, and keep the production deployment out of reach of the job entirely.
 :::
 
+On Kubernetes, the `infrahub-backup` Helm chart renders the same refresh as a CronJob. See [Refresh an environment on a schedule](./kubernetes-scheduled-restore.mdx).
+
 ### Restore to specific project
 
 If you have multiple Infrahub projects:

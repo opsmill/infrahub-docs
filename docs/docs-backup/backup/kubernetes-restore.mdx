@@ -7,6 +7,8 @@ import TabItem from '@theme/TabItem';
 
 Restore an Infrahub instance on Kubernetes from a backup stored in S3-compatible storage. The restore runs as a Kubernetes Job through the same `infrahub-backup` Helm chart.
 
+To refresh a staging or demo deployment from another environment's backups on a recurring schedule instead, see [Refresh an environment on a schedule](./kubernetes-scheduled-restore.mdx).
+
 :::warning
 Restoring a backup will overwrite your current Infrahub data. Create a safety backup before proceeding if you need to preserve any recent changes.
 :::
@@ -86,12 +88,15 @@ infrahub-backup:
   # Enable restore
   restore:
     enabled: true
-    s3:
-      bucket: "my-infrahub-backups"
-      key: "infrahub_backup_20250120_020000.tar.gz"
-      endpoint: "https://s3.amazonaws.com"
-      region: "us-east-1"
-      secretName: "backup-s3-credentials"
+    mode: "job"
+    storage:
+      type: "s3"
+      s3:
+        bucket: "my-infrahub-backups"
+        key: "infrahub_backup_20250120_020000.tar.gz"
+        endpoint: "https://s3.amazonaws.com"
+        region: "us-east-1"
+        secretName: "backup-s3-credentials"
 ```
 
 </TabItem>
@@ -106,12 +111,15 @@ backup:
 
 restore:
   enabled: true
-  s3:
-    bucket: "my-infrahub-backups"
-    key: "infrahub_backup_20250120_020000.tar.gz"
-    endpoint: "https://s3.amazonaws.com"
-    region: "us-east-1"
-    secretName: "backup-s3-credentials"
+  mode: "job"
+  storage:
+    type: "s3"
+    s3:
+      bucket: "my-infrahub-backups"
+      key: "infrahub_backup_20250120_020000.tar.gz"
+      endpoint: "https://s3.amazonaws.com"
+      region: "us-east-1"
+      secretName: "backup-s3-credentials"
 ```
 
 </TabItem>
@@ -333,4 +341,5 @@ Confirm your restore completed successfully:
 ## Related resources
 
 - [Back up Infrahub on Kubernetes](./kubernetes-backup.mdx)
+- [Refresh an environment on a schedule](./kubernetes-scheduled-restore.mdx)
 - [Restore from a backup (CLI)](./restore.mdx)

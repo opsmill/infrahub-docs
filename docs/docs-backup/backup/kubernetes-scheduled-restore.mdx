@@ -1,0 +1,308 @@
+---
+title: Refresh an environment on a schedule
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Run the restore CronJob in the `infrahub-backup` Helm chart to keep a staging or demo deployment on the newest backup another environment produces. Each run restores whichever archive is newest under the source bucket and prefix, so the target release never names a filename and the schedule keeps working as new backups land.
+
+Follow this guide to point a target release at a source bucket, enable the restore CronJob, and trigger a run without waiting for the next scheduled time.
+
+:::danger
+A scheduled restore replaces all data in the deployment it targets, on every run. Enable it only on a deployment you are willing to overwrite repeatedly, and keep the release that produces the backups out of reach of the schedule.
+:::
+
+## Prerequisites
+
+Before enabling a scheduled restore:
+
+- The target release uses `infrahub-backup` chart 1.3.0 or later with image tag `2.3.0` or later. Newest-archive selection was added in `2.3.0`.
+- The target is a separate release from the one producing the backups, in its own namespace. Each run restores into the namespace the pod runs in.
+- The source environment already holds at least one backup under the bucket and prefix. A run that finds no archive exits non-zero.
+- S3 credentials with `s3:ListBucket` and `s3:GetObject` on the bucket and prefix. List access is required because each run chooses its archive by listing the prefix.
+- Network egress from the restore pod to the Kubernetes API server. See [Network access to the API server](./kubernetes-backup.mdx#network-access-to-the-api-server).
+- Enough ephemeral storage on the node for one archive. The pod mounts an `emptyDir` at `restore.storage.path`, and each run downloads the selected object there before extracting it.
+- The backups were created from the same Infrahub edition, Community or Enterprise, as the target.
+
+## How the schedule chooses an archive
+
+Setting `restore.storage.s3.latest: true` renders `restore --latest --s3`, and the chart passes the bucket, prefix, endpoint, and region to the pod as `INFRAHUB_S3_*` variables. Every run repeats the same selection against the live contents of the prefix:
+
+- Only objects named `infrahub_backup_<YYYYMMDD_HHMMSS>.tar.gz`, optionally with an `.enc` suffix, take part. Anything else under the prefix — unrelated files, partial uploads, foreign names — is ignored.
+- Archives are ordered by the timestamp embedded in the name, newest first, with ties broken by name in descending order.
+
+Each run reports its selection before it touches the deployment:
+
+```text
+INFO[0000] Restoring latest backup infrahub_backup_20250120_020000.tar.gz from s3://my-infrahub-backups/infrahub/prod
+```
+
+That line records which source backup the target is currently running, and it is readable from the job logs alone.
+
+The selection never falls back to an older archive. A run whose prefix holds no matching archive, or whose newest archive is encrypted with no decryption key available, exits non-zero without stopping a single container. See [Restore the most recent backup](./restore.mdx#restore-the-most-recent-backup) for the full selection behavior.
+
+:::info
+The chart has no values key for a decryption key and no way to mount one into the restore pod, so a scheduled restore reads only archives the source uploaded without encryption. If the source encrypts its backups, every run exits non-zero naming the archive it selected.
+:::
+
+## Step 1: Point the release at the source bucket
+
+Create the credentials secret in the target namespace, holding a key pair with read access to the source bucket:
+
+```bash
+kubectl create secret generic backup-s3-credentials \
+  --namespace infrahub-staging \
+  --from-literal=AWS_ACCESS_KEY_ID=your-access-key \
+  --from-literal=AWS_SECRET_ACCESS_KEY=your-secret-key
+```
+
+Note the bucket and prefix the source release uploads to — its `backup.storage.s3.bucket` and `backup.storage.s3.prefix`. The target's `restore.storage.s3.prefix` has to match, or each run lists an empty prefix and exits.
+
+List the prefix to confirm the archives are where you expect:
+
+```bash
+aws s3 ls s3://my-infrahub-backups/infrahub/prod/
+```
+
+## Step 2: Enable the restore CronJob
+
+<Tabs>
+<TabItem value="subchart" label="Via Infrahub Helm Chart (Recommended)" default>
+
+Add the scheduled restore to the target deployment's Helm values:
+
+```yaml
+# values.yaml for the target Infrahub Helm chart
+infrahub-backup:
+  enabled: true
+
+  # The target release must not also produce backups
+  backup:
+    enabled: false
+
+  restore:
+    enabled: true
+    mode: "cronjob"
+    schedule: "0 4 * * *"
+
+    storage:
+      type: "s3"
+      s3:
+        bucket: "my-infrahub-backups"
+        prefix: "infrahub/prod"
+        latest: true
+        endpoint: "https://s3.amazonaws.com"
+        region: "us-east-1"
+        secretName: "backup-s3-credentials"
+```
+
+</TabItem>
+<TabItem value="standalone" label="Standalone Chart">
+
+Create a values file for the target namespace:
+
+```yaml
+# scheduled-restore-values.yaml
+backup:
+  enabled: false
+
+restore:
+  enabled: true
+  mode: "cronjob"
+  schedule: "0 4 * * *"
+
+  storage:
+    type: "s3"
+    s3:
+      bucket: "my-infrahub-backups"
+      prefix: "infrahub/prod"
+      latest: true
+      endpoint: "https://s3.amazonaws.com"
+      region: "us-east-1"
+      secretName: "backup-s3-credentials"
+```
+
+</TabItem>
+</Tabs>
+
+The values that distinguish a scheduled restore from the one-shot restore Job:
+
+| Value | Purpose |
+|-------|---------|
+| `restore.mode` | `"cronjob"` renders a CronJob. `"job"`, the default, renders the one-shot [restore Job](./kubernetes-restore.mdx). |
+| `restore.schedule` | Cron expression for the refresh. Defaults to `0 4 * * *`, two hours after the backup chart's default `0 2 * * *`, so a nightly backup lands before the refresh reads the prefix. |
+| `restore.storage.s3.latest` | Selects the newest archive under the bucket and prefix on every run, instead of naming one. |
+| `restore.storage.s3.prefix` | The prefix the archives live under. Match the source release's `backup.storage.s3.prefix`. |
+
+Pick a schedule that leaves room for the source backup to finish uploading. A refresh that fires while the source is still uploading selects the previous archive instead — a valid restore, one cycle behind the data you expected.
+
+## Step 3: Deploy and verify the schedule
+
+With `restore.mode: "cronjob"` the chart creates an ordinary CronJob rather than a Helm hook, so `helm upgrade` returns as soon as the object is applied and does not wait for a restore. The one-shot restore Job behaves differently: it runs as a `post-install,post-upgrade` hook and holds the release open until it finishes.
+
+<Tabs>
+<TabItem value="subchart-deploy" label="Via Infrahub Helm Chart" default>
+
+```bash
+helm upgrade infrahub oci://registry.opsmill.io/opsmill/chart/infrahub \
+  --namespace infrahub-staging \
+  --values values.yaml
+```
+
+</TabItem>
+<TabItem value="standalone-deploy" label="Standalone Chart">
+
+```bash
+helm upgrade --install infrahub-backup oci://registry.opsmill.io/opsmill/chart/infrahub-backup \
+  --namespace infrahub-staging \
+  --values scheduled-restore-values.yaml
+```
+
+</TabItem>
+</Tabs>
+
+Confirm the CronJob exists and is not suspended:
+
+```bash
+kubectl get cronjobs -n infrahub-staging
+```
+
+```text
+NAME                      SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+infrahub-backup-restore   0 4 * * *   <none>     False     0        <none>          30s
+```
+
+Nothing restores until the first scheduled time.
+
+## Step 4: Trigger a run without waiting
+
+Create a one-off Job from the CronJob to exercise the configuration before you rely on the schedule:
+
+```bash
+kubectl create job --from=cronjob/infrahub-backup-restore restore-check \
+  --namespace infrahub-staging
+```
+
+Read the CronJob name from `kubectl get cronjobs` rather than copying it. It is the release's full name with a `-restore` suffix, which differs between a standalone install and a subchart install.
+
+Follow the logs:
+
+```bash
+kubectl logs -n infrahub-staging -l app.kubernetes.io/name=infrahub-backup -f
+```
+
+Check the selection line names the archive you expect, then confirm the refreshed data:
+
+```bash
+# All Infrahub pods came back up
+kubectl get pods -n infrahub-staging
+
+# The restored data is present
+kubectl port-forward -n infrahub-staging svc/infrahub-server 8000:8000
+curl -X POST http://localhost:8000/graphql \
+  -H "Content-Type: application/json" \
+  -d '{"query": "{ InfrahubStatus { summary { schema_hash } } }"}'
+```
+
+Remove the one-off Job so it does not sit in the namespace alongside the scheduled runs:
+
+```bash
+kubectl delete job restore-check -n infrahub-staging
+```
+
+## Configuration guardrails
+
+Four combinations fail while the chart renders, so `helm template` and `helm upgrade` both stop before anything reaches the cluster:
+
+| Configuration | Why it is rejected |
+|---------------|--------------------|
+| `restore.mode: "cronjob"` with `restore.storage.type: "local"` | The pod mounts an `emptyDir`, which is empty on every scheduled run. |
+| `restore.mode: "cronjob"` with `backup.enabled: true` | A release that produces backups must never be a scheduled-restore target. |
+| Both `restore.storage.s3.key` and `restore.storage.s3.latest` | Name one exact archive or take the newest, not both. |
+| Neither `restore.storage.s3.key` nor `restore.storage.s3.latest` | Without either, the restore has no archive to read. |
+
+Each rejection names the reason:
+
+```text
+Error: execution error at (infrahub-backup/templates/job-restore.yaml:1:4): restore.mode=cronjob requires restore.storage.type=s3: local storage mounts an emptyDir, which is empty on every scheduled run
+```
+
+Both restore templates run the same check, so the path in the error reads `job-restore.yaml` even when the values set `restore.mode: "cronjob"`. Read the message, not the filename.
+
+The `backup.enabled` guardrail is scoped to one release: it stops a single release from both producing backups and restoring on a schedule. It cannot tell whether the namespace the CronJob lands in is the one you meant, because each run restores into its own namespace. Confirm the target namespace on every deploy.
+
+## Failure posture
+
+A scheduled restore is built for targets where the next run is an acceptable repair:
+
+- **A failed run is not retried.** `job.backoffLimit` is `0` and the chart performs no rollback. A run that fails after the Infrahub services were stopped leaves the target down until the next scheduled run completes. That suits a staging or demo environment; it is not a posture for production.
+- **Overlapping runs are skipped.** `cronJob.concurrencyPolicy` defaults to `Forbid`, so a run still going when the next one fires does not start.
+- **The target is unavailable during each run.** Every restore stops the Infrahub services, restores both databases, and starts the services again.
+- **Recent runs stay available for inspection.** `cronJob.successfulJobsHistoryLimit` and `cronJob.failedJobsHistoryLimit` both default to `3`, so the last three runs of each kind keep their pods and logs.
+
+Pause the schedule without removing it — during a maintenance window on the source, for example:
+
+```yaml
+cronJob:
+  suspend: true
+```
+
+## Troubleshooting
+
+### The deploy fails with a restore validation error
+
+The values hit a render-time guardrail. Match the message against [Configuration guardrails](#configuration-guardrails); the error text names which combination was rejected. Nothing was applied to the cluster, so correcting the values and running `helm upgrade` again is enough.
+
+### The run exits reporting no backups
+
+The prefix the target lists holds no matching archive. Compare the two values directly:
+
+```bash
+# What the target lists
+helm get values <target-release> -n infrahub-staging
+
+# What the source wrote
+aws s3 ls s3://my-infrahub-backups/infrahub/prod/
+```
+
+A trailing-slash or path mismatch between the target's `restore.storage.s3.prefix` and the source's `backup.storage.s3.prefix` is the common cause. This is also the expected state before the source takes its first backup.
+
+### Access denied while listing the bucket
+
+Selection lists the prefix before it downloads anything, so a credential with `s3:GetObject` but no `s3:ListBucket` fails at selection rather than at download. Grant both rights on the bucket and prefix.
+
+### The CronJob exists but never runs
+
+Check whether the schedule is suspended:
+
+```bash
+kubectl get cronjob infrahub-backup-restore -n infrahub-staging \
+  -o jsonpath='{.spec.suspend}{"\n"}'
+```
+
+With `cronJob.suspend` set to `true`, nothing is scheduled. If `cronJob.startingDeadlineSeconds` is set and the controller misses that window — during node pressure or a cluster upgrade — the run is skipped rather than delayed.
+
+### The run stops partway with no error
+
+If the pod starts but stalls at the service-stop, database, or service-start steps and the logs show no error, the pod may be unable to reach the Kubernetes API server. Restore relies on the API server's `exec` and `cp` subresources, which default-deny egress NetworkPolicies block even when RBAC is correct. See [Network access to the API server](./kubernetes-backup.mdx#network-access-to-the-api-server).
+
+Because a failed run is not retried, the target stays in whatever state the run left it until the next scheduled time. Fix the egress rule, then trigger a run with `kubectl create job --from=cronjob/...` rather than waiting.
+
+## Validation
+
+Confirm the schedule is working end to end:
+
+- [ ] The CronJob exists in the target namespace and is not suspended
+- [ ] A manually triggered run completed without errors
+- [ ] The job log names the archive and source location it restored from
+- [ ] All Infrahub pods in the target namespace are running
+- [ ] The restored data matches the source backup
+- [ ] `backup.enabled` is `false` on the target release
+
+## Related resources
+
+- [Restore Infrahub on Kubernetes](./kubernetes-restore.mdx) — one-shot restore from a named archive
+- [Back up Infrahub on Kubernetes](./kubernetes-backup.mdx) — configuring the source release that produces the backups
+- [Restore the most recent backup](./restore.mdx#restore-the-most-recent-backup) — how `--latest` selects an archive and when it refuses to run
+- [Manage backup retention](./retention.mdx) — bounding what accumulates under the source prefix

@@ -21,6 +21,7 @@ const sidebars: SidebarsConfig = {
         'backup/retention',
         'backup/kubernetes-backup',
         'backup/kubernetes-restore',
+        'backup/kubernetes-scheduled-restore',
       ],
     },
     {

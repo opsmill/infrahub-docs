@@ -150,6 +150,8 @@ infrahub-backup:
       neo4jMetadata: "all"      # Options: all, none, users, roles
 ```
 
+A scheduled backup with no retention policy grows its bucket until something fails. The chart has no retention values key, so the rules go through `backup.options.extraArgs`. See [Attach retention to scheduled backups](./retention.mdx#step-3-attach-retention-to-scheduled-backups) for the values and the delete permissions the credentials need.
+
 ## Step 2: Configure storage
 
 <Tabs>
@@ -414,4 +416,5 @@ Confirm your backup configuration works:
 ## Related resources
 
 - [Restore Infrahub on Kubernetes](./kubernetes-restore.mdx)
+- [Refresh an environment on a schedule](./kubernetes-scheduled-restore.mdx)
 - [Back up your Infrahub instance (CLI)](./create.mdx)

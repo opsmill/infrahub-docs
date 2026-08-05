@@ -43,6 +43,15 @@ infrahub-backup prune --retention-days 7 --retention-count 14 --force
 
 That policy keeps every archive from the last seven days *and* the 14 most recent archives, whichever set is larger. On a daily schedule it settles at 14 archives. On an hourly schedule the age rule dominates and roughly 168 archives survive. If you want a hard cap on the number of archives, set `--retention-count` alone.
 
+Pair the two rules when the schedule that produces the backups might stall. An age rule alone answers "how old may an archive be", not "how many recovery points must remain", so once every archive is older than the window the age rule claims nothing and only the keep-newest floor below applies — a scheduled `prune` erodes the location to a single archive. Adding a count rule raises that floor to the number you name, whether or not new backups keep arriving:
+
+```bash
+# Thirty days of history, and never fewer than 14 recovery points
+infrahub-backup prune --retention-days 30 --retention-count 14 --force
+```
+
+Retention attached to `create` is already protected from this: the policy is applied only after the backup is written and its checksum recorded, so a schedule that has started failing deletes nothing at all. The pairing matters for a standalone `prune` on its own schedule, which applies the policy whether or not a recent backup succeeded.
+
 **The most recent backup always survives.** Even a policy that matches every archive on disk keeps the newest one. There is no flag to override this, so a mistyped policy can never leave you with zero recovery points.
 
 **Each location is evaluated on its own.** The local directory and the S3 prefix are separate populations: each keeps its own newest archive, and each applies the rules to the archives it actually holds. Deleting a local copy never deletes the uploaded one.
@@ -152,6 +161,43 @@ export INFRAHUB_RETENTION_COUNT=60
 
 infrahub-backup create
 ```
+
+</TabItem>
+<TabItem value="kubernetes" label="Kubernetes (Helm)">
+
+The `infrahub-backup` chart has no retention values key, so pass the rules to the backup CronJob through `backup.options.extraArgs`:
+
+```yaml
+# values.yaml for the Infrahub Helm chart
+infrahub-backup:
+  enabled: true
+
+  backup:
+    enabled: true
+    mode: "cronjob"
+    schedule: "0 2 * * *"
+
+    storage:
+      type: "s3"
+      s3:
+        bucket: "my-infrahub-backups"
+        prefix: "infrahub/prod"
+        region: "us-east-1"
+        secretName: "backup-s3-credentials"
+
+    options:
+      extraArgs:
+        - "--retention-days=30"
+        - "--retention-count=60"
+```
+
+Each scheduled run then applies the policy after its backup succeeds, the same as a cron-driven `create`.
+
+Three differences matter on Kubernetes:
+
+- **The policy bounds the bucket, not the pod.** The backup directory is an `emptyDir` that starts empty on every run, and the default `backup.options.keepLocal: false` deletes the local copy as soon as the upload succeeds. The S3 prefix is the only location with archives left to prune.
+- **The credentials in `secretName` need delete rights.** Upload-only credentials make the S3 leg fail and the run exit non-zero. See [Grant list and delete permissions](#grant-list-and-delete-permissions).
+- **Retention rides along with a backup.** The chart always renders `create` as the command, so a prune-only CronJob is not expressible in values. Retention runs when a backup runs.
 
 </TabItem>
 </Tabs>
