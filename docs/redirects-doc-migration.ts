@@ -26,7 +26,7 @@ export const redirects_migration: Redirect[] = [
     { from: '/topics/labels', to: '/schema/display_label' },
     { from: '/topics/file-object', to: '/schema/file-object' },
     { from: '/topics/schema-attr-kind-number-pool', to: '/schema/number-pool' },
-    { from: '/guides/create-schema', to: '/academy/tutorials/build-your-first-schema' },
+    { from: '/guides/create-schema', to: '/learn/tutorials/build-your-first-schema' },
     { from: '/guides/import-schema', to: '/schema/create-and-load' },
 
     // ── Objects & Object Templates ────────────────────────────────────────────
@@ -58,13 +58,13 @@ export const redirects_migration: Redirect[] = [
 
     // ── Transformations ───────────────────────────────────────────────────────
     { from: '/topics/transformation', to: '/transformations/overview' },
-    { from: '/guides/jinja2-transform', to: '/academy/tutorials/transformations/build-a-jinja2-transformation' },
-    { from: '/guides/python-transform', to: '/academy/tutorials/transformations/build-a-python-transformation' },
+    { from: '/guides/jinja2-transform', to: '/learn/tutorials/transformations/build-a-jinja2-transformation' },
+    { from: '/guides/python-transform', to: '/learn/tutorials/transformations/build-a-python-transformation' },
 
     // ── Generators ────────────────────────────────────────────────────────────
     { from: '/topics/generator', to: '/generators/overview' },
-    { from: '/guides/generator', to: '/academy/tutorials/generators/build-your-first-generator' },
-    { from: '/guides/chaining-generators', to: '/academy/tutorials/generators/build-chained-generators' },
+    { from: '/guides/generator', to: '/learn/tutorials/generators/build-your-first-generator' },
+    { from: '/guides/chaining-generators', to: '/learn/tutorials/generators/build-chained-generators' },
     { from: '/topics/modular-generators', to: '/generators/modular' },
     { from: '/guides/modular-generator-best-practices', to: '/generators/modular-best-practices' },
 
@@ -93,7 +93,7 @@ export const redirects_migration: Redirect[] = [
     { from: '/topics/proposed-change', to: '/proposed-changes/overview' },
     // Checks
     { from: '/topics/check', to: '/checks/overview' },
-    { from: '/guides/check', to: '/academy/tutorials/build-a-check' },
+    { from: '/guides/check', to: '/learn/tutorials/build-a-check' },
     // Git Integration
     { from: '/topics/repository', to: '/git-integration/overview' },
     { from: '/guides/repository', to: '/git-integration/connect-repository' },
