@@ -4,6 +4,7 @@ import type * as Preset from "@docusaurus/preset-classic";
 import globalVars from './globalVars';
 import path from 'path';
 import { redirects_migration } from './redirects-doc-migration';
+import { redirects_academy_to_learn } from './redirects-academy-to-learn';
 
 function getDocsRelative(filePath) {
   const rootDocsDir = path.join(process.cwd(), 'docs');
@@ -126,6 +127,8 @@ const config: Config = {
           },
           // This covers all the redirects setup during doc migration
           ...redirects_migration,
+          // "academy" section renamed to "learn"
+          ...redirects_academy_to_learn,
         ],
       },
     ],
