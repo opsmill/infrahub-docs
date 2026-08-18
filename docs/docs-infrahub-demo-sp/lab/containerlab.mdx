@@ -17,18 +17,19 @@ whatever backbone the active dataset defines.
 Which PEs are deployable depends on the dataset:
 
 - **financial** (default) — all 8 PEs are Arista cEOS, so all 8 boot in the lab
-  and all 12 backbone links render.
+  and all 15 backbone links render, plus the 4 cEOS CE routers and their
+  PE-CE access links.
 - **isp** — only the Arista and Nokia PEs have a lab-runnable image, so 2 PE
   nodes boot with the single backbone link between them.
 
-The topology is written to `lab/mpls-topology.clab.yml` by
+The topology is written to `lab/mpls-backbone.clab.yml` by
 `invoke lab.deploy` before containerlab brings it up.
 
 ---
 
 ## Node map
 
-A PE is lab-deployable only when its platform carries a `containerlab_os`
+A device is lab-deployable only when its platform carries a `containerlab_os`
 image. Today that means two vendors:
 
 | Vendor | Platform | Containerlab image | Notes |
@@ -41,12 +42,36 @@ image. Today that means two vendors:
 Which PEs that yields depends on the active dataset:
 
 - **financial** (default) — all 8 PEs (`pe-01`…`pe-08`) are Arista cEOS, so all
-  8 boot in the lab and all 12 backbone links render.
+  8 boot in the lab and all 15 backbone links render.
 - **isp** — only `pe-lon-arista` (cEOS) and `pe-par-nokia` (SR Linux) are
   deployable; `pe-fra-cisco` and `pe-ams-juniper` are omitted.
 
-CE nodes run a generic Linux image (`ghcr.io/hellt/network-multitool`) and
-simulate customer CPE with a loopback address.
+:::note MPLS data plane
+
+The lab brings up IS-IS, the full iBGP mesh and PE-CE eBGP, and every customer
+prefix lands in the right VRF. It does **not** forward traffic between customer
+sites: cEOS never starts its LDP agent, so there is no MPLS label path between
+PEs. See
+[Troubleshooting](../troubleshooting.mdx#ldp-does-not-start-so-inter-site-vpn-traffic-fails).
+
+:::
+
+CE nodes are real routers, not stand-ins. On **financial** the four
+pre-provisioned CEs are Arista cEOS and boot from their own `ce-arista-eos`
+configuration artifact, so the PE-CE eBGP session establishes in the lab. A
+site whose CE is unmanaged (no `ce_device`), or whose L3VPN generator has not
+run yet, contributes no CE node and no PE-CE link.
+
+Behind each CE the topology also synthesises one **customer host** — a
+`nicolaka/netshoot` container named `cust-<site>` (for example `cust-ib-zrh`
+behind `ce-ib-zrh`). It is lab scaffolding, not Infrahub data: it exists so the LAN
+port on the CE has carrier. Without it the port stays down, the dot1q
+sub-interface sits `lowerlayerdown`, and the customer prefix is never advertised
+because a down interface contributes no connected route for the BGP `network`
+statement to match. Each host tags its own frames with the same VLAN the CE
+expects and takes `.10` of the customer subnet, with the CE sub-interface `.1`
+as its default gateway — so the encapsulation is exercised, and the host is a
+usable ping source across the VPN.
 
 ---
 
@@ -76,7 +101,7 @@ Configuration push to the Nokia PE is therefore not available in v1 (see
   - `ceos:latest` (requires an Arista account and local image import — see
     https://containerlab.dev/manual/kinds/ceos/)
   - `ghcr.io/nokia/srlinux` (public)
-  - `ghcr.io/hellt/network-multitool` (public)
+  - `nicolaka/netshoot` (public — the `cust-*` customer hosts on the CE LAN side)
 - A running Infrahub instance with bootstrap data loaded (`invoke init`)
 
 ---
@@ -84,18 +109,18 @@ Configuration push to the Nokia PE is therefore not available in v1 (see
 ## Deploy
 
 ```bash
-# Fetch the clab artifact from Infrahub and write lab/mpls-topology.clab.yml,
+# Fetch the clab artifact from Infrahub and write lab/mpls-backbone.clab.yml,
 # then call containerlab deploy.
 uv run invoke lab.deploy
 ```
 
-Expected output (default **financial** dataset — 8 Arista cEOS PEs plus the four
-`trading-floor-vpn` CE nodes):
+Expected output (default **financial** dataset — 8 Arista cEOS PEs, the four
+pre-provisioned Arista cEOS CE routers, and one customer host behind each CE):
 
 ```
 [INFO] Fetching clab-mpls-topology artifact from Infrahub...
-[INFO] Writing lab/mpls-topology.clab.yml
-[INFO] Running: containerlab deploy -t lab/mpls-topology.clab.yml
+[INFO] Writing lab/mpls-backbone.clab.yml
+[INFO] Running: containerlab deploy -t lab/mpls-backbone.clab.yml
 ...
 +----+---------------------------------+-----------+---------------------------------+
 | #  | Name                            | Kind      | Image                           |
@@ -108,15 +133,22 @@ Expected output (default **financial** dataset — 8 Arista cEOS PEs plus the fo
 | 6  | pe-06                           | ceos      | ceos:latest                     |
 | 7  | pe-07                           | ceos      | ceos:latest                     |
 | 8  | pe-08                           | ceos      | ceos:latest                     |
-| 9  | ce-trading-floor-vpn-pe-01      | linux     | ghcr.io/hellt/network-multitool |
-| 10 | ce-trading-floor-vpn-pe-02      | linux     | ghcr.io/hellt/network-multitool |
-| 11 | ce-trading-floor-vpn-pe-03      | linux     | ghcr.io/hellt/network-multitool |
-| 12 | ce-trading-floor-vpn-pe-04      | linux     | ghcr.io/hellt/network-multitool |
+| 9  | ce-ib-lon                       | ceos      | ceos:latest                     |
+| 10 | ce-ib-zrh                       | ceos      | ceos:latest                     |
+| 11 | ce-trading-lon                  | ceos      | ceos:latest                     |
+| 12 | ce-trading-zrh                  | ceos      | ceos:latest                     |
+| 13 | cust-ib-lon                     | linux     | nicolaka/netshoot:latest        |
+| 14 | cust-ib-zrh                     | linux     | nicolaka/netshoot:latest        |
+| 15 | cust-trading-lon                | linux     | nicolaka/netshoot:latest        |
+| 16 | cust-trading-zrh                | linux     | nicolaka/netshoot:latest        |
 +----+---------------------------------+-----------+---------------------------------+
 ```
 
 On the **isp** dataset the same command brings up just `pe-lon-arista`
-(Arista cEOS) and `pe-par-nokia-lab` (Nokia SR Linux), plus its CE nodes.
+(Arista cEOS) and `pe-par-nokia` (Nokia SR Linux), with the single backbone
+link between them. That dataset defines no CE routers, and a site without a
+`ce_device` contributes no CE node and no PE-CE link, so the isp lab exercises
+the backbone only — use the **financial** dataset for the PE-CE story.
 
 ---
 
@@ -128,18 +160,34 @@ After the lab is up, push the Arista EOS configuration artifact from Infrahub:
 uv run invoke lab.push-arista
 ```
 
-This fetches the Arista EOS configuration artifact(s) from Infrahub via the SDK
-and applies them over the containerlab management network using `pyeapi` / SSH.
-On the default **financial** backbone every PE is Arista (`pe-01`…`pe-08`); on
+This pushes the per-device configs that `invoke lab.deploy` already wrote to
+`lab/devices/<node>.cfg`, applying each over the containerlab management network
+via eAPI. It does not re-fetch them, so if you changed a template since the last
+deploy, re-run `invoke lab.deploy` (or `scripts/fetch_lab_configs.py`) first —
+otherwise the previous render is what reaches the device. On the default
+**financial** backbone every PE is Arista (`pe-01`…`pe-08`) plus the four CEs; on
 the **isp** dataset it is the single `pe-lon-arista` node.
 
 The command shows a diff of what changed. Verify with (financial default —
 substitute `pe-lon-arista` on the isp dataset):
 
 ```bash
-containerlab exec -t lab/mpls-topology.clab.yml --label clab-node-name=pe-01 \
-  --cmd "show bgp vpn-ipv4 summary"
+containerlab exec -t lab/mpls-backbone.clab.yml --label clab-node-name=pe-01 \
+  --cmd "Cli -p 15 -c 'show ip bgp summary vrf all'"
 ```
+
+`containerlab exec` runs its `--cmd` in the container, not in the EOS CLI, so
+the `Cli -p 15 -c '…'` wrapper is what gets an EOS command executed; without it
+the node answers `executable file not found in $PATH`. `show ip bgp summary vrf
+all` covers both the iBGP mesh in the default VRF and each PE-CE session in its
+customer VRF. Expect seven `Estab` neighbours in `VRF default` on every PE, plus
+one per L3VPN site on `pe-01` and `pe-08`.
+
+Note that the VPNv4 address family has no `show` command on the pinned cEOS
+4.29 image — `show bgp vpn-ipv4 summary` returns `% Not supported`. That is a
+CLI gap, not a signalling failure: the sessions carry the address family, and
+`show ip route vrf <name>` on a hub PE lists the customer prefix learned from
+its CE.
 
 ---
 
@@ -149,7 +197,10 @@ containerlab exec -t lab/mpls-topology.clab.yml --label clab-node-name=pe-01 \
 uv run invoke lab.destroy
 ```
 
-This calls `containerlab destroy` and removes the generated topology file.
+This calls `containerlab destroy` on the generated topology. The topology file
+itself is left in place — `invoke lab.status` and `invoke lab.destroy` both read
+it, so removing it would strand the lab. `invoke lab.deploy` overwrites it from
+Infrahub on the next run.
 
 ---
 
@@ -175,9 +226,10 @@ Nokia PE is `clab-mpls-backbone-1-pe-par-nokia`.
 | Node | Image | User | Password | Notes |
 |---|---|---|---|---|
 | Arista PE (`pe-01`…`pe-08` on financial, `pe-lon-arista` on isp) | Arista cEOS | `admin` | `admin` | Set by our startup-configuration, demo-only |
+| Arista CE (`ce-trading-lon`, `ce-trading-zrh`, `ce-ib-lon`, `ce-ib-zrh`) — financial only | Arista cEOS | `admin` | `admin` | Same startup-configuration, demo-only |
 | `pe-par-nokia` (CLI) — isp only | Nokia SR Linux | `admin` | `NokiaSrl1!` | SR Linux 22.11+ vendor default |
 | `pe-par-nokia` (shell) — isp only | Nokia SR Linux | `linuxadmin` | `NokiaSrl1!` | Shell access, same default |
-| `ce-*` (netshoot) | nicolaka/netshoot | `root` | (none) | Plain Linux containers |
+| Customer host (`cust-trading-lon`, `cust-trading-zrh`, `cust-ib-lon`, `cust-ib-zrh`) — financial only | nicolaka/netshoot | `root` | (none) | Plain Linux container, `docker exec` only |
 
 To reach the CLIs:
 
@@ -190,8 +242,12 @@ docker exec -it clab-mpls-backbone-1-pe-01 Cli
 ssh admin@clab-mpls-backbone-1-pe-par-nokia
 docker exec -it clab-mpls-backbone-1-pe-par-nokia sr_cli
 
-# CE Linux node (financial default)
-docker exec -it clab-mpls-backbone-1-ce-trading-floor-vpn-pe-01 bash
+# CE router (financial default) — same cEOS CLI as the PEs
+ssh admin@clab-mpls-backbone-1-ce-trading-lon
+docker exec -it clab-mpls-backbone-1-ce-trading-lon Cli
+
+# Customer host behind a CE (financial default) — plain shell, no SSH
+docker exec -it clab-mpls-backbone-1-cust-trading-lon bash
 ```
 
 The cEOS password (`admin`) is set by the startup-configuration we render —
@@ -212,7 +268,8 @@ different image tag in `templates/clab_topology.j2`.
 |---|---|
 | Nokia SR Linux configuration push | SR Linux uses a different CLI/API from SR OS, and the public SR Linux 23.10 image lacks several constructs SR OS supports (LDP, `l3vpn-ipv4-unicast` afi-safi, `bgp-vpn` under `network-instance`). The dedicated `pe-nokia-srlinux` artifact intentionally renders a **lab-minimum** configuration — hostname + interfaces + ISIS underlay only. BGP and per-VPN ip-vrf signalling are skipped on the SRL lab node. The production-quality configuration lives in the `pe-nokia-sros` artifact (real SR OS syntax) and is meant for a real Nokia box. |
 | Cisco / Juniper PEs | IOS-XR and Junos container images require vendor licences; these PEs are absent from the v1 lab topology. |
-| CE routing | CE nodes have loopbacks but no BGP daemon configured. Confirming end-to-end L3VPN reachability requires manual CE configuration. |
+| Inter-site VPN forwarding | PE-CE eBGP establishes and every customer prefix reaches the right VRF, but cEOS never starts its LDP agent, so there is no MPLS label path between PEs and traffic does not cross the backbone. See [Troubleshooting](../troubleshooting.mdx#ldp-does-not-start-so-inter-site-vpn-traffic-fails). |
+| Unmanaged CEs | Only sites with a `ce_device` get a lab CE. On the **isp** dataset no site names one, so that lab has no CE nodes, no PE-CE links, and no customer hosts. |
 
 ---
 
@@ -230,5 +287,9 @@ If containerlab fails with `Error response from daemon: pull access denied`:
    docker import cEOS-lab-4.30.0F.tar.xz ceos:latest
    ```
 
-3. **network-multitool** (`ghcr.io/hellt/network-multitool`) — public image;
-   if it fails, check Docker Hub rate limits or mirror via a local registry.
+3. **netshoot** (`nicolaka/netshoot`) — public image used by the `cust-*`
+   customer hosts; if it fails, check Docker Hub rate limits or mirror it via a
+   local registry.
+
+The CE routers use the same cEOS image as the PEs, so importing it once
+covers both.

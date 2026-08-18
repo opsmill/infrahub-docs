@@ -21,6 +21,7 @@ overview of what `invoke init` creates, see the
 git clone https://github.com/opsmill/infrahub-demo-sp.git
 cd infrahub-demo-sp
 cp .env.example .env
+set -a; source .env; set +a
 uv sync
 ```
 
@@ -28,6 +29,11 @@ Open `.env` and review the values — see [Configuration](#configuration)
 below for what each variable does. The defaults are fine for a local
 demo; you typically only edit `INFRAHUB_SERVICE_CATALOG` (to enable the
 Streamlit sidecar) and `INFRAHUB_DATASET` (to switch tenant theme).
+
+`set -a` is required, and re-running it is required in every new shell:
+`.env` holds quoted assignments, so a bare `source .env` leaves them as
+shell variables that `invoke` and `infrahubctl` never see, and the next
+step fails at "Loading schemas" with `Authentication is required`.
 
 ## 2. Start Infrahub and bootstrap data
 
@@ -39,8 +45,9 @@ This destroys any prior state, starts the containers, loads the schemas,
 the menu, all bootstrap objects (resource pools plus the selected dataset —
 its backbone, tenants, and services), and generates schema protocol bindings.
 The backbone ships inside the dataset: the default **financial** dataset loads
-8 Arista cEOS PEs (`pe-01`…`pe-08`) in a partial mesh, while **isp** loads 4
-multi-vendor PEs in a full mesh.
+8 Arista cEOS PEs (`pe-01`…`pe-08`) in a partial mesh plus 4 pre-provisioned
+Arista cEOS CE routers on the two hub PEs, while **isp** loads 4 multi-vendor
+PEs in a full mesh.
 
 Wait ~30 s after the containers come up before bootstrap runs.
 

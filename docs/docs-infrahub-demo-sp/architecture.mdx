@@ -31,13 +31,46 @@ Schema definition  →  Bootstrap data  →  Generators  →  Transforms  →  A
 
 The MPLS backbone is **static demo data** and is dataset-specific — each
 dataset ships its own backbone. The default **financial** dataset has 8 PEs,
-all Arista cEOS (`pe-01`…`pe-08`), in a partial mesh (an 8-node ring plus four
-cross-chords = 12 p2p links, every PE at degree 3) over a full iBGP mesh. The
-**isp** dataset has 4 PEs, one per vendor, in a full mesh (6 p2p links). Both
-run ISIS L2 for the underlay and LDP for label distribution. This keeps the
-demo focused on the L3VPN-as-a-service story. To add or move PEs, edit
+all Arista cEOS (`pe-01`…`pe-08`), in a partial mesh of 15 p2p links over a
+full iBGP mesh. `pe-01` (London) and `pe-08` (Zurich) are the two-degree hub
+PEs that carry every customer attachment; `pe-02`…`pe-07` form the meshed core
+between them at degree 4–5. The **isp** dataset has 4 PEs, one per vendor, in a
+full mesh (6 p2p links). Both run ISIS L2 for the underlay and LDP for label
+distribution. To add or move PEs, edit
 `objects/datasets/<dataset>/60_backbone.yml` (and `70_topology.yml` for the
 p2p links) by hand and rerun `invoke bootstrap`.
+
+### Customer edge
+
+The **financial** dataset also ships four pre-provisioned CE routers
+(`objects/datasets/financial/65_ce.yml`), two per customer, attached to the hub
+PEs:
+
+| CE | Customer (tenant) | PE | L3VPN |
+| -- | ----------------- | -- | ----- |
+| `ce-trading-lon` | `markets-trading` | `pe-01` Ethernet3 | `trading-floor-vpn` |
+| `ce-trading-zrh` | `markets-trading` | `pe-08` Ethernet3 | `trading-floor-vpn` |
+| `ce-ib-lon` | `investment-banking` | `pe-01` Ethernet4 | `ib-advisory-vpn` |
+| `ce-ib-zrh` | `investment-banking` | `pe-08` Ethernet4 | `ib-advisory-vpn` |
+
+They are Arista cEOS boxes with their own rendered configuration artifact
+(`ce-arista-eos`), so the PE-CE eBGP session actually establishes in the
+containerlab topology rather than being modelled only.
+
+The PE ports they land on are seeded in `60_backbone.yml` with
+`status: active` and a description matching the L3VPN generator's idempotency
+key (`L3VPN <vpn name>`). That is what pins the wiring: the generator binds the
+site to that exact port instead of allocating the next free one, and the port is
+already out of the free pool so no later service can claim it.
+
+### Customer autonomous system numbers
+
+PE-CE eBGP peer ASNs come from the `customer_asn_pool` number pool
+(65100–65199, `objects/50_pools.yml`). The L3VPN generator allocates **one AS
+per VPN** — a customer is one routing domain across its sites — and links it
+as `customer_asn` on the VPN. A site may still set `bgp_peer_asn` to override
+it, which is how the **isp** dataset peers with pre-agreed customer AS numbers;
+when every eBGP site overrides, no pool ASN is consumed.
 
 ## L3VPN service flow
 
@@ -49,10 +82,14 @@ When an operator creates an L3VPN through the Streamlit catalog:
 3. It adds the `ServiceL3Vpn` to the `l3vpns` group. A group-membership
    trigger (`objects/events/00_triggers.yml`) fires `L3VpnGenerator` **on the
    branch**, which materialises the VRF, route targets, PE-CE interfaces, IP
-   addresses, and an eBGP session if the routing protocol is set to `ebgp`.
+   addresses, and an eBGP session if the routing protocol is set to `ebgp`, all
+   inside the customer's own IP namespace.
    The generator runs event-driven rather than in the proposed-change pipeline
    (`execute_in_proposed_change: false`) so its data lands before artifacts
    render — otherwise the pipeline races and the configuration diff comes out empty.
+   A second rule in the same file re-runs the generator when a site is added to
+   or removed from a service that is already in the group; see
+   [services/l3vpn](./services/l3vpn.mdx) for what that rule cannot cover.
 4. Once the generator finishes, per-PE configuration artifacts are rendered by
    the transform layer against the now-complete branch data.
 5. The catalog opens a `CoreProposedChange` targeting `main`.

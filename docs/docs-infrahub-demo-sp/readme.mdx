@@ -71,8 +71,9 @@ Through this demo, you'll gain practical experience with:
 
 - **Modelling SP services in Infrahub** — `ServiceL3Vpn` / `ServiceSdwan` with
   uniqueness constraints, parent/child relationships, and lifecycle status.
-- **Resource pools** — `vpn_id_pool`, `sdwan_id_pool`, `pe_loopback_pool`,
-  `backbone_p2p_pool`, `pe_ce_pool` for deterministic allocation.
+- **Resource pools** — `vpn_id_pool`, `sdwan_id_pool`, `customer_asn_pool`,
+  `pe_loopback_pool`, `backbone_p2p_pool`, `pe_ce_pool` for deterministic
+  allocation.
 - **Generators** — Materialising VRFs, route targets, PE-CE /30 allocations,
   eBGP sessions, and SD-WAN edge devices from a single user-facing object.
 - **Per-vendor transforms** — Rendering the same intent into Arista EOS,
@@ -87,8 +88,9 @@ Through this demo, you'll gain practical experience with:
 ## Architecture at a glance
 
 Out of the box the **financial** dataset gives you the Sterling Financial MPLS
-backbone — eight Arista cEOS PEs (`pe-01`…`pe-08`) in a partial mesh — with two
-seeded customer services — one L3VPN, one SD-WAN — wired up end to end:
+backbone — eight Arista cEOS PEs (`pe-01`…`pe-08`) in a partial mesh, with four
+pre-provisioned Arista cEOS CE routers hanging off the two hub PEs — plus three
+seeded customer services — two L3VPNs and one SD-WAN — wired up end to end:
 
 ```mermaid
 flowchart TB
@@ -102,31 +104,38 @@ flowchart TB
         pe07["pe-07 · Dublin<br/>Arista cEOS<br/>10.0.0.7"]
         pe08["pe-08 · Zurich<br/>Arista cEOS<br/>10.0.0.8"]
         pe01 --- pe02
+        pe01 --- pe03
         pe02 --- pe03
+        pe02 --- pe04
+        pe02 --- pe05
         pe03 --- pe04
+        pe03 --- pe05
         pe04 --- pe05
+        pe04 --- pe06
+        pe04 --- pe07
         pe05 --- pe06
+        pe05 --- pe07
         pe06 --- pe07
+        pe06 --- pe08
         pe07 --- pe08
-        pe08 --- pe01
-        pe01 --- pe05
-        pe02 --- pe06
-        pe03 --- pe07
-        pe04 --- pe08
     end
 
     subgraph l3vpn["L3VPN: trading-floor-vpn — tenant: markets-trading"]
         direction LR
-        ce_lon["Trading London<br/>10.200.10.0/24"]
-        ce_fra["Trading Frankfurt<br/>10.200.20.0/24"]
-        ce_ams["Trading Amsterdam<br/>10.200.30.0/24"]
-        ce_par["Trading Paris<br/>10.200.40.0/24"]
+        ce_trading_lon["ce-trading-lon · London<br/>Arista cEOS<br/>10.200.10.0/24"]
+        ce_trading_zrh["ce-trading-zrh · Zurich<br/>Arista cEOS<br/>10.200.20.0/24"]
     end
 
-    pe01 -. "VRF · eBGP" .-> ce_lon
-    pe02 -. "VRF · eBGP" .-> ce_fra
-    pe03 -. "VRF · eBGP" .-> ce_ams
-    pe04 -. "VRF · eBGP" .-> ce_par
+    subgraph ibvpn["L3VPN: ib-advisory-vpn — tenant: investment-banking"]
+        direction LR
+        ce_ib_lon["ce-ib-lon · London<br/>Arista cEOS<br/>10.200.30.0/24"]
+        ce_ib_zrh["ce-ib-zrh · Zurich<br/>Arista cEOS<br/>10.200.40.0/24"]
+    end
+
+    pe01 -. "VRF · eBGP" .-> ce_trading_lon
+    pe08 -. "VRF · eBGP" .-> ce_trading_zrh
+    pe01 -. "VRF · eBGP" .-> ce_ib_lon
+    pe08 -. "VRF · eBGP" .-> ce_ib_zrh
 
     subgraph sdwan["SD-WAN: treasury-branch-sdwan — tenant: treasury-ops · hub-spoke · Cisco Viptela"]
         direction LR
@@ -141,21 +150,28 @@ flowchart TB
     classDef ce fill:#A9DFBF,stroke:#5d8d6f
     classDef edge fill:#FFE7BA,stroke:#a8772f
     class pe01,pe02,pe03,pe04,pe05,pe06,pe07,pe08 pe
-    class ce_lon,ce_fra,ce_ams,ce_par ce
+    class ce_trading_lon,ce_trading_zrh,ce_ib_lon,ce_ib_zrh ce
     class hub_lon,sp_fra,sp_ams edge
 ```
 
 **Backbone** — Eight PE routers, all Arista cEOS (`pe-01`…`pe-08`), in eight
-EMEA sites. The topology is a partial mesh — an eight-node ring plus four
-cross-chords, giving 12 backbone p2p links with every PE at degree 3 — over a
-full iBGP/VPNv4 mesh, ISIS for underlay reachability, and LDP for label
-distribution. (The **isp** dataset instead ships a four-PE, one-per-vendor
-backbone — see below.)
+EMEA sites. The topology is a partial mesh of 15 p2p links: `pe-01` (London)
+and `pe-08` (Zurich) are the degree-2 hub PEs carrying every customer
+attachment, and `pe-02`…`pe-07` form the meshed core between them at degree
+4–5. Over the top runs a full iBGP/VPNv4 mesh, ISIS for underlay reachability,
+and LDP for label distribution. (The **isp** dataset instead ships a four-PE,
+one-per-vendor backbone — see below.)
 
-**L3VPN service (`trading-floor-vpn`)** — Tenant `markets-trading`, four sites
-on `pe-01` (London), `pe-02` (Frankfurt), `pe-03` (Amsterdam) and `pe-04`
-(Paris) with eBGP PE-CE sessions and one /24 customer subnet per site in
-the `10.200.0.0/16` supernet.
+**Customer edge** — Four pre-provisioned Arista cEOS CE routers, two per
+customer, on the hub PEs: `ce-trading-lon`/`ce-ib-lon` on `pe-01` and
+`ce-trading-zrh`/`ce-ib-zrh` on `pe-08`. Each has its own rendered configuration
+artifact, so the PE-CE eBGP session comes up for real in the lab.
+
+**L3VPN services** — `trading-floor-vpn` (tenant `markets-trading`) and
+`ib-advisory-vpn` (tenant `investment-banking`), each with a London and a
+Zurich site, eBGP PE-CE sessions, and one /24 customer subnet per site in the
+`10.200.0.0/16` supernet. Each customer peers from its own AS, allocated from
+`customer_asn_pool`.
 
 **SD-WAN service (`treasury-branch-sdwan`)** — Tenant `treasury-ops`, hub-spoke
 on Cisco Viptela cEdge-1000 edges at London (hub), Frankfurt and Amsterdam
@@ -180,20 +196,22 @@ dropdown enums for vendor and topology, and lifecycle status. See the
 
 When a catalog form creates a `ServiceL3Vpn` or `ServiceSdwan` and the row
 joins the `l3vpns` or `sdwans` group, Infrahub auto-fires the matching
-generator. The L3VPN generator allocates a VRF, route targets, a /30 from
-`pe_ce_pool`, sets up the PE interface, and writes the eBGP session for each
-site. The SD-WAN generator materialises one CPE per site, allocates the LAN
+generator. The L3VPN generator allocates a VRF, route targets, a customer AS
+from `customer_asn_pool`, a /30 from `pe_ce_pool`, sets up the PE interface,
+and writes the eBGP session on both ends of each site — the CE end too, when
+the site names a pre-provisioned CE router. The SD-WAN generator materialises one CPE per site, allocates the LAN
 address from the customer subnet, and adds the edge to the vendor-specific
 group so the artifact pipeline targets it.
 
 ### Per-vendor configuration artifacts
 
-A single schema drives six Jinja2 templates: Arista EOS, Cisco IOS-XR, Juniper
-Junos, Nokia SR OS / SR Linux, Cisco Viptela cEdge (IOS-XE SD-WAN), and Versa
-VOS (FlexVNF). Each PE or edge ends up with a `text/plain` configuration artifact
-keyed by `name__value`, ready to feed into a CI/CD push. The default **financial**
-backbone is all-Arista, so it exercises only the Arista EOS template; the **isp**
-dataset, with one PE per vendor, exercises the full per-vendor set.
+A single schema drives seven Jinja2 templates: Arista EOS (PE), Arista EOS
+(CE), Cisco IOS-XR, Juniper Junos, Nokia SR OS / SR Linux, Cisco Viptela cEdge
+(IOS-XE SD-WAN), and Versa VOS (FlexVNF). Each PE, CE, or edge ends up with a
+`text/plain` configuration artifact keyed by `name__value`, ready to feed into a
+CI/CD push. The default **financial** backbone is all-Arista, so it exercises
+the two Arista templates; the **isp** dataset, with one PE per vendor,
+exercises the full per-vendor set.
 
 ### Branch-based workflows
 
@@ -206,9 +224,11 @@ artifacts so the diff is meaningful, and opens a `CoreProposedChange` against
 
 The `clab-mpls-topology` artifact emits a containerlab YAML wiring the
 lab-deployable PEs and their backbone links, derived from the shared /31
-addressing. For the default **financial** backbone that's all eight Arista
-cEOS PEs and all 12 backbone links; for the **isp** dataset it's the Arista
-and Nokia PEs (Nokia SR OS substituted to SR Linux for the lab image). See the
+addressing, plus every pre-provisioned CE and its PE-CE access link. For the
+default **financial** backbone that's eight Arista cEOS PEs, 15 backbone links,
+and four cEOS CEs that bring up real eBGP sessions against their PEs; for the
+**isp** dataset it's the Arista and Nokia PEs (Nokia SR OS substituted to SR
+Linux for the lab image). See the
 **[containerlab guide](./lab/containerlab.mdx)**.
 
 ## Community and support

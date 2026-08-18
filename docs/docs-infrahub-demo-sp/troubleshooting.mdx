@@ -45,9 +45,16 @@ time.sleep(40)  # change to 60 or more on slow machines
 RuntimeError: No free physical interface on pe-01
 ```
 
-**Cause:** The `L3VpnGenerator` allocates PE-CE interfaces by picking the
-first `InterfacePhysical` with `status = free` on the target PE. All
-interfaces on that PE are already in use (either `active` or `cust`).
+**Cause:** The `L3VpnGenerator` first looks for an `InterfacePhysical` on the
+target PE already described `L3VPN <vpn name>` — that is how a pre-wired PE-CE
+port is bound. When there is no such port it falls back to the lowest-numbered
+interface with `status = free`, and this error means there is none left: every
+interface on that PE is already `active`.
+
+On the **financial** dataset each PE ships with two free customer-facing
+spares; the ports wired to the pre-provisioned CEs (`Ethernet3`/`Ethernet4` on
+`pe-01` and `pe-08`) are deliberately `active` so they can never be handed to
+another service.
 
 **Fix:** Create a free interface on the PE via the Infrahub UI or GraphQL:
 
@@ -68,6 +75,82 @@ curl -s -X POST http://localhost:8000/graphql \
 ```
 
 Repeat for whichever PE is out of free interfaces.
+
+---
+
+## Configuration push fails: "not supported on this hardware platform"
+
+**Symptom:**
+
+```text
+eAPI error: CLI command 11 of 57 'ip routing' failed: invalid command
+last result: {'errors': ["Unavailable command (not supported on this hardware
+platform) (at token 1: 'routing')"]}
+```
+
+**Cause:** The node answered eAPI before its agents finished registering their
+CLI commands, so the parser genuinely did not know the `routing` keyword yet.
+It is a timing problem, not a configuration problem — the same file pushes
+cleanly to the nodes that had longer to boot, which is why the failure tends to
+appear part-way through a run.
+
+**Fix:** None needed. `scripts/push_arista.py` polls a read-only command served
+by the same agent that owns `ip routing`, and only pushes once that answers. If
+it times out instead, the node is genuinely stuck — check
+`docker logs clab-mpls-backbone-1-<node>`. Booting twelve cEOS nodes is
+memory-hungry; give Docker more RAM if nodes are being killed.
+
+---
+
+## Pushed configuration does not match Infrahub
+
+**Symptom:** The pushed command counts or interface names do not match what
+Infrahub shows, or a device rejects interfaces the topology does not have.
+
+**Cause:** `lab/devices/*.cfg` are fetched once by `invoke lab.deploy` and then
+reused by `invoke lab.push-arista`. After the dataset or a service changes, the
+files on disk are stale.
+
+**Fix:** Re-run `invoke lab.deploy`. It re-fetches the topology artifact and
+every per-device configuration, then redeploys the lab so the running nodes and
+the configuration files agree.
+
+---
+
+## LDP does not start, so inter-site VPN traffic fails
+
+**Symptom:** Every prefix is exchanged correctly — IS-IS is up, the iBGP mesh is
+up, PE-CE eBGP is up, and each PE holds the customer prefixes in the right VRF —
+but a host on one customer site cannot reach the same customer's other site. On
+any PE:
+
+```text
+show mpls ldp neighbor
+! Agent 'LdpAgent' is not running
+! LDP is not enabled
+```
+
+**Cause:** Not a configuration defect. The rendered PE configuration contains the
+full `mpls ldp` block, including `no shutdown` and the per-interface statements,
+and it pushes without error — but cEOS never starts the LDP agent. It appears
+to be a limitation of the cEOS-lab image rather than something the configuration
+can influence.
+
+**Consequence:** An L3VPN needs an MPLS label path between PEs to carry VPN
+traffic. Without LDP there is no transport, so VPNv4 routes cannot be used for
+forwarding even though BGP has exchanged them. The control plane is complete and
+demonstrable; the data plane between sites is not.
+
+**What still works:** everything up to the label path — IS-IS adjacencies, the
+full iBGP mesh, PE-CE eBGP, VRF route import/export, and customer LAN
+reachability *within* a site (host to its own CE gateway over the tagged VLAN).
+
+**Fix:** None known against the pinned image
+(`registry.opsmill.io/external/ceos-image:4.29.0.2F`, which reports itself as
+4.28.9M). If you have a newer cEOS locally, point the `ceos` kind at it in
+`templates/clab_topology.j2` and redeploy — a build whose LDP agent starts is the
+most likely route to a working data plane. Segment routing instead of LDP would
+be the other option, and a larger change.
 
 ---
 
@@ -126,15 +209,6 @@ Software Downloads portal (requires an Arista account) and import it:
 ```bash
 docker import cEOS-lab-4.30.0F.tar.xz ceos:latest
 docker image ls ceos
-```
-
-### network-multitool (`ghcr.io/hellt/network-multitool`)
-
-This is a public image. If it fails, you may be hitting Docker Hub rate
-limits. Authenticate with Docker Hub:
-
-```bash
-docker login docker.io
 ```
 
 ---
@@ -201,6 +275,52 @@ already be `cust` on `main`, making it appear unavailable for a new site.
 
 **Fix:** Use a different (free) interface for the new site, or set an
 existing `cust`-status interface back to `free` if it was decommissioned.
+
+---
+
+## Proposed Change: schema integrity failure blocks the merge
+
+**Symptom:** Every check the demo owns passes, every artifact validator passes,
+and the diff is correct — but the proposed change carries a failed
+`Schema Integrity` validator and merging is refused:
+
+```text
+Unable to merge proposed change containing failing checks
+```
+
+Its checks report conflicts on schema paths nothing in the change touched, most
+often:
+
+```text
+schema/IpamIPAddress/uniqueness_constraints
+schema/RoutingBGPSession/local_ip/cardinality
+schema/RoutingBGPSession/remote_ip/min_count
+```
+
+**Cause:** Not a data or schema problem in this repository. Compare the schema
+on the two branches and they are identical:
+
+```bash
+curl -s -H "X-INFRAHUB-KEY: $INFRAHUB_API_TOKEN" \
+  "$INFRAHUB_ADDRESS/api/schema?branch=main" > /tmp/main.json
+curl -s -H "X-INFRAHUB-KEY: $INFRAHUB_API_TOKEN" \
+  "$INFRAHUB_ADDRESS/api/schema?branch=<your-branch>" > /tmp/branch.json
+diff <(jq -S '.nodes[] | select(.name=="BGPSession")' /tmp/main.json) \
+     <(jq -S '.nodes[] | select(.name=="BGPSession")' /tmp/branch.json)
+```
+
+The conflicts also carry `"branch": "placeholder"` and `"id": "unknown"` rather
+than real references. Seen on Infrahub 1.10.6.
+
+**Behaviour:** intermittent, and sticky to the branch once it happens. Closing
+the proposed change and opening a new one against the *same* branch reproduces
+it exactly; a service created on a fresh branch is unaffected. Most branches
+never see it — an empty branch does not raise the validator at all.
+
+**Fix:** Recreate the service on a new branch. The catalog does that for you:
+submit the wizard again and delete the stuck branch afterwards. There is no way
+to clear the failed validator on the branch that has it, and no configuration in
+this repository influences whether it appears.
 
 ---
 

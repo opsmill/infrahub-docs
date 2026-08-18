@@ -32,6 +32,7 @@ has one or more `ServiceL3VpnSite` attachments (component relationship).
 |---|---|---|---|---|---|
 | `tenant` | `OrganizationGeneric` | one | Required | Owning organisation | User |
 | `vrf` | `IpamVRF` | one | Optional | VRF materialised by the generator | Generator |
+| `customer_asn` | `RoutingAutonomousSystem` | one | Optional | The customer AS used on every PE-CE eBGP session of this VPN | Generator allocates from `customer_asn_pool` |
 | `sites` | `ServiceL3VpnSite` | many | Optional | PE attachment points (component) | User / catalog |
 
 ---
@@ -50,7 +51,7 @@ Represents a single PE attachment of an L3VPN to a customer subnet. One site
 |---|---|---|---|---|
 | `name` | Text | Required | Unique within a given `l3vpn` (uniqueness constraint) | User |
 | `routing_protocol` | Dropdown | Required | `ebgp`, `static`, or `connected` | User |
-| `bgp_peer_asn` | Number | Optional | Customer BGP ASN (required when `routing_protocol = ebgp`) | User |
+| `bgp_peer_asn` | Number | Optional | Per-site override for the PE-CE peer AS. Leave unset to use `customer_asn` on the VPN | User |
 | `static_routes` | JSON | Optional | List of static routes to inject into the VRF | User |
 | `status` | Dropdown | Required | `provisioning` → `active` → `decommissioned`. Defaults to `provisioning` | Generator promotes to `active` |
 
@@ -60,7 +61,9 @@ Represents a single PE attachment of an L3VPN to a customer subnet. One site
 |---|---|---|---|---|---|
 | `l3vpn` | `ServiceL3Vpn` | one | Required | Parent VPN (parent relationship) | User / catalog |
 | `pe_device` | `DcimDevice` | one | Required | PE router for this attachment | User |
-| `pe_interface` | `InterfacePhysical` | one | Optional | PE-facing physical interface | Generator allocates from free interfaces |
+| `pe_interface` | `InterfacePhysical` | one | Optional | PE-facing physical interface | Generator: reuses a port already described `L3VPN <vpn name>`, else allocates a free one |
+| `ce_device` | `DcimDevice` | one | Optional | Pre-provisioned CE router this site terminates on. Unset = unmanaged CE | User |
+| `ce_interface` | `InterfacePhysical` | one | Optional | CE port facing the PE | User |
 | `customer_subnet` | `IpamPrefix` | one | Required | Customer prefix to be placed into the VRF | User |
 | `pe_address` | `IpamIPAddress` | one | Optional | PE IP on the PE-CE /30 link | Generator allocates from `pe_ce_pool` |
 | `ce_address` | `IpamIPAddress` | one | Optional | CE IP on the PE-CE /30 link | Generator allocates from `pe_ce_pool` |
@@ -278,6 +281,7 @@ by the generator and the Streamlit catalog:
 | `pe_loopback_pool` | `CoreIPPrefixPool` | Loopback /32 addresses | /32 from `10.0.0.0/24` |
 | `backbone_p2p_pool` | `CoreIPPrefixPool` | Backbone p2p /31 links | /31 from `10.1.0.0/16` |
 | `pe_ce_pool` | `CoreIPPrefixPool` | PE-CE /30 links per L3VPN site | /30 from `10.100.0.0/16` |
+| `customer_asn_pool` | `CoreNumberPool` | Customer AS numbers for PE-CE eBGP — one per L3VPN | Integer (range 65100–65199; the backbone AS 65000 sits outside it) |
 
 ---
 
@@ -289,9 +293,11 @@ the `L3VpnGenerator` fills in automatically:
 | Object | Field | Source |
 |---|---|---|
 | `ServiceL3Vpn` | `name`, `vpn_id`, `address_family`, `tenant` | User / catalog |
-| `ServiceL3Vpn` | `vrf`, `status = active` | Generator |
-| `ServiceL3VpnSite` | `name`, `pe_device`, `routing_protocol`, `bgp_peer_asn`, `customer_subnet`, `l3vpn` | User / catalog |
+| `ServiceL3Vpn` | `vrf`, `customer_asn`, `status = active` | Generator |
+| `ServiceL3VpnSite` | `name`, `pe_device`, `routing_protocol`, `customer_subnet`, `l3vpn` | User / catalog |
+| `ServiceL3VpnSite` | `bgp_peer_asn`, `ce_device`, `ce_interface` | User / catalog (all optional) |
 | `ServiceL3VpnSite` | `pe_interface`, `pe_address`, `ce_address`, `status = active` | Generator |
 | `IpamVRF` | all | Generator |
 | `IpamIPAddress` (PE-CE) | all | Generator |
-| `RoutingBGPSession` (PE-CE) | all (only when `routing_protocol = ebgp`) | Generator |
+| `RoutingAutonomousSystem` (customer) | all — ASN from `customer_asn_pool` | Generator |
+| `RoutingBGPSession` (PE-CE and CE-PE) | all (only when `routing_protocol = ebgp`) | Generator |
