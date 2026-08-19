@@ -11,7 +11,11 @@ overview of what `invoke init` creates, see the
 - Docker / Docker Compose
 - Python 3.10+
 - `uv` (https://docs.astral.sh/uv/)
-- (Optional) containerlab >= 0.50
+- (Optional) containerlab >= 0.50 — only for `invoke lab.deploy`, which has
+  much heavier requirements than the rest of the demo: a **Linux** host and
+  **32 GB+ RAM** for the default dataset's 12 cEOS routers. See
+  [Containerlab prerequisites](./lab/containerlab.mdx#prerequisites). Everything
+  else on this page runs fine on a laptop.
 - (Optional) `pnpm` (https://pnpm.io/) — only needed for `uv run invoke docs`,
   which builds the Docusaurus site locally
 

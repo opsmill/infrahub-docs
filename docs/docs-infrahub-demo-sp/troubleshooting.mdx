@@ -145,12 +145,78 @@ demonstrable; the data plane between sites is not.
 full iBGP mesh, PE-CE eBGP, VRF route import/export, and customer LAN
 reachability *within* a site (host to its own CE gateway over the tagged VLAN).
 
-**Fix:** None known against the pinned image
-(`registry.opsmill.io/external/ceos-image:4.29.0.2F`, which reports itself as
-4.28.9M). If you have a newer cEOS locally, point the `ceos` kind at it in
-`templates/clab_topology.j2` and redeploy — a build whose LDP agent starts is the
-most likely route to a working data plane. Segment routing instead of LDP would
+**Fix:** Unverified. This was diagnosed against cEOS 4.29.0.2F (which reports
+itself as 4.28.9M), whose LDP agent never starts. The lab now runs 4.36.0.1F on
+amd64 and 4.33.2F on arm64, so the gap may already be closed — if you can
+confirm either way on a real deploy, update this page. To test another build,
+point `CEOS_IMAGE` at it (`CEOS_IMAGE=<image> uv run invoke lab.deploy`). Segment routing instead of LDP would
 be the other option, and a larger change.
+
+---
+
+## Containerlab deploy hangs at "Running postdeploy actions"
+
+**Symptom:** `invoke lab.deploy` creates every node and every link within a
+second or two, then stops making progress. The last lines repeat once per cEOS
+node and nothing follows them, for tens of minutes:
+
+```text
+INFO Created link: pe-07:eth4 ▪-▪ pe-08:eth2
+INFO Running postdeploy actions for Arista cEOS 'pe-07' node
+INFO Running postdeploy actions for Arista cEOS 'pe-08' node
+```
+
+There is no error, no traceback and no exit — `containerlab inspect` shows the
+containers up, and `docker logs` on a node is empty or stops early.
+
+**Cause:** the nodes booted as containers but EOS never came up inside them.
+containerlab's cEOS postdeploy step opens the EOS CLI (`docker exec … Cli`) and
+waits for a prompt before pushing the management and interface configuration.
+That wait has no timeout, so an EOS that never finishes booting shows up as an
+indefinite stall rather than a failure.
+
+Two things cause it:
+
+1. **cEOS-lab older than 4.32.0F on a cgroups v2 host.** Earlier builds require
+   cgroups v1 and silently fail to boot otherwise. cgroups v2 is the default on
+   Ubuntu 21.04+, OrbStack, and most current distributions. Check the host:
+
+   ```bash
+   stat -fc %T /sys/fs/cgroup/     # cgroup2fs = v2, tmpfs = v1
+   ```
+
+   From 4.32.0F onward cEOS-lab detects the host's cgroup version itself. The
+   images `invoke lab.deploy` selects are all newer than that, so this only
+   bites a pinned older build — check `CEOS_IMAGE`.
+
+2. **Not enough memory.** cEOS wants ~2 GB per node, and the default
+   **financial** dataset runs 12 of them. On an undersized host the nodes
+   thrash or get OOM-killed mid-boot, which looks identical from the outside:
+
+   ```bash
+   free -h
+   dmesg -T | grep -iE 'oom|killed process'
+   docker stats --no-stream
+   ```
+
+   See [Containerlab prerequisites](./lab/containerlab.mdx#host) for sizing.
+   Use the **isp** dataset (2 lab nodes) if the host cannot take the financial
+   one.
+
+**Confirming which:** ask a node directly.
+
+```bash
+docker exec -it clab-mpls-backbone-1-pe-01 systemctl is-system-running
+```
+
+`starting` long after deploy means EOS is stuck mid-boot (cause 1 or 2);
+`running` means EOS is up and the problem is elsewhere. `systemctl list-jobs`
+on the node shows which unit is blocking.
+
+**Fix:** deploy on a host that meets the
+[prerequisites](./lab/containerlab.mdx#prerequisites), with a cEOS image of
+4.32.0F or newer matching the host architecture. Tear the partial lab down
+first — `uv run invoke lab.destroy` — so the retry starts clean.
 
 ---
 
@@ -201,14 +267,25 @@ docker login ghcr.io -u <github-username> -p <personal-access-token>
 
 Create a PAT at https://github.com/settings/tokens with `read:packages` scope.
 
-### Arista cEOS (`ceos:latest`)
+### Arista cEOS
 
-cEOS is not on any public registry. Download the `.tar.xz` from the Arista
-Software Downloads portal (requires an Arista account) and import it:
+The OpsMill mirror (`registry.opsmill.io/external/ceos-image`) is public — no
+Arista account and no manual import. A failure here is almost always an
+architecture mismatch instead: the mirror publishes no multi-arch tag, so only
+`4.33.2F` runs on arm64 and every other tag is amd64.
 
 ```bash
-docker import cEOS-lab-4.30.0F.tar.xz ceos:latest
-docker image ls ceos
+uname -m                                    # aarch64 needs the arm64 tag
+echo "${CEOS_IMAGE:-<unset>}"               # what you asked for, if anything
+```
+
+`invoke lab.deploy` sets `CEOS_IMAGE` from the host architecture, so this
+normally resolves itself. To run your own Arista-supplied build, import it and
+point `CEOS_IMAGE` at it:
+
+```bash
+docker import cEOS-lab-4.36.0F.tar.xz ceos:local
+CEOS_IMAGE=ceos:local uv run invoke lab.deploy
 ```
 
 ---

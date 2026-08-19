@@ -34,7 +34,7 @@ image. Today that means two vendors:
 
 | Vendor | Platform | Containerlab image | Notes |
 |---|---|---|---|
-| Arista EOS | `arista_eos` | `ceos:latest` | Full configuration push via `invoke lab.push-arista` |
+| Arista EOS | `arista_eos` | `ceos-image` (see [Architecture](#architecture)) | Full configuration push via `invoke lab.push-arista` |
 | Nokia SR OS | `nokia_sros` | SR Linux (`ghcr.io/nokia/srlinux`) | SR Linux used in place of SR OS (see below) |
 | Cisco IOS-XR | `cisco_iosxr` | — | No lab image — omitted from the topology |
 | Juniper Junos | `juniper_junos` | — | No lab image — omitted from the topology |
@@ -96,12 +96,57 @@ Configuration push to the Nokia PE is therefore not available in v1 (see
 
 ## Prerequisites
 
+### Host
+
+containerlab drives the host kernel directly (network namespaces, veth pairs,
+bridges), so the lab needs a **Linux host**. On macOS or Windows, run it inside
+a Linux VM — OrbStack, Lima, UTM or a cloud instance — not against Docker
+Desktop from the host side.
+
+The **financial** dataset is the demanding one: 12 Arista cEOS routers and 4
+customer hosts, alongside the Infrahub stack itself.
+
+| Resource | financial (default) | isp |
+|---|---|---|
+| Lab containers | 16 (12 cEOS + 4 hosts) | 2 (1 cEOS + 1 SR Linux) |
+| RAM for the lab | ~24 GB (cEOS wants ~2 GB/node) | ~4 GB |
+| RAM including the Infrahub stack | **32 GB or more** | ~16 GB |
+| vCPU | 8+ recommended | 4 |
+
+A host with less RAM than that does not fail cleanly — cEOS nodes thrash or get
+OOM-killed and the deploy stalls in postdeploy. If you have less, use the
+**isp** dataset, or run the Infrahub side only: everything except
+`invoke lab.deploy` works on a modest machine.
+
+### Architecture
+
+cEOS-lab images are published per architecture, and the OpsMill mirror carries
+no multi-arch tag, so the image has to match the host CPU:
+
+| Host `uname -m` | Image `invoke lab.deploy` selects |
+|---|---|
+| `x86_64` | `registry.opsmill.io/external/ceos-image:4.36.0.1F` |
+| `aarch64` / `arm64` | `registry.opsmill.io/external/ceos-image:4.33.2F` |
+
+`invoke lab.deploy` picks the right one from the host architecture and passes it
+to containerlab as `CEOS_IMAGE`; the rendered topology reads
+`${CEOS_IMAGE:=<amd64 default>}`, so the artifact Infrahub renders is
+host-independent. Override `CEOS_IMAGE` yourself to pin a different build.
+
+Do not pin a cEOS-lab image older than **4.32.0F**. Earlier builds require a
+cgroups v1 host and never finish booting on a cgroups v2 one — the default on
+Ubuntu 21.04+, OrbStack and most current distributions — and the failure is silent.
+See
+[Troubleshooting](../troubleshooting.mdx#containerlab-deploy-hangs-at-running-postdeploy-actions).
+
+### Software
+
 - containerlab >= 0.50
-- Docker with access to pull:
-  - `ceos:latest` (requires an Arista account and local image import — see
-    https://containerlab.dev/manual/kinds/ceos/)
-  - `ghcr.io/nokia/srlinux` (public)
-  - `nicolaka/netshoot` (public — the `cust-*` customer hosts on the CE LAN side)
+- Docker, with network access to pull:
+  - `registry.opsmill.io/external/ceos-image` (public mirror — no Arista
+    account or manual import needed)
+  - `ghcr.io/nokia/srlinux` (isp dataset only)
+  - `nicolaka/netshoot` (the `cust-*` customer hosts on the CE LAN side)
 - A running Infrahub instance with bootstrap data loaded (`invoke init`)
 
 ---
@@ -125,18 +170,18 @@ pre-provisioned Arista cEOS CE routers, and one customer host behind each CE):
 +----+---------------------------------+-----------+---------------------------------+
 | #  | Name                            | Kind      | Image                           |
 +----+---------------------------------+-----------+---------------------------------+
-| 1  | pe-01                           | ceos      | ceos:latest                     |
-| 2  | pe-02                           | ceos      | ceos:latest                     |
-| 3  | pe-03                           | ceos      | ceos:latest                     |
-| 4  | pe-04                           | ceos      | ceos:latest                     |
-| 5  | pe-05                           | ceos      | ceos:latest                     |
-| 6  | pe-06                           | ceos      | ceos:latest                     |
-| 7  | pe-07                           | ceos      | ceos:latest                     |
-| 8  | pe-08                           | ceos      | ceos:latest                     |
-| 9  | ce-ib-lon                       | ceos      | ceos:latest                     |
-| 10 | ce-ib-zrh                       | ceos      | ceos:latest                     |
-| 11 | ce-trading-lon                  | ceos      | ceos:latest                     |
-| 12 | ce-trading-zrh                  | ceos      | ceos:latest                     |
+| 1  | pe-01                           | ceos      | ceos-image:4.36.0.1F            |
+| 2  | pe-02                           | ceos      | ceos-image:4.36.0.1F            |
+| 3  | pe-03                           | ceos      | ceos-image:4.36.0.1F            |
+| 4  | pe-04                           | ceos      | ceos-image:4.36.0.1F            |
+| 5  | pe-05                           | ceos      | ceos-image:4.36.0.1F            |
+| 6  | pe-06                           | ceos      | ceos-image:4.36.0.1F            |
+| 7  | pe-07                           | ceos      | ceos-image:4.36.0.1F            |
+| 8  | pe-08                           | ceos      | ceos-image:4.36.0.1F            |
+| 9  | ce-ib-lon                       | ceos      | ceos-image:4.36.0.1F            |
+| 10 | ce-ib-zrh                       | ceos      | ceos-image:4.36.0.1F            |
+| 11 | ce-trading-lon                  | ceos      | ceos-image:4.36.0.1F            |
+| 12 | ce-trading-zrh                  | ceos      | ceos-image:4.36.0.1F            |
 | 13 | cust-ib-lon                     | linux     | nicolaka/netshoot:latest        |
 | 14 | cust-ib-zrh                     | linux     | nicolaka/netshoot:latest        |
 | 15 | cust-trading-lon                | linux     | nicolaka/netshoot:latest        |
@@ -225,8 +270,8 @@ Nokia PE is `clab-mpls-backbone-1-pe-par-nokia`.
 
 | Node | Image | User | Password | Notes |
 |---|---|---|---|---|
-| Arista PE (`pe-01`…`pe-08` on financial, `pe-lon-arista` on isp) | Arista cEOS | `admin` | `admin` | Set by our startup-configuration, demo-only |
-| Arista CE (`ce-trading-lon`, `ce-trading-zrh`, `ce-ib-lon`, `ce-ib-zrh`) — financial only | Arista cEOS | `admin` | `admin` | Same startup-configuration, demo-only |
+| Arista PE (`pe-01`…`pe-08` on financial, `pe-lon-arista` on isp) | Arista cEOS | `admin` | `admin` | containerlab's cEOS default, demo-only |
+| Arista CE (`ce-trading-lon`, `ce-trading-zrh`, `ce-ib-lon`, `ce-ib-zrh`) — financial only | Arista cEOS | `admin` | `admin` | Same containerlab default, demo-only |
 | `pe-par-nokia` (CLI) — isp only | Nokia SR Linux | `admin` | `NokiaSrl1!` | SR Linux 22.11+ vendor default |
 | `pe-par-nokia` (shell) — isp only | Nokia SR Linux | `linuxadmin` | `NokiaSrl1!` | Shell access, same default |
 | Customer host (`cust-trading-lon`, `cust-trading-zrh`, `cust-ib-lon`, `cust-ib-zrh`) — financial only | nicolaka/netshoot | `root` | (none) | Plain Linux container, `docker exec` only |
@@ -280,16 +325,27 @@ If containerlab fails with `Error response from daemon: pull access denied`:
 1. **SR Linux** (`ghcr.io/nokia/srlinux`) — requires a GitHub login:
    `docker login ghcr.io -u <github-user> -p <PAT>`
 
-2. **cEOS** — the image is not on any public registry. Download the `.tar.xz`
-   from https://www.arista.com/en/support/software-download and import it:
+2. **cEOS** — the OpsMill mirror
+   (`registry.opsmill.io/external/ceos-image`) is public and needs no login, so
+   a pull failure here is usually the wrong tag for your architecture rather
+   than an access problem: only `4.33.2F` is arm64, every other tag is amd64.
+   Check what you asked for:
 
    ```bash
-   docker import cEOS-lab-4.30.0F.tar.xz ceos:latest
+   uname -m
+   echo "${CEOS_IMAGE:-<unset, template default applies>}"
+   ```
+
+   To use your own Arista-supplied build instead, import it and point
+   `CEOS_IMAGE` at it:
+
+   ```bash
+   docker import cEOS-lab-4.36.0F.tar.xz ceos:local
+   CEOS_IMAGE=ceos:local uv run invoke lab.deploy
    ```
 
 3. **netshoot** (`nicolaka/netshoot`) — public image used by the `cust-*`
    customer hosts; if it fails, check Docker Hub rate limits or mirror it via a
    local registry.
 
-The CE routers use the same cEOS image as the PEs, so importing it once
-covers both.
+The CE routers use the same cEOS image as the PEs, so one image covers both.
