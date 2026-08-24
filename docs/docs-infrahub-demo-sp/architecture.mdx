@@ -4,7 +4,7 @@ This page summarises the data flow and the role of each directory.
 
 ## Data flow
 
-```
+```text
 Schema definition  →  Bootstrap data  →  Generators  →  Transforms  →  Artifacts
                                             ↓
                                           Checks
@@ -150,7 +150,7 @@ platform and reported as parse errors by `BatfishBackboneCheck`.
 
 Schemas are loaded in three passes so each layer can reference the previous:
 
-```
+```text
 invoke bootstrap
   └── infrahubctl schema load schemas/base/
   └── infrahubctl schema load schemas/extensions/

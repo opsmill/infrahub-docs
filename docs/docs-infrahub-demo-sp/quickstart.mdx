@@ -10,13 +10,13 @@ overview of what `invoke init` creates, see the
 
 - Docker / Docker Compose
 - Python 3.10+
-- `uv` (https://docs.astral.sh/uv/)
+- [`uv`](https://docs.astral.sh/uv/)
 - (Optional) containerlab >= 0.50 — only for `invoke lab.deploy`, which has
   much heavier requirements than the rest of the demo: a **Linux** host and
   **32 GB+ RAM** for the default dataset's 12 cEOS routers. See
   [Containerlab prerequisites](./lab/containerlab.mdx#prerequisites). Everything
   else on this page runs fine on a laptop.
-- (Optional) `pnpm` (https://pnpm.io/) — only needed for `uv run invoke docs`,
+- (Optional) [`pnpm`](https://pnpm.io/) — only needed for `uv run invoke docs`,
   which builds the Docusaurus site locally
 
 ## 1. Clone and install
@@ -57,7 +57,7 @@ Wait ~30 s after the containers come up before bootstrap runs.
 
 ## 3. Open the Infrahub UI
 
-Visit http://localhost:8000 — log in with `admin` / `infrahub`. The
+Visit `http://localhost:8000` — log in with `admin` / `infrahub`. The
 sidebar menu shows **Service Catalog → L3 VPNs**, **Topology → MPLS
 Backbones**, and **MPLS** (ISIS / LDP / MP-BGP processes).
 
@@ -70,7 +70,7 @@ uv run invoke start
 ```
 
 Every `invoke start` / `invoke init` will now also build and start the
-Streamlit sidecar. Visit http://localhost:8501. Create your first L3VPN.
+Streamlit sidecar. Visit `http://localhost:8501`. Create your first L3VPN.
 
 The Service Catalog also exposes a second wizard — **Create SD-WAN
 service** — for provisioning Cisco Viptela or Versa Networks SD-WAN
