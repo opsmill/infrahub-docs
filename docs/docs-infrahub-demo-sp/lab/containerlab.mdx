@@ -120,18 +120,41 @@ OOM-killed and the deploy stalls in postdeploy. If you have less, use the
 
 ### Architecture
 
-cEOS-lab images are published per architecture, and the OpsMill mirror carries
-no multi-arch tag, so the image has to match the host CPU:
+**The lab needs an x86_64 host. Apple Silicon cannot run it.**
 
-| Host `uname -m` | Image `invoke lab.deploy` selects |
+Every cEOS-lab build Arista publishes has a 32-bit x86 userland — `SWI_ARCH=i686`
+in the image's `/etc/swi-version`, amd64 tags included. Rosetta 2 does not
+translate 32-bit x86 at all, so the only thing left to execute it on Apple
+Silicon is qemu-i386 user-mode emulation. Under emulation EOS gets as far as
+`agentsToStart=[...]`, loops on `ProcMgr.service`, and systemd eventually gives
+up: the container exits 255 about 17 minutes in, with nothing naming the cause.
+There is no arm64 cEOS-lab tag to substitute — a tag whose registry metadata
+claims `arm64` is a mislabelled x86 image, not an ARM build.
+
+`invoke lab.deploy` therefore refuses 64-bit ARM hosts outright, in under a
+second, rather than letting twelve routers die one at a time:
+
+```bash
+✗ cEOS-lab cannot run on this host (arm64).
+```
+
+Set `LAB_ALLOW_UNSUPPORTED_ARCH=true` to attempt it anyway.
+
+| Host `uname -m` | cEOS image |
 |---|---|
 | `x86_64` | `registry.opsmill.io/external/ceos-image:4.36.0.1F` |
-| `aarch64` / `arm64` | `registry.opsmill.io/external/ceos-image:4.33.2F` |
+| `aarch64` / `arm64` | unsupported — `lab.deploy` refuses |
 
-`invoke lab.deploy` picks the right one from the host architecture and passes it
-to containerlab as `CEOS_IMAGE`; the rendered topology reads
-`${CEOS_IMAGE:=<amd64 default>}`, so the artifact Infrahub renders is
-host-independent. Override `CEOS_IMAGE` yourself to pin a different build.
+The rendered topology reads `${CEOS_IMAGE:=<default>}`, so a different build can
+be pinned with `CEOS_IMAGE` without re-rendering the artifact.
+
+On an Apple Silicon machine everything except `invoke lab.deploy` works
+unchanged — schemas, generators, transforms, checks, artifact rendering and the
+service catalog. Only the containerlab side needs an x86_64 host.
+
+SR Linux is the exception: `ghcr.io/nokia/srlinux:26.7.1-554` is a genuine
+multi-arch image and boots natively on ARM. That only covers the single `srl`
+node in the **isp** dataset; the **financial** dataset is all cEOS.
 
 Do not pin a cEOS-lab image older than **4.32.0F**. Earlier builds require a
 cgroups v1 host and never finish booting on a cgroups v2 one — the default on
@@ -327,8 +350,10 @@ If containerlab fails with `Error response from daemon: pull access denied`:
 
 2. **cEOS** — the OpsMill mirror
    (`registry.opsmill.io/external/ceos-image`) is public and needs no login, so
-   a pull failure here is usually the wrong tag for your architecture rather
-   than an access problem: only `4.33.2F` is arm64, every other tag is amd64.
+   a pull failure here is usually a tag that does not exist rather than an
+   access problem. Note that the mirror's registry metadata is not a reliable
+   guide to architecture: at least one tag declares `arm64` while carrying an
+   x86 image, and pulling it on Apple Silicon succeeds and then fails to boot.
    Check what you asked for:
 
    ```bash
