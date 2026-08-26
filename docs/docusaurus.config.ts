@@ -296,6 +296,17 @@ const config: Config = {
     [
       '@docusaurus/plugin-content-docs',
       {
+        id: 'docs-arista-avd',
+        path: 'docs-arista-avd',
+        routeBasePath: 'arista-avd',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-arista-avd.ts',
+        editUrl: 'https://github.com/opsmill/infrahub-arista-avd/tree/main/docs',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
         id: 'docs-infrahub-demo-sp',
         path: 'docs-infrahub-demo-sp',
         routeBasePath: 'infrahub-demo-sp',
@@ -485,6 +496,12 @@ const config: Config = {
               sidebarId: "solutionAiDcSidebar",
               label: "AI Datacenter",
               docsPluginId: "docs-infrahub-solution-ai-dc",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "aristaAvdSidebar",
+              label: "Arista AVD",
+              docsPluginId: "docs-arista-avd",
             },
           ],
         },
