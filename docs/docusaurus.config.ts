@@ -26,6 +26,8 @@ const config: Config = {
       'data-domain': 'docs.infrahub.app'
     }, {
       src: '/js/custom-reo.js'
+    }, {
+      src: 'https://static.claydar.com/init.v1.js?id=cbhzbmnLAA'
     }
   ] : [],
 
