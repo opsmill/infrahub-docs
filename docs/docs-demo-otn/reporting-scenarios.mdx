@@ -1,0 +1,459 @@
+---
+title: Reporting scenarios
+---
+
+# Reporting scenarios
+
+The six scenarios that read rather than write, and the two maps every PoP
+carries as artifacts. Every number below is produced by the engine and asserted
+by a unit test.
+
+## Before you start
+
+Scenarios three to eight read rather than write, but they do not all read the
+same branch. Scenarios three and six ask about the plant, so a branch holding
+the dataset and nothing else is enough. Scenarios four, five, seven and eight
+ask about services, so they need the provisioning step to have run first: the
+output below names `svc-ams-mil-ai-400g` and counts five provisioned services.
+
+```bash
+uv run invoke branch-create --name probe
+uv run invoke load --branch probe
+
+# Scenarios four, five, seven and eight need these two as well.
+uv run invoke demo-setup --branch probe
+uv run invoke demo-provision-all --branch probe
+```
+
+The diagram on the [demo guide](./demo-guide.mdx) gives the run order and links
+the other scenario pages.
+
+## Scenario three: what spectrum is left, and what can actually use it
+
+**Run this before provisioning anything.** Occupancy is derived from the
+carriers on the branch, so the answer moves the moment a service is added, and
+the published figure belongs to the dataset.
+
+```bash
+uv run invoke demo-capacity --branch probe
+```
+
+```text
+oms-fra-mil is the busiest section on probe: 4,134,400 of 4,800,000 MHz
+occupied, 665,600 MHz free in 26 blocks. 16 of 21 sections carry no
+wavelength at all.
+
+section       occupied     free  blocks  anchors for another 400G
+oms-fra-mil  4,134,400  665,600      26   1, channel 95
+oms-ams-fra  1,050,000 3,750,000      1  73, channel 23
+oms-ber-fra    750,000 4,050,000      2  77, channel 2
+oms-par-fra    450,000 4,350,000      2  83, channel 2
+oms-vie-mil    133,200 4,666,800      4  89, channel 2
+```
+
+Nothing in the model stores any of that. Occupied is the union of the intervals
+the carriers crossing a section hold, each interval centred on a carrier's
+anchor and sized by its mode's symbol rate. Free is the band minus that union,
+reported as blocks. Both are computed at read time, so both are branch-aware at
+no extra cost.
+
+Sixteen of the twenty-one sections carry no wavelength at all. That is the real
+shape of this network: one congested corridor and twenty quiet ones. A report
+that listed only the busy sections would hide it.
+
+### Free spectrum is not capacity
+
+The one figure to take away from this scenario is the gap between the two
+right-hand columns on the first row:
+
+```text
+Yes, on channel 95. A DP-16QAM 64GBd 400G carrier occupies 79,600 MHz,
+665,600 MHz is free on this section in 26 blocks, and 1 of the 96 anchors
+can take one. Free spectrum divided by width would have said 8.
+```
+
+**Eight against one.** Anchors are quantised onto the 50 GHz grid, so a carrier
+is usable only when its whole width fits inside a single free block with a grid
+position at its centre. Twenty-five of the twenty-six free blocks on
+`oms-fra-mil` are narrower than the narrowest mode in the catalog. Twenty-one
+are 20,400 MHz, two are 5,600, one is 38,000 and one is 35,200, against 44,400
+MHz for `DP-QPSK 32GBd 100G`. Only the 152,800 MHz block at the top of the band
+can take anything at all. Dividing megahertz by width counts fragments no anchor
+reaches into. [The spectral model](./spectral-model.mdx) page has the arithmetic.
+
+### Can another 400G fit?
+
+Per section, yes, once: channel 95 on `oms-fra-mil`. You do not provision onto a
+section though, you provision onto a route, and a wavelength holds its width on
+every section it crosses. The same report answers the route-level question:
+
+```text
+Amsterdam to Milan              per-section free: ams-fra 3,750,000,
+                                fra-mil 665,600
+                                route free: 665,600 in 26 blocks,
+                                1 anchor, channel 95
+Frankfurt to Milan via Geneva   per-section free: fra-gva 4,800,000,
+                                gva-mil 4,800,000
+                                route free: 4,800,000 in 1 block,
+                                94 anchors, channel 2
+```
+
+A route's free spectrum is the band minus the union of its sections' occupancy,
+never wider than the narrowest section and usually narrower. On this branch the
+Amsterdam to Milan figure happens to equal the Frankfurt to Milan one. The
+seven wavelengths already on `oms-ams-fra` sit between channels 2 and 20, and
+none of them reaches into the block the congested corridor still has free.
+
+**The empty route reports 94 anchors, not 96.** Channels 1 and 96 cannot centre
+a 79,600 MHz carrier without pushing it past a band edge. That is not a bug in
+the report. The usable anchor range narrows as the mode widens, and on an empty
+section a `32 GBd` carrier gets all 96 while every 400G mode gets 2 through 95.
+
+### After provisioning
+
+Run the same command once the five demo services exist and it says:
+
+```text
+oms-fra-mil is the busiest section on probe: 4,134,400 of 4,800,000 MHz
+occupied, 665,600 MHz free in 26 blocks. 13 of 21 sections carry no
+wavelength at all.
+```
+
+The congested corridor did not move at all, which is exactly what it reported
+before provisioning. The five services did change the picture: sixteen empty
+sections became thirteen, because `svc-ber-ams-400g` and `svc-fra-gva-hpc-400g`
+lit spectrum on three sections that were dark. The two services that cross the
+corridor, `svc-ams-mil-ai-400g` and `svc-fra-mil-ai-400g`, groomed into
+wavelengths that were already lit and took tributary slots inside them. Neither
+added a carrier to `oms-fra-mil`, and neither consumed a megahertz.
+
+That is what the ODU layer changes about this report. Provisioning a service no
+longer necessarily costs spectrum, and whether it does is decided one layer
+down. If a wavelength on the route has slot room for the container, the service
+rides it and the occupied figure stands still. So the occupied megahertz no
+longer tells the two runs apart on this corridor. The empty-section count does,
+and the capacity scenario still runs first so that you have the before figure to
+read the after one against.
+
+`invoke demo` runs `demo-capacity` before `demo-provision-all`, so a full demo
+run never reaches the state above on its own; only a manual re-run gets there.
+That is also why the acceptance walk over this page did not notice these two
+figures going stale when grooming arrived.
+
+## Scenario four: cut the Frankfurt to Amsterdam fiber
+
+A digger goes through the duct between Amsterdam and Frankfurt. What is down?
+
+```bash
+uv run invoke demo-impact --branch probe
+```
+
+```text
+Cutting oms-ams-fra drops 7 wavelength(s), 2.8 Tbps of transport,
+1 recorded service(s) and 1 customer(s).
+
+plant       roadm-ams-01 to roadm-fra-01, 470.000 km, 6 spans,
+            14 amplifiers (7 towards Frankfurt, 7 towards Amsterdam)
+customers   EuroHPC-Leonardo
+routers     rtr-ams-01, rtr-leonardo-mil-01
+signals     400GBASE-FR4 x1
+```
+
+When you triage an outage, you need the latency-sensitive rows before the
+transit ones.
+
+**Latency-sensitive services first:**
+
+```text
+svc-ams-mil-ai-400g  EuroHPC-Leonardo  gold  channel 2
+  oc-ch002-ams-mil  150,000 MHz, 191.32500 to 191.47500 THz
+  6127.051 us against a 7000.000 us budget
+  rtr-ams-01 [1/1/1, 1/1/2] to rtr-leonardo-mil-01 [1/1/1, 1/1/2]
+```
+
+**Then the six wavelengths with nothing behind them:**
+
+```text
+unattached: channels 5, 8, 11, 14, 17, 20, each 150,000 MHz wide
+
+These wavelengths carry no service object. They are real spectrum and a real
+loss; the model has no customer recorded behind them.
+```
+
+Six of the seven wavelengths on this section are spectrum the dataset ships
+with no `OtnService` behind them. A report that dropped them for having a null
+path would have said "one service affected" where the true answer is seven
+wavelengths, 1,050,000 MHz of C-band and 2.8 terabits.
+
+Every row carries the width and the two edges beside the anchor. A restoration
+plan needs to know how much spectrum to find somewhere else, and a channel
+number does not say. Seven carriers at 150,000 MHz each is 1,050,000 MHz to
+re-home, which is more than a fifth of the band on whatever section takes them.
+
+Provisioning grooms rather than lights. Two of the four services
+`demo-provision-all` places, `svc-ams-mil-ai-400g` and `svc-fra-mil-ai-400g`,
+find a wavelength that already has tributary slot room and take slots in it
+instead of lighting one of their own. So `svc-ams-mil-ai-400g` rides channel 2,
+a wavelength the dataset already ships, and channel 2 leaves the unattached list
+because it finally has a customer behind it. That is the intended behaviour: an
+operator fills the wavelengths already lit before paying for spectrum, so the
+model does too.
+
+### The duct, not the section
+
+A cut in a duct is a cut in every fiber in it, and the section is only what an
+operator names:
+
+```text
+cd-ams-southeast  GEANT  span-ams-fra-01   also carries: (nothing else)
+cd-fra-north      GEANT  span-ams-fra-06   also carries: oms-par-fra
+(no conduit)             4 spans of this section are outside any recorded conduit
+```
+
+`cd-fra-north` also carries Paris to Frankfurt. A digger in that trench takes
+both corridors, and the section-level view would never have said so.
+
+### The typo that must not return green
+
+```bash
+uv run invoke demo-impact --branch probe --section oms-ams-frs
+```
+
+```text
+ValueError: no optical multiplex section matched the `section` variable on this
+branch. An empty result and a name that does not exist are different answers,
+and this is the second one
+```
+
+Sixteen sections in this dataset carry nothing, so "no impact" is a
+common and correct answer. An operator who mistypes a name and is told "no
+impact" stops looking. A section that exists and carries nothing reports zero:
+
+```text
+$ uv run invoke demo-impact --branch probe --section oms-ams-bru
+Cutting oms-ams-bru drops 0 wavelength(s), 0 Gbps of transport,
+0 recorded service(s) and 0 customer(s).
+```
+
+## Scenario five: trace a service end to end
+
+```bash
+uv run invoke demo-trace --branch probe
+```
+
+```text
+svc-ams-mil-ai-400g  EuroHPC-Leonardo  ai-training-dci  active  budget 7000.000 us
+
+endpoint_a  rtr-ams-01            Amsterdam  client ports 1/1/1, 1/1/2
+endpoint_z  rtr-leonardo-mil-01   Milan      client ports 1/1/1, 1/1/2
+
+path        1250.000 km, 318.399 dB, OSNR 25.287 dB, margin +5.287 dB
+            6127.051 us total, of which 6120.901 us is propagation
+            and 6.150 us is everything else
+carrier     oc-ch002-ams-mil, channel 2, 191.40000 THz,
+            DP-QPSK 128GBd 400G occupying 150,000 MHz from
+            191.32500 to 191.47500 THz, SD-FEC at 4.000 us
+sections    oms-ams-fra (roadm-ams-01 to roadm-fra-01)
+            oms-fra-mil (roadm-fra-01 to roadm-mil-01)
+container   odu-svc-ams-mil-ai-400g, ODUC4, GMP, 400GBASE-FR4 (ethernet)
+conduits    cd-ams-southeast, cd-fra-north, cd-fra-south, cd-mil-northeast
+
+35 hops:
+   1  OtnRoadm      roadm-ams-01              0.000 km     7.000 dB      0.150 us
+   2  OtnAmplifier  amp-ams-fra-01            0.000 km     7.000 dB      0.250 us
+   3  OtnFiberSpan  span-ams-fra-01          78.334 km    25.767 dB    383.830 us  cd-ams-southeast
+   4  OtnAmplifier  amp-ams-fra-03           78.334 km    25.767 dB    383.930 us
+  ...
+  34  OtnAmplifier  amp-fra-mil-19         1250.000 km   311.399 dB   6122.901 us
+  35  OtnRoadm      roadm-mil-01           1250.000 km   318.399 dB   6123.051 us
+```
+
+Router to glass to router, in order. The running totals appear at each element,
+with the duct each span is buried in.
+
+The last hop reads 6123.051 us and the path reads 6127.051. The four microsecond
+difference is the forward error correction encoder and decoder, which sit in the
+transponder rather than on the route.
+
+**What the trace will not tell you.** Which of `rtr-ams-01`'s two client ports
+carries this service. The dataset wires transponder line ports to ROADM add and
+drop ports and stops there; there is no recorded adjacency between a router port
+and a transponder client port. The trace lists every client-role port on each
+endpoint and says the assignment is not modelled, rather than picking one of two
+candidates and presenting the guess as a fact.
+
+## Scenario six: where do the cheap pluggables reach?
+
+400ZR and 800ZR are cheap. A planner wants to know where they can replace a
+transponder.
+
+```bash
+uv run invoke demo-reach --branch probe
+```
+
+```text
+400ZR, 800ZR reach nothing on this network. The shortest optical multiplex
+section is oms-ams-bru at 220.000 km, and every one of these parts is rated
+120.000 km.
+
+400ZR                pluggable      120.000 km   0/21
+800ZR                pluggable      120.000 km   0/21
+DP-64QAM 64GBd 600G  transponder    400.000 km   7/21
+DP-16QAM 64GBd 400G  transponder   1000.000 km  20/21
+OpenZR+ 400G         pluggable     1000.000 km  20/21
+DP-16QAM 32GBd 200G  transponder   1500.000 km  21/21
+OpenZR+ 300G         pluggable     2000.000 km  21/21
+DP-QPSK 128GBd 400G  transponder   2500.000 km  21/21
+DP-QPSK 32GBd 100G   transponder   3000.000 km  21/21
+OpenZR+ 200G         pluggable     3000.000 km  21/21
+```
+
+Zero of twenty-one. The shortest section in the entire topology is 100 km beyond
+what either part reaches, and the next shortest are 320 km and 330 km. The
+finding does not depend on the exact catalog figure.
+
+That is the answer a planner wants before raising a purchase order, and it is
+only available because reach is modelled data rather than an assumption. The
+same table shows what does work: `OpenZR+ 400G` covers twenty of twenty-one
+sections and misses only Paris to Madrid at 1250 km.
+
+One caveat applies to every row: reach is not the budget. A mode in reach of a
+section can still miss the OSNR margin over that section's amplifier chains,
+and `budget_report` is what computes that. A section has two chains and
+two margins, one per direction of travel, and the reports show the worse of the
+two.
+
+## Scenario seven: which services are not diverse?
+
+```bash
+uv run invoke demo-srlg --branch probe
+```
+
+```text
+5 non-diverse pair(s) among 5 provisioned service(s) on probe,
+5 of them between two latency-sensitive services.
+
+cd-fra-south      3  svc-ams-mil-ai-400g, svc-fra-gva-hpc-400g, svc-fra-mil-ai-400g
+cd-mil-northeast  3  svc-ams-mil-ai-400g, svc-fra-mil-ai-400g, svc-vie-mil-hpc-400g
+cd-ams-northeast  1  svc-ber-ams-400g
+cd-ams-southeast  1  svc-ams-mil-ai-400g
+cd-ber-north      1  svc-ber-ams-400g
+cd-fra-north      1  svc-ams-mil-ai-400g
+
+high  svc-ams-mil-ai-400g and svc-fra-gva-hpc-400g share cd-fra-south.
+      One cut in that duct takes both.
+high  svc-fra-mil-ai-400g and svc-vie-mil-hpc-400g share cd-mil-northeast.
+      One cut in that duct takes both.
+...
+
+not exposed: svc-ber-ams-400g
+```
+
+The instructive pair is the first one. Frankfurt to Geneva and Amsterdam to
+Milan share no section, no ROADM and no city pair. On a route map they look
+diverse. They both leave Frankfurt through `cd-fra-south`, and one backhoe takes
+both.
+
+That is why the exposure is read off the spans and not off the sections. A
+section can cross several conduits and a conduit can hold spans from several
+sections, so intersecting section lists would miss this pair entirely.
+
+`svc-ber-ams-400g` is in no pair at all, which is the control: the report pairs
+services that share a duct rather than pairing everything it can.
+
+Diversity here is reported, not provisioned. Protection switching is out of
+scope, and an operator may have accepted this exposure deliberately, which is
+why this is a report and not a check that blocks a merge.
+
+**A declared requirement is the other half, and that one does block.** This
+report finds every pair sharing a duct, whether anybody asked for diversity or
+not. `checks/diversity.py` looks at the opposite set: only the pairs an operator
+put in an `OtnDiversityGroup`, where somebody wrote the promise down. It fails
+the proposed change when that promise does not hold, and says nothing at all
+about the pairs above, so the exposure this report lists stays accepted. The two
+loadable scenarios below show both outcomes side by side.
+
+## Scenario eight: the AI services against their budgets
+
+```bash
+uv run invoke demo-latency --branch probe
+```
+
+```text
+4 latency-sensitive service(s) on probe. None over budget.
+The tightest is svc-fra-mil-ai-400g at +175.259 us.
+
+1 provisioned service was excluded because its profile carries no latency
+budget.
+
+svc-fra-mil-ai-400g   ai-training-dci   780 km   3824.741 us
+  propagation 3819.441  electronics 5.300 (0.14%)  budget 4000.000  +175.259
+svc-ams-mil-ai-400g   ai-training-dci  1250 km   6127.051 us
+  propagation 6120.901  electronics 6.150 (0.10%)  budget 7000.000  +872.949
+svc-vie-mil-hpc-400g  hpc-research      800 km   3922.680 us
+  propagation 3917.380  electronics 5.300 (0.14%)  budget 5000.000 +1077.320
+svc-fra-gva-hpc-400g  hpc-research      590 km   2894.165 us
+  propagation 2889.065  electronics 5.100 (0.18%)  budget 4000.000 +1105.835
+```
+
+The electronics column is the negative result. ROADMs at 150 ns, amplifiers at
+100 ns and forward error correction at 4 µs come to between 0.10 and 0.18
+percent of the total on every one of these routes. Propagation at 4897 ns per
+kilometre is the rest.
+
+There is no FEC-against-reach trade-off to exploit on these four services: each
+one already sits on the route that is both OSNR-optimal and latency-optimal, so
+nothing was left on the table. That is not a general rule about continental
+distances. Span loss enters the OSNR cascade exponentially while route length
+enters latency linearly, which is how Copenhagen beats Prague on margin while
+being 110 km longer, as [scenario
+two](./provisioning-scenarios.mdx) shows. Modelling FEC latency was still worth
+doing, because it is what let the model rule the trade-off out here instead of
+assuming it.
+
+The excluded service is `svc-ber-ams-400g`, which is `ip-transit` and has no
+budget. The report says how many it dropped rather than silently showing four of
+five rows.
+
+See [AI and HPC payloads](./ai-payloads.mdx) for the arithmetic and the tension
+that is real, which is capacity against latency.
+
+## The two maps every PoP carries
+
+The scenarios above answer one question each. The maps answer the first question
+an audience asks, which is what the network looks like.
+
+Open **OTN Sites** in the Infrahub sidebar, pick a PoP, and open its
+**Artifacts** tab. Two maps hang there and both draw the fourteen PoPs and the
+21 sections between them, from the graph on the branch you are reading. Each PoP
+gets its own copy of each, with that site and the routes terminating on it drawn
+heavier than the rest. A copy reads as that site's reach into the core.
+
+**`network-map`, titled "European optical core".** Colour is the OSNR margin a
+400G DP-16QAM carrier has on a route: whether a wavelength closes on it. Three
+things on it are worth pointing at before anyone asks:
+
+- **The red route.** Paris to Madrid, the one section a 400G DP-16QAM carrier
+  cannot cross. The same finding as the failing check in the note under
+  [before you start](./provisioning-scenarios.mdx#before-you-start), drawn
+  rather than printed.
+- **The chip on Frankfurt to Milan.** `4,134 GHz` of the 4,800 the C-band gives
+  it, which is the corridor scenarios two and three are about.
+- **The dashes on Vienna to Milan.** The Raman-pumped section, good one way and
+  thin the other.
+
+**`odu-map`, titled "ODU capacity and grooming".** Colour is the largest container
+that still fits on the roomiest lit carrier of a route: whether another circuit
+fits inside the wavelengths already there. The same geography, a different layer,
+and the two can disagree about the same route without either being wrong.
+
+On the default branch this map is mostly grey, and that is the picture rather than
+a broken render. Sixteen of the twenty-one sections carry no wavelength at all, so
+they have no slot figure, and grey says "not known" rather than "empty and
+available". The five that do carry wavelengths are all green, because every
+pre-provisioned carrier ships with an empty line container on it.
+
+Infrahub renders these artifacts from this repository, so they exist wherever
+the repository is registered. The [network map](./network-map.mdx) and
+[ODU map](./odu-map.mdx) pages explain every colour, dot and ring on each
+drawing.

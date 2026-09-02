@@ -1,0 +1,92 @@
+---
+title: What this demo shows of Infrahub
+---
+
+# What this demo shows of Infrahub
+
+If you are evaluating Infrahub and have no interest in optics, each row below
+names a capability first, then the scenario in this demo that exercises it, then
+a link to the page that walks it. The optical detail is the example rather than
+the subject. A wavelength here plays the part a prefix, a VLAN or a circuit would
+play in your own domain, and the mechanism is the same one you would use.
+
+If you want the result before the reading, [the quick start](./quickstart.mdx)
+takes you from a fresh clone to a merge Infrahub refuses.
+
+## The capability map
+
+| Infrahub capability | What this demo does with it | Scenario, and where it is walked |
+| --- | --- | --- |
+| Branches | Every service is provisioned on a branch cut from the default one. The plant sits on the default branch and no service is ever written there. | Scenario one, [create the branch and the request](./provisioning-scenarios.mdx#create-the-branch-and-the-request) |
+| Proposed changes | Opening a proposed change from the branch runs the whole pipeline: eight checks, one generator and three artifact definitions, each reported on the change. The branch has to be created with `--sync-with-git` for that, or the change runs the two built-in validators and stops. | Scenario one, [review and merge](./provisioning-scenarios.mdx#review-and-merge) |
+| Checks that gate a merge | `.infrahub.yml` registers eight check definitions. `provisionable` reads `status` and fails the change for a service the generator left at `rejected` that nobody signed for. The reason code and the detail are what make the message readable. | Madrid to Warsaw at DP-16QAM, [the regenerator pair](./loadable-scenarios.mdx#two-loadable-scenarios-for-the-regenerator) and [the quick start](./quickstart.mdx#the-refusal-that-blocks-the-merge) |
+| Generators | One generator definition turns a service request that names no route into a carrier, an optical path, 25 ordered hops and two containers. | Scenario one, [run the generator](./provisioning-scenarios.mdx#run-the-generator) |
+| Artifacts | Three artifact definitions: a JSON service trace on every service, and two SVG maps rendered once per PoP, each from its own stored query. | Scenario five and [the two maps every PoP carries](./reporting-scenarios.mdx#the-two-maps-every-pop-carries) |
+| Python transforms | Ten transforms, each bound to its own stored query, render every report in the demo from live data. | Scenario eight, [the AI services against their budgets](./reporting-scenarios.mdx#scenario-eight-the-ai-services-against-their-budgets) |
+| Stored GraphQL queries | Nineteen queries, one per report or check, so a query two consumers share is never a query neither can change. | [Adding a report](./developer-guide.mdx#adding-a-report) |
+| Object files in Git | `objects/` holds the plant and loads on every init. `demo/` holds scenario input and is loaded by hand onto a branch. | [`objects/` against `demo/`](./developer-guide.mdx#objects-against-demo) |
+| Schema as code | Eight schema files loaded as one payload, with flat generics composed on the concrete nodes. | [The files](./schema-reference.mdx#the-files) |
+| Computed attributes | 29 of them across the eight files, every one Jinja2, most turning a scaled integer into a value a person can read. | [Display attributes](./schema-reference.mdx#display-attributes) |
+| Schema constraints | Enums, `min_value` and `max_value`, `optional: false` with a `default_value`, and uniqueness constraints in the `["relationship", "attribute__value"]` form. | The enum and the `default_value` at [the six reason codes](./schema-reference.mdx#the-six-reason-codes-and-the-signature-beside-them), the bounds at [the rules that constrain a change](./developer-guide.mdx#the-rules-that-constrain-a-change), the uniqueness constraint at [a regenerated circuit](./client-mapping.mdx#a-regenerated-circuit-has-containers-on-both-sides) |
+| `on_delete: cascade` | Used on the two relationships that own their children: a device's ports, and an optical path's hops. No page walks it. | Not walked |
+| Custom menus | `menus/otn.yml` builds the sidebar as five top-level entries and thirteen leaves, and every kind sets `include_in_menu: false` so nothing appears twice. | [Menu and navigation](./schema-reference.mdx#menu-and-navigation) |
+| Groups as targets | A `CoreGeneratorGroup` fires the generator. A `CoreStandardGroup` scoped to the PoPs is what the two map artifacts render against. | Scenario one, [create the branch and the request](./provisioning-scenarios.mdx#create-the-branch-and-the-request) |
+| The repository as a Git integration | The schema, the object files, the checks, the generator and the transforms all come from this repository. `invoke init` registers it, and that is what turns the pipeline on. | [Registering the repository](./developer-guide.mdx#registering-the-repository) |
+
+## How a check decides a merge
+
+Three facts carry most of the weight, and they are worth stating on their own
+because they are the part that translates directly to your domain.
+
+**Any check that logs an error blocks the merge.** `log_error` blocks and
+`log_info` annotates. There is no `log_warning` in between, so a check has no
+way to soften a finding into advice.
+
+**A check can be global rather than targeted.** `provisionable` is registered
+with no `targets`, so it judges every service on the branch instead of the ones
+your change touched. Adding a span, retiring a mode or filling a corridor can
+make a service nobody edited impossible to build, and a targeted check bound
+to the edited objects would report green over it.
+
+**A refusal can be signed for.** `refusal_accepted` is a `Boolean` on the
+service with `default_value: false`. Set it and the branch merges with the
+refusal on the record, which is why scenario two merges: the 400G on the
+saturated Frankfurt to Milan corridor is refused for slots, and
+`demo/90_fra_mil_saturated.yml` signs for that refusal. The scenario that
+actually holds a merge shut is `demo/06_mad_waw_16qam.yml`, where nothing signs
+for anything. [Concepts](./concepts.mdx#a-refusal-is-an-answer-and-it-does-not-merge-unless-somebody-signed-for-it)
+has the decision tree.
+
+## What this demo does not exercise
+
+Absence read from silence is a bad inference, so the list below is explicit.
+Each row was checked against the repository rather than recalled.
+
+| Capability | Status here |
+| --- | --- |
+| Resource pools, `CoreNumberPool`, prefix and address pools | Not used. No pool of any kind is declared. A channel is chosen by fitting a mode's occupied width into free spectrum, which is a bin-packing decision rather than an allocation from a range. |
+| Profiles, `generate_profile` | Not used. Shared default values are written into the object files. |
+| Object templates, `generate_template` | Not used. The generator writes structure instead, because what it writes depends on which route closed. |
+| IPAM, prefixes and addresses | Not used. There is no `IpamPrefix` and no address anywhere in the schema. The vendored location generic drops `LocationHosting` deliberately, and that is the relationship that would have brought IPAM in. |
+| Transform-backed computed attributes | Not used. All 29 computed attributes are Jinja2 over the node's own fields. Nothing here aggregates over a cardinality-many relationship inside the schema. |
+| Jinja2 transforms and device configuration artifacts | Not used. All ten transforms are Python, and no artifact in this demo is a router configuration. |
+| Hierarchical locations | Declared and then switched off. The vendored generic carries `hierarchical: true`, but `OtnSite` sets `parent: ""` and `children: ""`, so the fifteen sites are one flat set with no region or country above them. |
+| Webhooks and event-driven integration | Not used. Every run here is a command you type or a proposed change you open. |
+| Accounts, roles and permissions | Not used. The repository ships no account, no account group and no permission object, and every command runs as the admin token in `.env`. |
+| Synchronisation with an external system | Not used. Nothing in this repository reads from or writes to a source of truth outside Infrahub. |
+
+Two capabilities look absent from that list and are not. `on_delete: cascade`
+is used, and so are uniqueness constraints of the
+`["relationship", "attribute__value"]` form. Both are in the capability map
+above.
+
+## Where to go from here
+
+- [Quick start](./quickstart.mdx) is the shortest path to a blocked merge.
+- [Provisioning scenarios](./provisioning-scenarios.mdx) walk the two scenarios
+  that write: one service that provisions, and one corridor where a 400G is
+  refused and a 100G is not.
+- [Reporting scenarios](./reporting-scenarios.mdx) walk the six that read,
+  including what a fiber cut takes down and which services are not diverse.
+- [Developer guide](./developer-guide.mdx) is where to look if you want to add a
+  report, a check or an element of your own.

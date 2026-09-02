@@ -1,0 +1,246 @@
+---
+title: AI and HPC payloads
+---
+
+# AI and HPC payloads
+
+Distributed training traffic runs on this network in operation, so the model
+treats it as a primary payload alongside IP transit.
+
+Two of the four findings below are negative. Modelling reach and latency as data
+is what produces a negative answer at all: a model that assumes them can only
+report what works.
+
+## What is real, and what is illustrative
+
+**Real.** GÉANT runs a EuroHPC HyperConnectivity programme that interconnects
+European supercomputing sites. The network modelled here is, in operation, an AI
+and HPC transport network.
+
+**Real.** 400ZR, OpenZR+ and 800ZR are published standards, not vendor
+marketing. 400ZR is an OIF Implementation Agreement; OpenZR+ is a multi-source
+agreement. All three exist specifically to carry high-bandwidth traffic between
+compute sites as IP over DWDM, with the coherent optics in the router's own
+pluggable and no separate transponder.
+
+**Real.** Distributed training is latency-bound and not only bandwidth-bound.
+All-reduce collectives wait for the slowest peer, so round-trip time sets the
+pace of the whole job. Fiber propagation sets the floor on round-trip time
+at **4897 ns per kilometre** in G.652 at 1550 nm.
+
+**Illustrative.** Which supercomputing facility attaches to which modelled point
+of presence, the specific span lengths, and the reach and OSNR figures in the
+mode catalog. They are representative of their classes. Every conclusion below
+survives a change to any of them, and each section says why.
+
+## The compute sites in the model
+
+| Facility | Location | Modelled attachment |
+| --- | --- | --- |
+| JUPITER | Jülich, Germany | Frankfurt |
+| Leonardo | Bologna, Italy | Milan |
+| MareNostrum 5 | Barcelona, Spain | Madrid |
+| Karolina | Ostrava, Czechia | Prague |
+| MeluXina | Luxembourg | Brussels |
+| Vega | Maribor, Slovenia | Vienna |
+
+LUMI in Kajaani is deliberately absent. Finland is outside the fourteen PoPs,
+and inventing a point of presence to hold it would misrepresent the topology.
+
+## Latency is computed, never declared
+
+```text
+propagation_delay_ns = length_m * group_index_milli * 1_000_000 / C_M_PER_S
+```
+
+`group_index_milli` is 1468 for G.652 at 1550 nm and lives on the fiber type,
+not in the code, because G.654 and G.655 differ and the difference is measurable
+over 1000 km. ROADM, amplifier and forward error correction latency add on top,
+and the running total lands on each path hop next to cumulative loss and OSNR.
+
+`OtnService.service_profile` is what decides whether a service has a latency
+budget at all. `ai-training-dci`, `ai-inference` and `hpc-research` carry
+`max_latency_ns`; `ip-transit` and `legacy-sdh` leave it null, and the latency
+report says how many services it excluded for that reason.
+
+## The ZR catalog
+
+| Mode | Rate | Required OSNR | Nominal reach | FEC | FEC latency |
+| --- | --- | --- | --- | --- | --- |
+| 400ZR | 400G | 26.0 dB | 120 km | cFEC | 5 µs |
+| OpenZR+ 400G | 400G | 23.0 dB | 1000 km | oFEC | 9 µs |
+| OpenZR+ 300G | 300G | 20.5 dB | 2000 km | oFEC | 9 µs |
+| OpenZR+ 200G | 200G | 17.5 dB | 3000 km | oFEC | 9 µs |
+| 800ZR | 800G | 29.0 dB | 120 km | cFEC | 5 µs |
+
+Only transponder modes are provisionable in this model. A ZR wavelength
+originates in the router's own pluggable, and every router port in the loaded
+dataset is grey: no centre frequency, -2 dBm launch, LC connector. The catalog
+rows above exist to be reported on, and the selector filters them out as
+equipment rather than discovering them as a dispersion failure.
+
+## Negative result one: 400ZR reaches nothing here
+
+Both 120 km parts reach **zero of twenty-one** optical multiplex sections.
+
+The shortest section in the whole topology is Amsterdam to Brussels at 220 km. A
+400ZR falls 100 km short of the easiest section in the network, and an 800ZR
+falls exactly as far short. The ordering holds if the reach figure moves by a few
+tens of kilometres, because the next shortest sections are 320 km and 330 km.
+
+```text
+$ uv run invoke demo-reach --branch probe
+
+400ZR, 800ZR reach nothing on this network. The shortest optical multiplex
+section is oms-ams-bru at 220.000 km, and every one of these parts is rated
+120.000 km.
+```
+
+That is the answer a planner wants before ordering pluggables, and it is visible
+only because reach is modelled data rather than an assumption. The same report
+shows where the parts that do reach can go: `OpenZR+ 400G` covers twenty of
+twenty-one sections, missing only Paris to Madrid at 1250 km.
+
+**Reach is not the budget.** A mode whose catalog reach covers a section can
+still miss the OSNR margin over that section's amplifier chains. The reach
+report answers whether the part is worth ordering; `budget_report` computes
+whether the wavelength closes, once in each direction of travel. Every row in the reach report says so,
+because conflating the two would let the report claim something it did not
+compute.
+
+## Negative result two: forward error correction does not drive route selection
+
+Stronger error correction buys reach and costs latency, which suggests an
+optimal route that depends on which of the two a service needs more. On this
+network the arithmetic removes the choice.
+
+Frankfurt to Milan is 780 km of fiber, which is 3819.441 µs of propagation.
+Everything the electronics contribute, measured end to end on the provisioned
+service, is **5.300 µs**. Straight out of `ai_latency` on the demo branch:
+
+| Service | Length | Propagation | Total | Electronics | Share |
+| --- | --- | --- | --- | --- | --- |
+| Frankfurt to Geneva | 590 km | 2889.065 µs | 2894.165 µs | 5.100 µs | 0.18 % |
+| Frankfurt to Milan | 780 km | 3819.441 µs | 3824.741 µs | 5.300 µs | 0.14 % |
+| Vienna to Milan | 800 km | 3917.380 µs | 3922.680 µs | 5.300 µs | 0.14 % |
+| Amsterdam to Milan | 1250 km | 6120.901 µs | 6127.051 µs | 6.150 µs | 0.10 % |
+
+The propagation column is summed span by span, each at its own fiber type's
+group index, rather than computed once over the total length. On this plant
+every span is G.652.D so the two agree to within a nanosecond of rounding, and
+the sum is what stays correct the day a G.654 span appears.
+
+The strongest correction in the catalog, oFEC at 9 µs, would still be 0.24
+percent of the Frankfurt to Milan propagation. At continental distances
+propagation dominates by three orders of magnitude, so the OSNR-optimal route
+and the latency-optimal route are both the shortest route, and there is no
+trade-off to exploit.
+
+Modelling FEC latency was still worth doing. It is what let the model rule the
+trade-off out by measurement rather than by assumption.
+
+## The tension that is real: capacity against latency
+
+The shortest route fills up. The next route is longer, and distance is latency
+at 4897 ns per kilometre.
+
+Frankfurt to Milan direct is 780 km. Routed via Geneva it is 990 km, and the
+detour costs **1,028,312 ns** of extra propagation, 27 percent of the direct
+route's own delay from a single diversion. End to end, through the budget
+engine, the penalty is 1028.864 µs: 552 ns more than the propagation figure,
+from two extra ROADMs and four extra amplifiers.
+
+Against a four millisecond one-way budget:
+
+| Route | One way | Verdict |
+| --- | --- | --- |
+| Direct, 780 km | 3824.741 µs | Passes, 175.259 µs to spare |
+| Via Geneva, 990 km | 4853.605 µs | Fails by 853.605 µs |
+
+Propagation delay is the same both ways, so one figure covers a route. Loss and
+OSNR are not: a section carries an amplifier chain per direction, and a span
+with a Raman pump on it costs less one way and more the other.
+
+Four milliseconds is the number that separates them, and the finding depends on
+it. At five milliseconds both routes pass and there is nothing to report, which
+is why the budget belongs on the service object as data a reader can check.
+
+The direct corridor holds 4,134,400 MHz of its 4,800,000 MHz C-band in the
+shipped dataset, so a new 400G fits today, but only once. The corridor has
+capacity and no alternative:
+
+> 665,600 MHz is free on the only latency-compatible route between these two
+> compute sites, and exactly one of the 96 anchors, channel 95, can centre a
+> 400G carrier inside a single free block. Dividing free spectrum by carrier
+> width would have promised eight. When that anchor is gone there is no second
+> route, because the only other one costs 1028 µs and puts the budget out of
+> reach by 848. Capacity anywhere else in the network does not substitute for
+> it.
+
+**When they are gone, the corridor is congested rather than closed.** A 400G
+service needs a whole `ODUC4`, all 320 tributary slots of a wavelength, so for
+this service the last usable block of spectrum and the last wavelength are the
+same thing. A smaller client is not in that position: a `100GBASE-LR4` needs 80
+slots and grooms into a wavelength somebody has already lit, which consumes no
+spectrum at all. `demo/90_fra_mil_saturated.yml` runs both requests against the same
+exhausted corridor and gets opposite answers, and
+[the provisioning scenarios](./provisioning-scenarios.mdx#scenario-two-a-corridor-out-of-colour-and-what-still-fits)
+walks through them. The honest statement about a full corridor names the layer:
+no new wavelength can be lit on it, and whether a circuit fits depends on how
+big the circuit is.
+
+## A regenerator is a latency term, and a large one
+
+The FEC correction above is small enough to be ruled out by measurement. The
+framing delay at an O-E-O regenerator is not, because it comes with a second
+half of route attached to it.
+
+A circuit split at a regenerator pays for both segments plus what the junction
+charges for reframing, which `framing_latency_ns` holds on the device. Madrid to
+Warsaw takes **14,558,963 ns** end to end against **9,163,620 ns** for its Madrid
+to Frankfurt half alone. So a chain is the last thing a latency-bound payload
+should want, and the routing engine ranks a direct wavelength above one wherever
+both serve the route.
+
+Madrid to Warsaw takes the chain because it has no direct wavelength that closes
+on any of the ten modes. That is the only condition under which a chain wins, and
+it is a reach problem being paid for in latency. A service on that route with a
+tight `max_latency_ns` would be refused on the budget rather than quietly given
+the slow answer.
+
+## Diversity is reported, and separately enforced when it was promised
+
+A training cluster split across two sites cannot tolerate a single fiber cut.
+Two services on two different routes look diverse on a map, and if their spans
+share a conduit, one backhoe cuts both.
+
+`srlg_exposure` answers that from the conduit model. On the demo dataset it
+finds five non-diverse pairs among five services, every one of them between two
+latency-sensitive services. The instructive one is Frankfurt to Geneva against
+Amsterdam to Milan: no shared section, no shared ROADM, no shared city pair, and
+they share `cd-fra-south` out of Frankfurt.
+
+Protection switching itself is out of scope. Reporting the exposure is cheap;
+building restoration is a different demo.
+
+**The declared case does block a merge.** Put two services in an
+`OtnDiversityGroup` and `checks/diversity.py` fails the proposed change when
+their routes share a duct. It stays silent about every pair above, because
+nobody promised anything about them and an operator may have accepted the
+exposure deliberately. Reporting and enforcing are two questions, and only the
+second one has an answer worth blocking on.
+
+## Where the numbers come from
+
+Every figure above is produced by the loaded dataset and asserted by a test, so
+retuning the plant fails a test rather than quietly falsifying a document.
+
+| Claim | Test |
+| --- | --- |
+| 4897 ns per kilometre, and the two Frankfurt to Milan delays | `tests/unit/test_units.py` |
+| The 1,028,312 ns propagation penalty | `tests/unit/test_routing_claims.py` |
+| The four rows of the electronics-share table | `tests/unit/test_routing_claims.py` |
+| The end-to-end delays and the four millisecond verdicts | `tests/unit/test_routing_claims.py` |
+| 220 km is the unique shortest section | `tests/unit/test_impact_claims.py` |
+| Both 120 km parts reach zero sections | `tests/unit/test_budget_claims.py` |
+| Every span is G.652.D, so the propagation split is exact | `tests/unit/test_impact_claims.py` |
