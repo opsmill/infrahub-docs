@@ -1,0 +1,505 @@
+---
+title: Provisioning scenarios
+---
+
+# Provisioning scenarios
+
+The two scenarios that write. One provisions a service and shows what the route
+selection did not pick. The other puts a second service on a corridor that has
+run out of colour, and shows why one closes and the other does not. Every number
+below is produced by the engine and asserted by a unit test.
+
+The [demo guide](./demo-guide.mdx) carries the run order and links the other
+scenario pages.
+
+## Before you start
+
+```bash
+uv run invoke start
+uv run invoke list
+```
+
+Every numbered scenario below is an invoke task. The tasks read the address and
+the API token from `.env` and pass both to whatever they run, so nothing in the
+runbook asks you to export a credential first.
+
+**[Loadable scenarios and the runbook](./loadable-scenarios.mdx) is the
+exception.** Those sections call `infrahubctl` directly to create a branch and
+load a file, and `infrahubctl` resolves the address from `.env` but never the
+token. Without it the first write fails with `Authentication is required to
+perform this operation` and the branch lookup that follows fails with
+`BranchNotFoundError`, which points at the wrong thing. Export the file once per
+shell before you start that page:
+
+```bash
+set -a && source .env && set +a
+```
+
+:::note
+
+The OSNR check fails on the default branch, and that is the shipped state. Paris
+to Madrid is 1250 km and falls 0.535 dB short at `DP-16QAM 64GBd 400G`, in both
+directions. It is a true finding about a long route, not a broken demo, and the
+[link budget](./link-budget.mdx) page covers what the fix costs. Expect to see it
+if you run the check before provisioning anything.
+
+:::
+
+## Scenario one: Berlin to Amsterdam at 400G
+
+### Create the branch and the request
+
+```bash
+uv run invoke demo-setup --branch provision-ber-ams-400g
+```
+
+That creates the branch and loads the schema, the menu and the dataset. It then
+loads the five service requests. The generator target group comes with the
+dataset, in `objects/00_groups.yml`, and the numeric prefix puts it first. Each
+service declares `member_of_groups: [optical_services]`, and a service cannot
+join a group that does not exist yet.
+
+The task skips the dataset load when the branch already holds it, so a second
+run costs seconds rather than minutes.
+
+A schema load onto a branch already holding the 2342-object dataset runs longer
+than the client's 120 second timeout. The server finishes anyway. Poll
+`/api/schema?branch=provision-ber-ams-400g` rather than running the load again,
+and wait until `nodes` plus `generics` reaches the same count the endpoint
+reports for `main`. That total counts Infrahub's built-in kinds as well as the
+44 this repository declares, so it moves with the Infrahub version and `main`
+is the only reliable thing to compare it against.
+
+The request itself is eight lines of intent. No route, no wavelength, no
+channel:
+
+```yaml
+- name: svc-ber-ams-400g
+  description: Berlin to Amsterdam, 400G IP transit.
+  customer: NREN-DE
+  rate_gbps: 400
+  sla: gold
+  service_profile: ip-transit
+  endpoint_a: rtr-ber-01
+  endpoint_z: rtr-ams-01
+```
+
+### Run the generator
+
+```bash
+uv run invoke demo-provision --branch provision-ber-ams-400g
+```
+
+```text
+svc-ber-ams-400g: candidate 1 of 6 is oms-ham-ber|oms-ams-ham on DP-16QAM 64GBd 400G,
+  2 sections, 800 km, margin +2.284 dB, 3923.026 us, channel 2
+svc-ber-ams-400g: candidate 2 of 6 is oms-ber-fra|oms-ams-fra on DP-16QAM 64GBd 400G,
+  2 sections, 1010 km, margin +0.507 dB, 4951.540 us, channel 38
+svc-ber-ams-400g: candidate 3 of 6 is oms-ber-cph|oms-ham-cph|oms-ams-ham on
+  DP-QPSK 128GBd 400G, 3 sections, 1330 km, margin +5.378 dB, 6519.243 us, channel 2
+svc-ber-ams-400g: candidate 4 of 6 is oms-ber-prg|oms-prg-fra|oms-ams-fra on
+  DP-QPSK 128GBd 400G, 3 sections, 1220 km, margin +5.241 dB, 5980.401 us, channel 23
+svc-ber-ams-400g: candidate 5 of 6 is oms-ber-fra|oms-par-fra|oms-bru-par|oms-ams-bru
+  on DP-QPSK 128GBd 400G, 4 sections, 1700 km, margin +2.608 dB, 8331.574 us, channel 2
+svc-ber-ams-400g: candidate 6 of 6 is oms-ber-fra|oms-par-fra|oms-lon-par|oms-ams-lon
+  on DP-QPSK 128GBd 400G, 4 sections, 2080 km, margin +2.003 dB, 10192.828 us, channel 2
+svc-ber-ams-400g: chose oms-ham-ber|oms-ams-ham on DP-16QAM 64GBd 400G, channel 2,
+  800 km, margin +2.284 dB, 3923.026 us
+```
+
+**The winning route is empty and the anchor is still 2, not 1.** A
+`DP-16QAM 64GBd 400G` carrier occupies 79,600 MHz. Centring it on channel 1
+would put its lower edge 14,800 MHz below the bottom of the C band. Channel 1
+and channel 96 are unusable for every 400G mode in the catalog. The report
+says 94 usable anchors rather than 96 on a section with nothing on it at all.
+This is the smallest visible consequence of modelling width, and it shows up on
+the emptiest route in the demo.
+
+### What the generator did
+
+The candidate routes came from `client.traverse_paths()`, filtered to the two
+relationships that mean "this section terminates on that ROADM". There is no
+graph walker in this repository.
+
+Each route was then budgeted at every transponder mode that reaches 400 Gbps,
+and the narrowest mode that closes won. That is why Hamburg and Frankfurt land
+on DP-16QAM and the two three-section routes land on DP-QPSK. Both three-section
+routes fail at DP-16QAM, by 0.259 dB through Prague and 0.122 dB through
+Copenhagen, and both close comfortably one modulation order down at twice the
+spectrum.
+
+Copenhagen is 110 km longer than Prague and has the better margin. Its sections
+are built from shorter spans, and span loss enters the OSNR cascade
+exponentially while route length enters it linearly. Route length alone does not
+order signal quality.
+
+The ranking is fewest sections, then highest margin, then lowest channel, then
+the route's own name. Hamburg and Frankfurt tie at two sections and Hamburg wins
+on 2.284 against 0.507. The order is total, so the same request produces the same
+answer on every run.
+
+:::note
+
+Ranking modes by margin instead of by spectrum would put every carrier in the
+demo on DP-QPSK, because dropping two bits per symbol gains about 5.5 dB. It
+would also double the spectrum each one occupies. The selector treats the
+lower-order fallback as the cost it is.
+
+:::
+
+### Read the result
+
+The generator wrote 29 objects and changed one:
+
+| Kind | Count | What it holds |
+| --- | --- | --- |
+| `OtnOpticalCarrier` | 1 | Channel 2, DP-16QAM 64GBd 400G occupying 79,600 MHz, both Hamburg sections |
+| `OtnOpticalPath` | 1 | 800 km, 212.202 dB, 27.784 dB OSNR, +2.284 dB margin, 3923.026 us |
+| `OtnPathHop` | 25 | Three ROADMs, twelve spans, ten amplifiers, in order |
+| `OtnContainer` | 2 | The line container on the carrier, and the client container inside it |
+| `OtnService` | 1 changed | Status `active`, pointing at the path |
+
+No pre-provisioned wavelength crosses exactly `oms-ham-ber` and `oms-ams-ham`,
+so there was nothing to groom into and this run lit a wavelength. That is two
+containers rather than one. `odu-line-oc-svc-ber-ams-400g` is an `ODUC4` holding
+the carrier and offering 320 tributary slots. `odu-svc-ber-ams-400g` is the
+`400GBASE-FR4` client nested inside it with GMP mapping, occupying all 320 and
+holding no carrier of its own. A 400G client fills a 400G wavelength exactly, so
+that wavelength now reports 320 of 320 committed and nothing else can groom into
+it.
+
+A service on the Frankfurt to Milan corridor takes the other path and writes one
+container, because forty wavelengths are already lit there. Scenario two is that
+case.
+
+**The carrier it wrote has an empty `line_ports` list, and that is a limitation
+rather than a bug.** Every one of the forty wavelengths in the shipped dataset
+names the two line ports that terminate it, one at each end, because the
+generator that writes `objects/` binds them. `generators/optical_service.py`
+names no line port and no transponder: it writes the carrier, the path, the hops
+and the containers, picks the route and the mode, and stops. So a wavelength
+provisioned by a demo scenario knows which sections it rides and not which
+hardware would light it. Binding it would mean choosing a free line port at each
+endpoint, which is an assignment problem this feature did not take on. The
+transponders are there to bind to, since every PoP carries at least two, so the
+gap is in the generator and not in the plant.
+
+The hop table is the interesting one. Every row shows the running totals at
+the output of that element:
+
+```text
+  1 roadm-ber-01           len=  0.000 km loss=  7.000 dB osnr=          delay=0.150 us
+  2 amp-ham-ber-10         len=  0.000 km loss=  7.000 dB osnr=49.500 dB delay=0.250 us
+  3 span-ham-ber-04        len= 82.500 km loss= 26.650 dB osnr=49.500 dB delay=404.229 us
+  4 amp-ham-ber-08         len= 82.500 km loss= 26.650 dB osnr=38.029 dB delay=404.329 us
+ ...
+ 11 roadm-ham-01           len=330.000 km loss= 92.600 dB osnr=31.747 dB delay=1616.716 us
+ ...
+ 25 roadm-ams-01           len=800.000 km loss=212.202 dB osnr=27.784 dB delay=3919.026 us
+```
+
+OSNR is empty on the first row and only on the first row. There is no noise to
+measure the signal against until an amplifier has added some.
+
+The amplifier names say nothing about direction, and nothing here needs them to.
+This service runs from Berlin towards Amsterdam, which is the B-to-A direction
+of both sections it crosses, so every amplifier on the walk comes out of those
+sections' `amplifiers_b2a` list. The amplifiers in the same huts facing the
+other way are in the `amplifiers_a2b` list and carry the traffic going back. An
+amplifier's own page shows the same thing: exactly one of its two section
+relationships is set.
+
+The path's 3923.026 us is four microseconds more than the last hop's 3919.026,
+which is the FEC encoder and decoder. Propagation is three orders of magnitude
+larger and dominates everything else on the route.
+
+### Run it again
+
+```bash
+uv run invoke demo-provision --branch provision-ber-ams-400g
+```
+
+Same route, same mode, same channel, and the object counts do not move. Every
+object is named from the service name alone, so a second run updates rather than
+duplicates, and the selector excludes the service's own carrier when it counts
+occupancy. Without that, the run would find its own channel taken and step to
+the next one every time.
+
+### Review and merge
+
+Open a proposed change from `provision-ber-ams-400g`. This needs the repository
+registered, which `invoke init` does and `uv run invoke load-repository` does on
+its own. The pipeline then runs the eight checks, the generator and all three
+artifact definitions against the change, and reports each one on it.
+
+It also needs the branch to exist in Git. The checks, the generator and the
+artifact definitions are files in this repository, so Infrahub reads them from a
+Git branch that matches the data branch. `infrahubctl branch create` defaults to
+`--no-sync-with-git` and `invoke demo-setup` does not override it, so a branch
+either of them made carries data only. A proposed change from one runs Data
+Integrity and Schema Integrity and stops there. Create the branch with
+`uv run infrahubctl branch create <name> --sync-with-git` when you intend to open
+a proposed change from it, and the count goes from two validators to sixteen.
+
+The generator runs **before** the checks, which is what makes `provisionable`
+safe. It gates the merge on a verdict the generator derived. That
+verdict was written seconds earlier against this branch's own data, not read off
+a refusal that has been sitting on the default branch since some unrelated
+change put it there.
+
+Its diff:
+
+```text
+OtnOpticalCarrier   ADDED    1     oc-svc-ber-ams-400g
+OtnOpticalPath      ADDED    1     path-svc-ber-ams-400g
+OtnPathHop          ADDED   25
+OtnContainer        ADDED    2     odu-line-oc-svc-ber-ams-400g, odu-svc-ber-ams-400g
+OtnService          ADDED    5     the five requests the setup loaded
+```
+
+The plant is not in the diff. `invoke init` loads the schema, the menu and the
+dataset onto the default branch. A branch cut from it inherits all of that,
+and the diff contains only what the branch added. That is the five service
+requests the setup step loaded, and the 29 objects the generator wrote for the
+one you provisioned. The line container is in the diff even though it joined no
+tracking group: tracking decides what a re-run may reclaim, not what a branch
+diff shows. The service it changed is one of the five, which is why
+the services appear here as added rather than modified: the default branch has
+none of them.
+
+A stack whose default branch holds no plant behaves differently: the setup step
+loads the dataset onto the branch instead, and the diff then contains the whole
+network as well.
+
+Four of the eight checks say something about this change:
+
+- `channel_collision` confirms no two carriers hold overlapping spectrum on the
+  same section. It reports how much of the band the busiest one holds.
+- `osnr_margin` re-evaluates every wavelength on the branch, now 41 rather than
+  40, and separately sweeps all 21 sections in both directions against one
+  reference mode. It reports the worst margin from each loop.
+- `container_capacity` walks the container tree and confirms no parent's children
+  commit more tributary slots than it offers. The 400G client here fills its
+  wavelength exactly, 320 of 320, which is the boundary case: exactly full passes,
+  and one slot more would fail.
+- `channel_count_consistency` compares what each ROADM degree monitor reports
+  against the carriers on the section that degree faces, and **it names four
+  monitors without blocking the merge.** Four degrees sit along this route:
+  `MON-DEG-HAM` at Berlin, `MON-DEG-BER` and `MON-DEG-AMS` at Hamburg, and
+  `MON-DEG-HAM` at Amsterdam. All four still report 0 channels while the two
+  sections they face now carry the wavelength the generator just lit. The
+  paragraph below says why that is a report rather than a refusal.
+
+**The fourth one reports and does not refuse, and the clock is why.** Nothing in
+this repository writes a monitor reading when a wavelength is lit. The generator
+creates the carrier, the path, the hops and the containers, and it does not touch
+a port, so the reported count sits one behind the topology on every section the
+new wavelength crosses. A monitor reading is dated, the shipped ones at
+`2026-08-26T06:00:00Z`, and no reading can know about a wavelength designed after
+it was taken. So a monitor reporting **fewer** channels than its section holds is
+a wavelength designed and not yet turned up, and the check says so and lets the
+merge through. The direction it does refuse is a monitor reporting **more**:
+no reading of any age can invent light, so that one is either a stale count or a
+wavelength removed from the model while the equipment was left alone. What these
+four findings show is that provisioning is only half automated: the topology
+moved and the telemetry record has not caught up.
+
+The other four say nothing, for different reasons. `units_import` only asserts
+that the worker can import the shared package. `monitor_completeness` is silent
+because this change adds no device, so nothing on the branch newly lacks a
+monitor. `diversity` is silent because
+nobody declared a diversity requirement for this service, and that silence is
+deliberate rather than an oversight: the check speaks only about promises an
+operator wrote down. `provisionable` passes and says what it looked at: every
+service on this branch provisioned, so there is no refusal to gate on. It prints
+its counts rather than passing quietly. A green check on a branch with
+no services and a green check on a provisioned network look identical from the
+proposed change. Only one of them is evidence of anything.
+
+That collision check **is** the reservation. Nothing in this model stores
+occupancy as state, so nothing has to be released when a service is torn down.
+Two engineers provisioning on two branches each see the same free spectrum,
+because neither branch can see the other, and they collide at the proposed
+change. That is the correct place: it is where a human is already looking, and
+it is the only point at which both intentions exist at once.
+
+Two carriers no longer have to share an anchor to collide. A `128 GBd` carrier
+occupies 150,000 MHz and reaches three grid positions either side of its own
+centre, so the check compares intervals rather than channel numbers. To see it
+fire, put a second carrier on channel 3 over `oms-ham-ber` and run:
+
+```bash
+uv run invoke check --name channel_collision --branch provision-ber-ams-400g
+```
+
+```text
+oc-collision-probe and oc-svc-ber-ams-400g share 29,600 MHz of spectrum on
+oms-ham-ber, from 191,410,200 to 191,439,800 MHz. oc-collision-probe on
+channel 3 running DP-16QAM 64GBd 400G (191,410,200 to 191,489,800 MHz,
+79,600 MHz wide) against oc-svc-ber-ams-400g on channel 2 running
+DP-16QAM 64GBd 400G (191,360,200 to 191,439,800 MHz, 79,600 MHz wide).
+A wavelength holds its width for the whole length of every section it
+crosses, so only one of these can be provisioned
+```
+
+Neither carrier claims the other's channel number. The old check, which
+compared anchors, called this section clean.
+
+## Scenario two: a corridor out of colour, and what still fits
+
+Frankfurt to Milan carries a distributed training workload. All-reduce
+collectives stall on round-trip time, so the request states a four millisecond
+one-way budget:
+
+```yaml
+- name: svc-fra-mil-ai-400g
+  description: Frankfurt to Milan, 400G distributed training interconnect.
+  customer: EuroHPC-Leonardo
+  rate_gbps: 400
+  sla: gold
+  service_profile: ai-training-dci
+  max_latency_ns: 4000000
+  endpoint_a: rtr-fra-01
+  endpoint_z: rtr-leonardo-mil-01
+```
+
+The direct route is 780 km and takes 3824.741 us. It fits, with 175.259 us to
+spare, and every other route between these two sites misses the budget. It is
+also the busiest corridor in the network. Fill both of its layers:
+
+```bash
+uv run invoke demo-refusal --branch provision-ber-ams-400g
+```
+
+`demo/90_fra_mil_saturated.yml` loads three more carriers into the last usable
+block. That takes `oms-fra-mil` from 4,134,400 MHz occupied to 4,267,600 MHz,
+and leaves 532,400 MHz in 29 blocks whose widest is 38,000 MHz, narrower than any
+seeded mode. It then grooms one 100G tenant onto each of the twenty-two
+wavelengths that run Frankfurt to Milan and nowhere else. Each of those
+twenty-two is an `ODUC4` line container offering 320 tributary slots, so one
+80-slot tenant leaves 240 free. Then it asks twice.
+
+### The 400G is refused, and the reason is slots
+
+```text
+svc-fra-mil-ai-400g: discarded oms-fra-gva|oms-gva-mil [latency] closes on
+  DP-16QAM 64GBd 400G over 990 km, and takes 4853.605 us against a budget of
+  4000.000 us, which it misses by 853.605 us
+svc-fra-mil-ai-400g: discarded oms-prg-fra|oms-prg-vie|oms-vie-mil [latency]
+  closes on DP-QPSK 128GBd 400G over 1560 km, and takes 7645.589 us against a
+  budget of 4000.000 us, which it misses by 3645.589 us
+svc-fra-mil-ai-400g: discarded oms-prg-fra|oms-prg-waw|oms-vie-waw|oms-vie-mil
+  [latency] closes on DP-QPSK 128GBd 400G over 2600 km, and takes 12739.627 us
+  against a budget of 4000.000 us, which it misses by 8739.627 us
+svc-fra-mil-ai-400g: candidate 1 of 1 is oms-fra-mil on DP-16QAM 64GBd 400G,
+  1 sections, 780 km, margin +1.894 dB, 3824.741 us, no anchor free, groom only
+svc-fra-mil-ai-400g: refused, no-slots: neither a direct wavelength nor a chain
+  serves this route. Direct: odu-line-oc-ch047-fra-mil is the tightest of 40 line
+  containers on oms-fra-mil and offers 320 slots with 240 free, and none of the
+  40 has room for the 320 slots ODUC4 takes, and no wavelength can be lit either,
+  because no anchor puts a DP-16QAM 64GBd 400G carrier, which occupies 79,600 MHz,
+  inside spectrum free on all 1 of its sections: the widest free block is
+  38,000 MHz. Chain: no pair of wavelengths covers a candidate route end to end
+  and meets at one of the 3 O-E-O devices holding both
+```
+
+The service comes back `rejected`, with that sentence stored on it, and nothing
+else is written. The verdict is two fields rather than one: `rejection_code` is
+`no-slots`, one of six values the schema enforces, and `rejection_detail` holds
+the prose. Nothing parses the code back out of the sentence.
+
+**This scenario ends in an accepted refusal, so the branch merges.**
+`demo/90_fra_mil_saturated.yml` sets `refusal_accepted` on
+`svc-fra-mil-ai-400g`, and `provisionable` then says nothing about it. That is
+the file signing for the refusal it causes. It took the corridor away, the
+refusal is the answer it exists to demonstrate, and there is no fix to hold the
+merge open for. Without that signature the proposed change would go red, which is
+what [Madrid to
+Warsaw](./loadable-scenarios.mdx#two-loadable-scenarios-for-the-regenerator) is
+for.
+
+The signature is a nine-line restatement of a service defined in
+`demo/00_services.yml`, not a name-and-flag update, because `infrahubctl object
+load` answers a partial update with `customer is mandatory`. That duplicate can
+drift, so
+`tests/unit/test_demo_scenarios.py::test_the_saturated_scenario_restates_the_service_it_signs_for_unchanged`
+asserts the two blocks agree on every shared field and that the flag is the only
+thing `90` adds. Losing `max_latency_ns` in the copy would be the quiet failure.
+Four milliseconds is what rules out the Geneva detour at 4853.605 us, and leaves
+this corridor as the only route the service has.
+
+Note the fourth line. `oms-fra-mil` is not discarded for capacity any more. It
+comes back as the one surviving candidate, marked `no channel free, groom only`,
+because a service that grooms into a wavelength somebody already lit consumes no
+channel. The refusal then names the figure that actually blocks it. A
+`400GBASE-FR4` maps into an `ODUC4` and needs all 320 slots of a wavelength,
+and the roomiest wavelength on the corridor has 240.
+
+**The refusal closes three escapes, not two.** Grooming is tried first, lighting
+a new wavelength second, and a chain across an O-E-O device third. The message
+has to say why each one failed, or a reader is left wondering about the one it
+skipped. The `Chain:` clause names how many devices were considered. The dataset
+ships three, `oeo-fra-01` at Frankfurt and the two cross-connects, and none of
+them terminates a pair of wavelengths that covers this route. A chain would not
+have helped here anyway, because the route is one section long and the shortage
+is slots rather than reach.
+
+### The 100G provisions on the same corridor
+
+```text
+svc-fra-mil-transit-100g: candidate 1 of 1 is oms-fra-mil on DP-QPSK 32GBd 100G,
+  1 sections, 780 km, margin +12.394 dB, 3824.741 us, no channel free, groom only
+svc-fra-mil-transit-100g: chose oms-fra-mil on DP-QPSK 32GBd 100G, no anchor
+  free, groom only, 780 km, margin +12.394 dB, 3824.741 us
+svc-fra-mil-transit-100g: grooms into odu-line-oc-ch047-fra-mil on
+  oc-ch047-fra-mil, the tightest of 40 line containers on oms-fra-mil, offering
+  320 slots with 240 free, and the ODU4 takes 80
+```
+
+Same corridor, same four millisecond budget, same spectrum that no mode can use,
+and this one provisions. Its client is a `100GBASE-LR4` in an `ODU4`, 80 slots, and 240
+are free. It lights nothing: no `oc-svc-fra-mil-transit-100g` is created, the
+service's optical path points at `oc-ch047-fra-mil`, and the only object written
+on the wavelength is the client container nested under
+`odu-line-oc-ch047-fra-mil`.
+
+### What this pair is for
+
+Spectrum and slots run out independently, and a section reported as full is only
+full at one of the two layers. 532,400 MHz free in 29 blocks whose widest is
+38,000 is a statement about colour. It says no new wavelength can be lit, because
+the narrowest mode in the catalog needs 44,400 MHz contiguous. It says
+nothing about whether the wavelengths already lit have room inside them. The capacity
+view answers the first question and the ODU map answers the second, and neither
+one substitutes for the other.
+
+This is also why the refusal has to be engineered rather than observed. A single
+empty `ODUC4` anywhere on the corridor offers 320 free slots and takes the 400G
+client. The scenario has to occupy all forty wavelengths before the refusal
+is reachable at all. Take one tenant out of
+`demo/90_fra_mil_saturated.yml` and the 400G provisions.
+
+### The controls
+
+Before best-fit grooming, this scenario refused the 400G on latency: the direct
+corridor was rejected for capacity before the ODU layer was consulted, and the
+Geneva detour at 4853.605 us was the nearest surviving miss. That refusal was a
+true sentence about a question nobody asked, and it is why
+`routing.choose_route` now takes `require_free_channel` rather than gating on
+spectrum unconditionally. What that flag gates has widened with the model. A
+route has an anchor only when some grid position centres the mode's whole
+occupied width inside spectrum free on every section it crosses.
+
+Latency is still the constraint that decides which routes are candidates at all.
+Four milliseconds is still the number that separates them:
+
+| Budget | Candidate routes |
+| --- | --- |
+| 4 ms | The direct corridor only. The detour misses by 853.605 us. |
+| 5 ms | The direct corridor and the Geneva detour, and the direct one wins on hop count. |
+| None | Every route that closes optically, ranked on hop count then margin. |
+
+`tests/unit/test_routing_claims.py` asserts the three latency figures against the
+committed dataset, and `tests/unit/test_generator.py` asserts the two outcomes
+above from a forty-container payload, so retuning a span length or changing the
+packing rule fails a test rather than quietly making this page false.

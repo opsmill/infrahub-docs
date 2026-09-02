@@ -1,0 +1,258 @@
+---
+title: Quick start
+---
+
+import blocked from './media/quickstart-blocked.png';
+import artifacts from './media/quickstart-map.png';
+import refusal from './media/quickstart-refusal.png';
+import service from './media/quickstart-service.png';
+
+# Quick start
+
+Go from a fresh clone to a proposed change Infrahub will not merge. You
+provision a 400G service from Berlin to Amsterdam, then ask the same network for
+a circuit it cannot carry and watch a check hold the merge shut.
+
+Nine and a half minutes of command time, measured on a warm machine with the
+images already pulled. `invoke init` is eight of them, and the rest is seconds.
+Registration keeps running for a few minutes after `init` returns, so the
+proposed change at the end waits on that rather than on you.
+
+## Before you start
+
+You need Docker with Compose v2, [uv](https://docs.astral.sh/uv/), and about
+8 GB of free memory for the stack. [Install and load the
+demo](./installation-setup.mdx) carries the full prerequisites, what each step
+loads and how to verify it. This page runs a subset of those commands and
+explains less.
+
+The first command below runs `invoke init`, which takes the containers down with
+`-v` and deletes their volumes. Every object in the current stack goes with them,
+on every branch, and nothing is exported first. Run it on a machine whose
+Infrahub data you can afford to lose.
+
+## When a step fails
+
+Every step here is an invoke task, and the tasks read the address and the API
+token from `.env` and pass both to whatever they run. [Install and load the
+demo](./installation-setup.mdx) is where the failures are covered: the check
+that says whether the shared package reached the worker, the `Authentication
+failure` that appears when a tool reads the address from `.env` but not the
+token, and how to tear the stack down and start over.
+
+## What is deliberately red on the default branch
+
+The OSNR check fails on the default branch, and that is the shipped state.
+Paris to Madrid is 1250 km and falls 0.535 dB short at `DP-16QAM 64GBd 400G`,
+in both directions. It is a true finding about a long route rather than a
+broken demo, and you will meet it on every branch cut from the default one,
+including both branches below. [The link
+budget](./link-budget.mdx#paris-to-madrid-does-not-close-and-the-check-says-so)
+page has the answers an engineer would reach for and what each one costs.
+
+## Start the stack
+
+```bash
+git clone https://github.com/opsmill/infrahub-demo-otn
+cd infrahub-demo-otn
+cp .env.example .env
+uv sync
+
+uv run invoke init
+```
+
+`invoke init` destroys any existing stack, starts a new one, loads the schema,
+the menu and the dataset, and registers this repository. Registration is the
+step that turns the proposed-change pipeline on, so the checks below have
+something to run in.
+
+Infrahub is then at [http://localhost:8000](http://localhost:8000).
+
+<figure className="doc-figure">
+  <a href={artifacts} target="_blank" rel="noopener noreferrer">
+  <img
+    src={artifacts}
+    alt="Berlin's Artifacts tab in Infrahub, listing two artifacts named network-map and odu-map, both with status Ready and content type image/svg+xml, each with a checksum, a storage id and the artifact definition that produced it."
+  />
+  </a>
+  <figcaption>
+
+  What registration bought you. Every PoP now carries two maps as artifacts,
+  rendered from the graph rather than drawn by hand. This is Berlin's copy.
+
+  </figcaption>
+</figure>
+
+## Provision Berlin to Amsterdam at 400G
+
+```bash
+set -a && source .env && set +a
+uv run infrahubctl branch create provision-ber-ams-400g --sync-with-git
+uv run invoke demo-setup --branch provision-ber-ams-400g
+uv run invoke demo-provision --branch provision-ber-ams-400g
+```
+
+The first command creates the branch in Git as well as in the graph, which is
+what lets a proposed change from it read the checks, the generator and the
+artifact definitions out of this repository. `invoke demo-setup` on its own
+would make a data-only branch, and a proposed change from one of those runs the
+two built-in validators and stops.
+
+The second command loads five service requests onto it. Each one is intent and
+nothing else: `svc-ber-ams-400g` asks for 400 Gbps between two routers and names
+no route, no wavelength and no channel.
+
+The third runs the generator. It budgets six candidate routes at every
+transponder mode that reaches 400 Gbps and takes the narrowest mode that
+closes:
+
+```text
+svc-ber-ams-400g: chose oms-ham-ber|oms-ams-ham on DP-16QAM 64GBd 400G, channel 2,
+  800 km, margin +2.284 dB, 3923.026 us
+```
+
+That run wrote 29 objects, among them one carrier, one optical path, 25 hops in
+order and two containers, and moved the service to `active`. [Scenario
+one](./provisioning-scenarios.mdx#scenario-one-berlin-to-amsterdam-at-400g)
+walks all six candidates, including why the winning route anchors on channel 2
+rather than channel 1.
+
+<figure className="doc-figure">
+  <a href={service} target="_blank" rel="noopener noreferrer">
+  <img
+    src={service}
+    alt="The svc-ber-ams-400g service in Infrahub with status Active, an optical path named path-svc-ber-ams-400g, a container named odu-svc-ber-ams-400g, and both the rejection code and rejection detail fields empty."
+  />
+  </a>
+  <figcaption>
+
+  The service after the generator ran. It arrived naming no route and now has an
+  optical path and a container, with both rejection fields empty.
+
+  </figcaption>
+</figure>
+
+Open a proposed change from `provision-ber-ams-400g` and the pipeline runs eight
+checks, the generator and three artifact definitions, reporting each on the
+change. No service on the branch is refused, so `provisionable` passes.
+`osnr_margin` is still red on the Paris to Madrid deficit, as it is on every
+branch. That red is the shipped finding above, not anything this branch did.
+
+:::note
+
+**A branch only runs those checks if it exists in Git as well.** The checks, the
+generator and the artifact definitions all live in this repository, so Infrahub
+needs a matching Git branch to read them from. `infrahubctl branch create`
+defaults to `--no-sync-with-git`, and a proposed change from a branch made that
+way runs the two built-in validators and nothing else. That is why both branches
+on this page are created with `--sync-with-git` before anything is loaded onto
+them. `invoke demo-setup` and `invoke branch-create` do not pass the flag, so a
+branch either of them makes on its own carries data only.
+
+:::
+
+## The refusal that blocks the merge
+
+```bash
+set -a && source .env && set +a
+uv run infrahubctl branch create oeo-refused --sync-with-git
+uv run infrahubctl object load demo/06_mad_waw_16qam.yml --branch oeo-refused
+uv run invoke demo-provision --service svc-mad-waw-400g --branch oeo-refused
+```
+
+The first line exports `.env` for the shell. `infrahubctl` resolves the address
+from that file but never the token, and the invoke tasks are the ones that pass
+both.
+
+Madrid to Warsaw is 2970 km over four sections, and no single wavelength closes
+it on any of the ten modes in the catalog. The loaded file puts a regenerator
+at each of the three sites on that route where one could go. All three splits
+are refused for optical budget, and one run reports all three:
+
+```bash
+uv run invoke check --name provisionable --branch oeo-refused
+```
+
+```text
+svc-mad-waw-400g cannot be provisioned and was refused for budget: neither a
+direct wavelength nor a chain serves this route. Direct:
+oms-par-mad|oms-par-fra|oms-prg-fra|oms-prg-waw closes on no mode: best margin
+-0.021 dB on DP-QPSK 128GBd 400G. Chain:
+oc-ch070-mad-par|oeo-par-01|oc-ch070-par-waw does not close: segment 1 -0.535
+dB, segment 2 -2.439 dB. It has not been accepted, so this branch does not
+merge. Fix the network or the request, or set refusal_accepted on the service to
+keep the refusal on the record
+```
+
+Open a proposed change from `oeo-refused` and that sentence is what a reviewer
+sees. A check that logs an error means the change cannot be merged. `log_error`
+blocks and `log_info` annotates, and there is no `log_warning` in between to
+soften a refusal with. The branch merges once somebody fixes the route or sets
+`refusal_accepted` on the service, which puts the decision on the record rather
+than passing quietly.
+
+`provisionable` is registered with no targets, which makes it global: it judges
+every service on the branch rather than the one you edited. A service nobody
+touched can be the one that blocks your merge.
+
+Two other checks are red on this branch, and neither of them is the point.
+`osnr_margin` fails on the Paris to Madrid deficit that sits on every branch,
+and `channel_collision` fails because the three regenerator wavelength pairs
+this file loads overlap in spectrum on purpose.
+
+<figure className="doc-figure">
+  <a href={refusal} target="_blank" rel="noopener noreferrer">
+  <img
+    src={refusal}
+    alt="The svc-mad-waw-400g service in Infrahub with status Rejected, a rejection code of Optical budget, the full rejection detail naming both the direct route and the regenerator chain that failed, and Refusal Accepted set to false."
+  />
+  </a>
+  <figcaption>
+
+  The same fields as the provisioned service, filled in the other direction. The
+  last row is the one that matters: nobody has accepted this refusal, so it
+  blocks.
+
+  </figcaption>
+</figure>
+
+<figure className="doc-figure">
+  <a href={blocked} target="_blank" rel="noopener noreferrer">
+  <img
+    src={blocked}
+    alt="The Checks tab of a proposed change in Infrahub, headed Admin wants to merge oeo-refused into main, listing sixteen validators. Summary rings across the top read Artifact, Data, Generator, Repository and Schema in green and User in red. Thirteen rows carry a green tick; three carry a red warning triangle: Check: provisionable, Check: channel_collision and Check: osnr_margin."
+  />
+  </a>
+  <figcaption>
+
+  The merge held shut. Sixteen validators ran; `provisionable` is the one this
+  page is about. `osnr_margin` is the shipped Paris to Madrid deficit, and
+  `channel_collision` fires because this scenario overlaps three regenerator
+  pairs in spectrum on purpose.
+
+  </figcaption>
+</figure>
+
+## Clean up
+
+```bash
+uv run invoke demo-clean --branch provision-ber-ams-400g
+uv run invoke demo-clean --branch oeo-refused
+```
+
+The default branch is back to the state it shipped in: the plant, no services,
+and the OSNR check still failing on Paris to Madrid. Every service you
+provisioned lived on a branch, which is the point.
+
+## Where to go next
+
+- [What this demo shows of Infrahub](./what-this-shows.mdx) lists each Infrahub
+  capability the demo exercises, names the scenario that shows it, and says
+  plainly which capabilities the demo does not touch.
+- [Provisioning scenarios](./provisioning-scenarios.mdx) walks the Berlin to
+  Amsterdam run in full, then puts a second service on a corridor that has run
+  out of spectrum and shows why one closes and the other does not.
+- [Loadable scenarios and the
+  runbook](./loadable-scenarios.mdx#two-loadable-scenarios-for-the-regenerator)
+  carries the fix for Madrid to Warsaw: the same route closes as two segments
+  once one more wavelength pair arrives at a lower modulation order.

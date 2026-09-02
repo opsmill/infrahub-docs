@@ -1,0 +1,530 @@
+---
+title: Loadable scenarios and the runbook
+---
+
+# Loadable scenarios and the runbook
+
+Three pairs of scenarios and one single, all loaded by hand rather than driven by
+an invoke task, then the runbook that walks the whole demo in narrative order,
+then how to put the default branch back. Every number below is produced by the
+engine and asserted by a unit test.
+
+The [demo guide](./demo-guide.mdx) carries the run order and links the other
+scenario pages.
+
+## Two loadable scenarios for the ODU layer
+
+Both are scenario input under `demo/`, loaded by hand onto a branch rather than
+run as an `invoke` task. They can share one branch because they touch no common
+wavelength.
+
+```bash
+set -a && source .env && set +a   # infrahubctl needs the token in the environment
+uv run infrahubctl branch create odu-demo
+uv run infrahubctl object load demo/04_odu_ten_in_one.yml --branch odu-demo
+uv run infrahubctl object load demo/05_odu_mixed_fill.yml --branch odu-demo
+```
+
+**`demo/04_odu_ten_in_one.yml`, ten circuits in one wavelength.** Provision
+`svc-lon-mil-sdh-01` through `-10` and each maps into an `ODU2` of 8 slots that
+grooms into the same `ODU4` line container. Ten eights are eighty, so the tenth
+takes it to 80 of 80 and none of the ten lights a wavelength of its own.
+`svc-lon-mil-sdh-11` is then **refused**, reason `no-slots`, naming the container
+it did not fit with both slot figures and then saying that no wavelength could be
+lit either. Grooming is tried first and lighting second, so the file has to close
+both escapes. It spends the last usable block on `oms-fra-mil`, leaving
+532,400 MHz in 29 blocks. The widest of those, 38,000 MHz, is narrower than the
+44,400 MHz the narrowest mode in the catalog occupies.
+
+**This one ends in an accepted refusal too.** The file carries
+`refusal_accepted: true` on `svc-lon-mil-sdh-11` and on none of the ten that
+provisioned. `provisionable` reads the refusal, sees it signed for and
+passes. The scenario's point is that grooming is tried before lighting and a
+refusal has to close both escapes, and none of that needs a red pipeline. The
+flag also survives the generator: a rerun that refuses the service again leaves
+the signature alone, and only the path where the service actually provisions
+clears it.
+
+The band split on that branch is `odu4` 5, `full` 1, `no-odu` 15. Only
+`oms-ams-lon` turns red, and the two other sections the corridor crosses stay
+green because they still carry empty `ODUC4` wavelengths at 320 free.
+
+**`demo/05_odu_mixed_fill.yml`, every band at once.** No service and no generator
+run. It writes client containers directly, spread so that at least one section
+lands in each of the five bands. The measured split is `odu4` 2, `odu2` 1,
+`odu0` 1, `full` 1, `no-odu` 16, over 21 sections. Load it, fetch `odu-map` from any PoP, and
+the legend can be read against the picture.
+
+**Read the map, then check it.** Two minutes, and it is the step that says whether
+the drawing works without its author standing next to it. Give someone the
+rendered `odu-map` and nothing else, and ask for two lists: the sections that can
+still take a 100G circuit, and the sections where nothing fits. Both come off the
+colours, green for the first and red for the second. Then check the answer against
+the containers on the branch rather than against the map:
+
+```bash
+uv run invoke check --name container_capacity --branch odu-demo
+```
+
+The summary line counts parents that fit, parents with no known figure and
+overfilled ones. Those counts come from the same slot table the map coloured
+itself with. A reader who names a green section the containers say is full has
+found a real disagreement. There is nowhere for one to hide: the map, the check
+and the generator all call one implementation of the capacity rule.
+
+## Two loadable scenarios for the regenerator
+
+Both are scenario input under `demo/`, loaded by hand, and they are a before and
+after. They need **two branches**, because the point is the comparison: one
+branch keeps the refusal, and the other is the proposal a reviewer holds against
+it.
+
+```bash
+set -a && source .env && set +a   # infrahubctl needs the token in the environment
+uv run infrahubctl branch create oeo-refused
+uv run infrahubctl object load demo/06_mad_waw_16qam.yml --branch oeo-refused
+uv run invoke demo-provision --service svc-mad-waw-400g --branch oeo-refused
+
+uv run infrahubctl branch create oeo-closed
+uv run infrahubctl object load demo/06_mad_waw_16qam.yml --branch oeo-closed
+uv run infrahubctl object load demo/07_mad_waw_qpsk.yml --branch oeo-closed
+uv run invoke demo-provision --service svc-mad-waw-400g --branch oeo-closed
+```
+
+**`demo/06_mad_waw_16qam.yml`, three regenerators and three refusals.** Madrid
+to Warsaw is 2970 km over four sections, and no single wavelength closes it on
+any of the ten modes. The best is -0.021 dB at DP-QPSK 128GBd 400G. The file
+puts an `OtnOduSwitch` at each of the three sites on that route where one could
+go, `oeo-par-01`, `oeo-fra-02` and `oeo-prg-01`, each holding the wavelength
+pair its split needs. All three splits are **refused**, reason `budget`: Paris
+returns -0.535 and -2.439 dB, Frankfurt -2.755, Prague -4.004. One run reports
+all three.
+
+The two later splits show one figure each because the generator stops budgeting a
+chain at its first failing segment. A verdict is a conjunction, so the second half
+cannot rescue the first and computing it would only produce a number nobody may
+act on. Both halves of all four attempts are in the
+[link budget](./link-budget.mdx#madrid-to-warsaw-where-one-regenerator-is-not-enough)
+table, measured segment by segment.
+
+That refusal is the scenario and not a fault in the file. A route's verdict is a
+conjunction over its segments, so one half short of OSNR refuses the whole
+circuit however much margin the other half has.
+
+**This scenario ends in a blocked merge, and it is the only one that does.**
+Nothing in `demo/06_mad_waw_16qam.yml` sets `refusal_accepted`, so a proposed
+change from `oeo-refused` goes red. Run the check and read the answer:
+
+```bash
+uv run invoke check --name provisionable --branch oeo-refused
+```
+
+```text
+svc-mad-waw-400g cannot be provisioned and was refused for budget: neither a
+direct wavelength nor a chain serves this route. Direct:
+oms-par-mad|oms-par-fra|oms-prg-fra|oms-prg-waw closes on no mode: best margin
+-0.021 dB on DP-QPSK 128GBd 400G. Chain:
+oc-ch070-mad-par|oeo-par-01|oc-ch070-par-waw does not close: segment 1 -0.535
+dB, segment 2 -2.439 dB. It has not been accepted, so this branch does not
+merge. Fix the network or the request, or set refusal_accepted on the service to
+keep the refusal on the record
+```
+
+The service, the code and the detail are all in the one message, because a
+proposed change shows a reader this line and nothing else. The same run adds
+`Judged 1 service(s). 1 refused and unaccepted, 0 refused with no readable code,
+0 accepting a refusal that does not exist, 0 refused and signed for, 0 carrying
+an optical path.`
+
+Every other refusal in this guide is signed for. This one is deliberately
+not, so the gate is seen firing at least once.
+`tests/unit/test_demo_scenarios.py::test_madrid_to_warsaw_signs_for_nothing_so_one_scenario_still_blocks`
+fails if somebody adds the flag here, because a feature every scenario accepts
+its way past is a feature nobody watching the demo ever sees.
+
+Two other checks are red on this branch for reasons that predate the gate.
+`osnr_margin` fails on a Paris to Madrid deficit that is on every branch
+including the default one. `channel_collision` fails because the three
+regenerator wavelength pairs this file loads overlap in spectrum on purpose.
+Neither is `provisionable`, and neither is this feature's doing.
+
+**`demo/07_mad_waw_qpsk.yml`, the mode that finishes the job.** One more
+wavelength pair on the same Frankfurt split, at DP-QPSK 128GBd 400G, on
+`oeo-fra-03`. No new site, no new section, no edited margin. The service then
+provisions as two segments:
+
+```text
+no direct wavelength serves
+oms-par-mad|oms-par-fra|oms-prg-fra|oms-prg-waw, so it takes the chain
+oc-ch073-mad-fra|oeo-fra-03|oc-ch073-fra-waw in 2 segments regenerated at
+oeo-fra-03 at Frankfurt, 2970 km, segment 1 +2.745 dB, segment 2
++5.740 dB, 14558.963 us including the framing delay
+```
+
+Because `06` is loaded underneath, the same run still refuses all three 16QAM
+splits and says so. So one provisioning run tells the whole story: the fix for
+this route is a regenerator **and** a mode change, and three attempts at the
+regenerator alone were not enough. The [link budget](./link-budget.mdx#a-regenerated-circuit-and-the-two-things-it-costs)
+page has the table and what a chain costs.
+
+**This scenario refuses nothing, and it is the trap in the pair.** The run logs
+three discarded 16QAM splits. A gate reading the log would block a branch on
+which the service ended up fine. It reads the node instead:
+`svc-mad-waw-400g` on `oeo-closed` is `active`, carries two path segments, and
+holds no reason code, no detail and `refusal_accepted` false. `provisionable`
+passes, and it is measured rather than argued.
+`tests/unit/test_demo_scenarios.py::test_the_qpsk_fix_accepts_nothing_because_it_refuses_nothing`
+holds the file to it, because a signature here would be one on a refusal that
+does not exist, which is its own error.
+
+`channel_collision` is red on `oeo-closed` for the same reason it is red on
+`oeo-refused`: `06` is loaded underneath and its wavelength pairs overlap. That
+is the branch below, not the fix on top of it.
+
+**Why `oeo-fra-03` and not `oeo-fra-02`.** One device terminating all four
+Frankfurt wavelengths is a valid plant and it changes the answer, which was
+measured. With the 16QAM pair and the QPSK pair on one device, the generator
+takes the mixed cover and closes at +2.745 and +0.240 dB. Both halves close, so
+it is a real circuit, and it is a poorer demonstration. The second half survives
+on a quarter of a decibel, and a reader is left thinking the modulation mattered
+on one side only. A junction needs one device terminating both of its
+wavelengths, so keeping the QPSK pair on its own device makes that cover
+unavailable.
+
+## Two loadable scenarios for declared diversity
+
+These two share **one** branch, because the point is one run reporting a
+satisfied promise and a broken one side by side.
+
+```bash
+set -a && source .env && set +a   # infrahubctl needs the token in the environment
+uv run infrahubctl branch create diversity-demo
+uv run infrahubctl object load demo/08_diversity_mil_feeds.yml --branch diversity-demo
+uv run infrahubctl object load demo/09_diversity_fra_feeds.yml --branch diversity-demo
+
+# all four members, because a member with no route is undetermined, not a pass
+for s in svc-mil-feed-vie-100g svc-mil-feed-gva-100g \
+         svc-fra-feed-ams-100g svc-fra-feed-par-100g; do
+  uv run invoke demo-provision --branch diversity-demo --service "$s"
+done
+
+uv run invoke check --name diversity --branch diversity-demo
+```
+
+**`demo/08_diversity_mil_feeds.yml`, a promise that holds.** Milan's two
+northern feeds arrive through different trenches. Vienna to Milan takes
+`oms-vie-mil`, whose ducted span sits in `cd-mil-northeast`, and Geneva to Milan
+takes `oms-gva-mil`, in `cd-mil-northwest`. No conduit is on both routes, so the
+check passes. It passes because the routes are disjoint and **not** because
+nobody asked, which is the distinction the file exists to draw. A satisfied
+requirement and an absent requirement both look like a green check, and only one
+of them is worth anything.
+
+**`demo/09_diversity_fra_feeds.yml`, a promise that does not.** Amsterdam to
+Frankfurt and Paris to Frankfurt are different cities on different sections, and
+both enter Frankfurt through `cd-fra-north`. The check **fails**, which is the
+expected result:
+
+```text
+svc-fra-feed-ams-100g and svc-fra-feed-par-100g are both in diversity
+group dg-frankfurt-feeds and their routes share cd-fra-north. One cut in
+that duct takes both, so the diversity this group declares does not hold
+```
+
+With both files loaded the same run adds `Checked 2 diversity group(s) over 4
+routed service(s). 1 pair(s) share a conduit against a declaration and 0
+member(s) have no route yet. Services declaring no group are not judged here.`
+The Milan pair is judged and passes in the same breath as the Frankfurt pair is
+judged and fails. The last sentence is the check saying out loud what it did
+not look at.
+
+Run the same check against the `demo` branch and it reports `PASSED` in silence.
+Those five services share four ducts between them, which the exposure report
+lists in scenario seven. None of them declared a group, so this check has nothing
+to say about any of it.
+
+**Provision before checking.** A member with no route yet is reported as
+undetermined, and undetermined is not a pass. Running the check against one
+provisioned circuit proves nothing about the pair.
+
+## One loadable scenario for the missing monitor
+
+A single rather than a pair, because there is no second file worth reading beside
+it. The other scenarios on this page load something the network then refuses.
+This one loads a record an operator would sign off on, and the fault is that
+something else was never written. Deleting the file is the whole of the fix, so
+there is no "after" half to compare against.
+
+```bash
+set -a && source .env && set +a   # infrahubctl needs the token in the environment
+uv run infrahubctl branch create monitor-gap
+uv run infrahubctl object load demo/10_amplifier_without_monitor.yml --branch monitor-gap
+uv run invoke check --name monitor_completeness --branch monitor-gap
+```
+
+**`demo/10_amplifier_without_monitor.yml`, a stage nobody can measure.** One
+`OtnAmplifier`, `amp-ham-ber-11`, written in the same fields as the 306 the
+dataset ships: every mandatory attribute set, every bound respected, no site
+because an amplifier hut is not a PoP. **The load succeeds**, and the success is
+the scenario. What is missing is an `OtnAmplifierMonitor` among its ports, and no
+constraint in `schemas/` can refuse that. A schema constrains what is written, so
+it cannot notice a gap. `ports` peers the generic `OtnGenericPort` as well, and
+Infrahub cannot filter a relationship to a generic by the kind of its peers, so
+the schema has no way to say "at least one of these ports is a monitor" even in
+principle.
+
+The check **fails**, with exactly one finding:
+
+```text
+amp-ham-ber-11 is an OtnAmplifier and carries no OtnAmplifierMonitor, so nothing
+can compare its configured gain against what it is delivering. The drift report
+skips a stage with no monitor rather than reporting it
+```
+
+The message names what stops working and not only what is absent. A reader who
+meets "no monitor" has to work out whether that matters; a reader who meets this
+one already knows that the gain drift report is now quietly one stage short.
+
+The same run says what it counted:
+
+```text
+Monitor coverage: 306/307 amplifiers, 9/9 Raman pumps, 59/59 transponders,
+16/16 multiplexers, 42/42 ROADM degrees. Routers, patch panels and ODU switches
+carry no monitor and are not judged here
+```
+
+Per kind rather than as one total, because the totals differ by two orders of
+magnitude and 306 covered amplifiers would hide nine uncovered Raman pumps inside
+a single percentage. The last sentence is the check naming the boundary of what
+it judged, so a reader is not left inferring it from silence. Run the same check
+against the default branch and the first figure reads 306/306 and the opening
+word changes to `Monitor coverage complete`.
+
+`59/59 transponders` counts monitors, not light. Sixteen of those fifty-nine
+monitors sit on a transponder with no wavelength on either line port, and each
+reports loss of signal: received power at the floor of its range, and no OSNR,
+Q factor, dispersion or differential group delay. Before this dataset moved,
+every receiver reported the same healthy 25.1 dB whether or not anything was
+lit. This check has nothing to say about that either way. It asks whether a
+device carries a monitor, and a monitor honestly reporting darkness is covered.
+[Concepts](./concepts.mdx) says why eight PoPs terminate nothing.
+
+**The new amplifier is in no section chain, and that is deliberate.**
+`oms-ham-ber` has four spans and five amplifiers in each direction, because the
+budget engine pairs amplifier k with span k and puts a pre-amplifier after the
+last span. A sixth amplifier on a four-span section raises before a decibel is
+computed, so `osnr_margin` would turn red on a section this scenario has nothing
+to say about, and the branch would carry two failures with only one of them the
+point. The check does not need the relationship: it asks whether a device carries
+a monitor, and that question never goes through a section.
+
+**Negative result: no other check moves on this branch.**
+`channel_count_consistency` still passes, because an amplifier lights no
+wavelength and no channel count changes. `container_capacity`, `diversity` and
+`provisionable` see no service and no container. A check that fired on an
+unrelated change would be a check nobody reads twice.
+
+```bash
+uv run invoke demo-clean --branch monitor-gap
+```
+
+## The runbook
+
+About thirty minutes, one branch until step 12, in narrative order.
+
+**Setup, once.** The object load takes a few minutes; start it before the
+audience arrives.
+
+```bash
+uv run invoke start
+uv run invoke demo-setup
+```
+
+Every step below runs on the `demo` branch and none of them needs you to say
+so. Each one ends by naming the step that follows, and a step run out of order
+says which task to run first instead of failing inside the client. To watch the
+whole thing without typing between steps:
+
+```bash
+uv run invoke demo
+```
+
+**1. The network, on one page.** Two minutes, in the browser, before any
+command. Open **OTN Sites**, pick Frankfurt, open its **Artifacts** tab, and
+open `network-map`.
+
+Fourteen PoPs in their real positions, 21 routes coloured by how much OSNR
+margin a 400G `DP-16QAM` carrier has on each. Point at the red route into Madrid, then at
+the chip on Frankfurt to Milan. Several of the findings the next twelve steps
+compute are already on this drawing, which is what makes it worth two minutes.
+The [network map](./network-map.mdx) page has the rest of the legend.
+
+`odu-map` is on the same Artifacts tab and is mostly grey here. Say what it is,
+leave it closed, and come back to it at step 12.
+
+**2. What is in the network, and what is left.** Two minutes.
+
+```bash
+uv run invoke demo-capacity
+```
+
+Cover the 4,134,400 of 4,800,000 MHz first, then the eight-against-one gap
+between free spectrum and usable anchors. Then the sixteen empty sections, and
+the difference between a section's free spectrum and a route's.
+
+**3. Where the cheap parts reach.** Two minutes. Run it before anybody asks.
+
+```bash
+uv run invoke demo-reach
+```
+
+Zero of twenty-one. Pause here: this is the step where the model returns an
+answer nobody wanted, computed from data rather than assumed.
+
+**4. Ask for a service and watch it choose.** Four minutes.
+
+```bash
+uv run invoke demo-provision
+```
+
+Six candidate routes, Hamburg wins on fewest sections then margin. Read the
+discarded ones out loud: each one names the route, the mode, the margin and the
+reason it lost.
+
+**5. Provision the rest.** One minute, and it is setup for what follows.
+
+```bash
+uv run invoke demo-provision-all
+```
+
+Two groom and two light, in that order, every time. `svc-fra-mil-ai-400g` and
+`svc-ams-mil-ai-400g` take tributary slots in wavelengths that are already up,
+`oc-ch047-fra-mil` and `oc-ch002-ams-mil`. Then `svc-fra-gva-hpc-400g` and
+`svc-vie-mil-hpc-400g` find no line container with room and each light channel 2,
+on `oms-fra-gva` and `oms-vie-mil`. Channel 2 and not channel 1, because a
+79,600 MHz carrier centred on channel 1 falls off the bottom of the band. Say the
+grooming out loud: it is the ODU layer choosing not to buy spectrum, and it is why
+the cut in step 7 drops seven wavelengths and not eight.
+
+**6. Trace one of them.** Two minutes.
+
+```bash
+uv run invoke demo-trace
+```
+
+Thirty-five hops, router to router. Point at the conduit column; it sets up
+step 8.
+
+**7. Cut the fiber.** Three minutes. Leave room for questions on this one.
+
+```bash
+uv run invoke demo-impact
+```
+
+Seven wavelengths, 2.8 Tbps, one AI service, one customer, and six
+wavelengths the model holds with no customer behind them. Then the duct
+breakdown, and the fact that `cd-fra-north` also carries Paris to Frankfurt.
+
+Then mistype it, deliberately:
+
+```bash
+uv run invoke demo-impact --section oms-ams-frs
+```
+
+It refuses. An impact tool that answers "no impact" to a typo is worse than one
+that answers nothing.
+
+**8. Who is not diverse.** Two minutes.
+
+```bash
+uv run invoke demo-srlg
+```
+
+Frankfurt to Geneva and Amsterdam to Milan, no shared section, one shared duct.
+
+**9. The latency budgets.** Two minutes.
+
+```bash
+uv run invoke demo-latency
+```
+
+Then the electronics column, and the sentence about there being no trade-off.
+
+**10. The one service that states its handover.** Two minutes.
+
+```bash
+uv run invoke demo-infiniband
+```
+
+Frankfurt to Prague at 212 Gbps with `client_signal: IB-HDR-4X`, and the
+container comes back `ODUflex`. Drop that one line from the file and the same
+request provisions `400GBASE-FR4`, with no error. The rate rule picks only
+from catalog rows marked `auto_selectable`, which the two InfiniBand rows are
+not.
+
+212 Gbps and not 200: HDR signals at 212.5, which is 170 tributary slots, and a
+200G wavelength offers 160. The request lands on DP-16QAM 64GBd 400G, whose
+`ODUC4` offers 320, so the `ODUflex` takes 170 and leaves 150 free.
+
+**11. Congestion in two layers.** Three minutes. Fill both layers of the
+Frankfurt to Milan corridor, then ask twice.
+
+```bash
+uv run invoke demo-refusal
+```
+
+The 400G is refused on slots: it needs a whole ODUC4 and the roomiest wavelength
+there has 240 of 320 free. The 100G then provisions on the same corridor without
+lighting anything. 532,400 MHz free in 29 blocks none of which reaches 44,400
+says no new wavelength can be lit; it says nothing about room inside the ones
+already lit.
+
+**12. The other map, and one question off it.** Three minutes, in the browser.
+This one wants its own branch, because the published band split was measured on a
+branch holding the dataset and this scenario and nothing else. `odu-demo` from
+earlier in this page already carries `04_odu_ten_in_one.yml` as well, so this
+step uses a separate name:
+
+```bash
+set -a && source .env && set +a   # infrahubctl needs the token in the environment
+uv run infrahubctl branch create odu-mixed-fill
+uv run infrahubctl object load demo/05_odu_mixed_fill.yml --branch odu-mixed-fill
+```
+
+Open `odu-map` on any PoP on `odu-mixed-fill`. Same coastline, same fourteen discs,
+different question. Ask the room for two lists off the colours alone: which
+sections can still take a 100G circuit, and which can take nothing. Green is the
+first, red is the second, and the panel's FITS column spells both out. Then check
+the answer against the containers instead of against the map:
+
+```bash
+uv run invoke check --name container_capacity --branch odu-mixed-fill
+```
+
+The two cannot disagree. The map, the check and the provisioning generator
+all call one implementation of the capacity rule. Finish on the grey: sixteen
+sections carry no wavelength at all, and the map says "not known" about them rather
+than "available".
+
+**13. The branch.** One minute. Open the proposed change and show the diff and
+the checks. Everything in the last thirty minutes happened on a branch, the
+default branch is untouched, and the checks decide whether any of it merges.
+
+## Clean up
+
+```bash
+uv run invoke demo-clean --branch provision-ber-ams-400g
+uv run invoke demo-clean --branch probe
+uv run invoke demo-clean --branch odu-demo
+uv run invoke demo-clean --branch odu-mixed-fill
+uv run invoke demo-clean --branch oeo-refused
+uv run invoke demo-clean --branch oeo-closed
+uv run invoke demo-clean --branch diversity-demo
+uv run invoke demo-clean --branch monitor-gap
+uv run invoke demo-clean
+```
+
+The default branch is back to the state it shipped in: the fourteen PoPs and
+their plant, the customer campus on the end of its coarse tail, no services, and
+the OSNR check still failing on Paris to Madrid.
+Every service in this guide was provisioned on a branch, which is the point.

@@ -1,0 +1,244 @@
+---
+title: Install and load the demo
+---
+
+# Install and load the demo
+
+## Prerequisites
+
+- Docker with Compose v2
+- [uv](https://docs.astral.sh/uv/)
+- About 8 GB of free memory for the Infrahub stack
+
+## Start the stack
+
+```bash
+git clone https://github.com/opsmill/infrahub-demo-otn
+cd infrahub-demo-otn
+cp .env.example .env
+uv sync
+
+uv run invoke init
+```
+
+`invoke init` destroys any existing stack, starts a new one, loads the schema,
+the menu and the dataset, and registers this repository. From nothing to a demo
+you can browse, in one command.
+
+Registration is the step that turns the proposed-change pipeline on. It creates
+the check definitions, the transforms, the artifact definitions and the
+generator definition from `.infrahub.yml`, so a change you open gets checked and
+every PoP carries a rendered map. Without it Infrahub holds the data and none of
+the automation. `uv run invoke load-repository` runs it on its own against a
+stack you already have.
+
+The first step builds a custom Infrahub image. The build installs the
+`infrahub_demo_otn` package into the image's virtualenv so checks, generators
+and transforms can all import it. `invoke start` on its own builds the image
+only when it is missing; pass `--rebuild` to force it.
+
+Infrahub is then available at
+[http://localhost:8000](http://localhost:8000).
+
+`uv run invoke list` prints every task. `uv run invoke info` reports the
+address, the image, whether the stack answers and what is loaded on a branch.
+
+## Verify the shared package reached the worker
+
+```bash
+uv run invoke check --name units_import
+```
+
+This check fails by name if the worker image loses the shared package. An
+opaque `ModuleNotFoundError` in an unrelated generator is much harder to
+diagnose.
+
+To confirm inside the container itself:
+
+```bash
+docker exec infrahub-demo-otn-task-worker-1 /.venv/bin/python \
+  -c "from infrahub_demo_otn.units import db_to_mdb; print(db_to_mdb(0.21))"
+```
+
+Expected output is `210`.
+
+## Load the schema
+
+`invoke init` already did this. To load the schema on its own, onto a branch:
+
+```bash
+uv run invoke load-schema --branch main
+```
+
+Or check the schema files offline, with no running Infrahub:
+
+```bash
+uv run invoke schema-check
+```
+
+:::note
+
+`infrahubctl`, the tool these tasks call, reads the address from `.env` but
+**not** the API token, so an unauthenticated read succeeds while the first write
+fails with `Authentication failure`. Every invoke task passes both, through the
+subprocess environment rather than on the command line. That is the reason to run
+the task rather than the tool.
+
+:::
+
+## Load the data
+
+The schema gives you 44 empty kinds. This step fills them with a European core
+network: 15 sites, of which 14 are PoPs, 21 ROADM-to-ROADM sections and 133 fiber
+spans. On that plant sit 441 devices, 1488 ports, 40 pre-provisioned wavelengths
+and one line container on each of them.
+
+Which branch to load onto depends on what is already there.
+
+- **A stack `invoke init` has only now created** holds nothing, so `main` is
+  safe, and loading onto it makes the demo ready to browse the moment the load
+  finishes. That is what `init` does.
+- **A stack that already holds objects** gets the load on a branch. A bad bulk
+  load on the default branch means deleting objects one at a time; a bad load
+  on a branch is one delete.
+
+For the second case:
+
+```bash
+uv run invoke branch-create --name geant
+uv run invoke load --branch geant
+```
+
+The object load takes a few minutes for 2342 objects. Files load in sorted
+order and that order matters, which is why they have numeric prefixes. The
+catalogs load first, then tags, sites, conduits, devices, ports, spans, sections,
+carriers and the line containers riding them. The O-E-O devices load last,
+because each names the wavelengths it terminates. A reference has to resolve
+against something already loaded.
+
+### Check the load
+
+```bash
+cat scripts/geant_manifest.json
+```
+
+That file is written by the generator and is the only place the per-kind counts
+live. The unit tests and the CI integration test read it directly. The figures
+on this page are copied by hand and then checked against it by
+`tests/unit/test_doc_claims.py`, which reads this page and fails when a number
+here stops matching the data.
+
+Two queries at `http://localhost:8000/graphql/geant`:
+
+```graphql
+# Every element the link budget has to sum, plus the three ODU switches,
+# which inherit the same generic. Returns 554.
+{ OtnOpticalElement { count } }
+
+# Carriers on the busiest corridor. Returns 40, holding 4,134,400 MHz
+# of the 4,800,000 MHz the C-band gives that section.
+{ OtnOpticalCarrier(sections__name__value: "oms-fra-mil") { count } }
+```
+
+Routers are absent from the first count on purpose. Light terminates at a
+router, so a router adds no insertion loss and does not inherit the optical
+element generic.
+
+### Regenerating the data
+
+The object files under `objects/1*.yml` are **output**. They come from a seed at
+the top of `scripts/generate_geant_dataset.py`: a site table, a section table, a
+conduit table and a carrier plan. Change a number there and re-run:
+
+```bash
+uv run python scripts/generate_geant_dataset.py
+uv run pytest tests/unit -q
+```
+
+To check the committed files still match the seed without writing anything:
+
+```bash
+uv run python scripts/generate_geant_dataset.py --check
+```
+
+Editing a file under `objects/` manually is not supported. Each generated file
+says so in its header and the next `--check` fails.
+
+### What the data says, including the parts that are zero
+
+Eight results in this dataset are negative, and the demo reports each one.
+
+| Finding | Why it matters |
+| --- | --- |
+| **400ZR and 800ZR are unusable network-wide.** Both quote 120 km of reach. The shortest section is Amsterdam to Brussels at 220 km. | The answer a planner wants before ordering pluggables, and it is visible only because reach is modelled data rather than an assumption. |
+| **Madrid has no diverse route.** It is single-homed on Paris. | MareNostrum 5 cannot survive a single fiber cut, and the diversity report says so rather than reporting nothing. |
+| **Sixteen of the twenty-one sections carry no wavelength.** | Deliberate. The 40 carriers are concentrated on one corridor, because one congested corridor is what the capacity-against-latency scenario needs. An evenly loaded network demonstrates nothing. |
+| **Twenty-five of the twenty-six free blocks on Frankfurt to Milan fit no mode at all.** The narrowest mode in the catalog, DP-QPSK 32GBd 100G, occupies 44,400 MHz. Twenty-one blocks are 20,400 MHz, two are 5,600, one is 38,000 and one is 35,200. | 665,600 MHz is free and almost none of it is usable. Fragmentation is a capacity finding in its own right and a free-megahertz total hides it. See [the spectral model](./spectral-model.mdx). |
+| **Channels 1 and 96 cannot anchor a 400G carrier.** A `64 GBd` carrier occupies 79,600 MHz and a `128 GBd` one 150,000 MHz, and centring either on the first or last grid position pushes it past the band edge. | The usable anchor range narrows as the mode widens: 96 anchors at `32 GBd`, 94 at every 400G mode. The grid is not the capacity. |
+| **The width model is optimistic at `64 GBd`.** It puts a `64 GBd` carrier at 79.6 GHz against the 87.5 GHz media channel a real deployment allocates, 7.9 GHz under. | The 9.2 GHz guard band is fitted to one published anchor and checked against a second it misses. Stated rather than hidden, because it is the demo's least defensible constant. |
+| **The chromatic dispersion gate does fire, once.** Madrid to Warsaw is 2970 km, which accumulates 50,490 ps/nm against a 50,000 ps/nm tolerance at 400G. | One site pair, at the highest modulation, one percent over. A second constraint that never fires proves only that the engine has two branches. |
+| **Paris to Madrid does not close at 400G on the most spectrally efficient mode.** It is short by 0.535 dB in both directions, so the OSNR check fails on the default branch. | Deliberate, and a true finding about a 1250 km route rather than a fault in the data. The [link budget](./link-budget.mdx) page has the answers an engineer would reach for, what each costs, and why regenerating this particular route is not among them. |
+
+### The Frankfurt to Milan corridor
+
+This is the pair the AI and HPC scenario runs on: JUPITER at Frankfurt to
+Leonardo at Milan. Every number below is reproducible from the branch you
+loaded above.
+
+| | Direct | Via Geneva |
+| --- | --- | --- |
+| Length | 780 km | 990 km |
+| One-way propagation | 3819 µs | 4848 µs |
+| One-way total, with node and FEC overhead | 3824.741 µs | 4853.605 µs |
+| Spectrum in use | 4,134,400 of 4,800,000 MHz | 0 of 4,800,000 MHz |
+| Anchors left for another 400G | 1 of 96 | 94 of 96 |
+
+The detour costs **1028 µs**, which is 27 percent of the direct route's own
+delay. The budget is checked against the total, not the propagation figure, so
+against a 4 ms one-way budget the direct route passes with 175.259 µs of margin
+and the detour misses by 853.605 µs.
+
+The finding is about the corridor's future, not about today. The service fits
+right now, but only just: 665,600 MHz is free and exactly one anchor, channel 95,
+can centre a 400G carrier inside a single free block. The corridor is 86.1
+percent full and **has no latency-compatible alternative once it fills**, which
+is a capacity-exhaustion answer rather than a bandwidth one. Dividing free
+spectrum by a 79,600 MHz carrier width would have promised eight more services.
+
+Both candidate routes also leave Frankfurt through the same conduit,
+`cd-fra-south`, so a service split across the two is exposed to one backhoe
+outside the city:
+
+```graphql
+{ OtnFiberSpan(conduit__name__value: "cd-fra-south") {
+    edges { node { name { value } oms { node { name { value } } } } } }
+```
+
+### Tear the branch down
+
+```bash
+uv run invoke branch-delete --name geant
+```
+
+## Run the unit tests
+
+```bash
+uv run invoke test-unit
+```
+
+These need no running Infrahub. The link budget math is verified against
+hand-computed reference values, so it stays checkable even when the stack is
+down.
+
+## Run the linters
+
+```bash
+uv run invoke lint
+```
+
+## Tear down
+
+```bash
+uv run invoke stop      # keeps the data
+uv run invoke destroy   # deletes the volumes and everything in them
+```

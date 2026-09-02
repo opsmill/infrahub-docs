@@ -1,0 +1,546 @@
+---
+title: Developer guide
+---
+
+# Developer guide
+
+How this repository is laid out, how to change it, and how to check that you did
+not break anything.
+
+## Layout
+
+```text
+schemas/          Infrahub schema YAML. Eight files, 44 kinds.
+objects/          The GÉANT dataset plus the generator target group. Loaded by .infrahub.yml.
+demo/             Scenario input for the walkthrough. NOT loaded by .infrahub.yml.
+src/              infrahub_demo_otn: the pure Python nobody needs a server to test.
+queries/          GraphQL, one file per artifact that reads it.
+checks/           Validation that blocks a merge.
+transforms/       Reports that answer a question.
+generators/       Automation that writes objects.
+menus/            The sidebar.
+scripts/          The dataset generator and the basemap extractor.
+tests/unit/       Everything above, offline.
+tests/integration/ The same thing against a live Infrahub in a container.
+docs/             This site.
+```
+
+### `objects/` against `demo/`
+
+The distinction matters more than it looks.
+
+`objects/` is the network, plus the one object the repository configuration
+depends on. Ten of its sixteen files, the `objects/1*.yml` series, are produced
+by `scripts/generate_geant_dataset.py` from a fixed seed, guarded by
+`tests/unit/test_geant_dataset.py`, and loaded by `.infrahub.yml`. A manual edit
+to one of those fails the regenerate-and-diff test on the next run. The five
+`objects/0*.yml` catalogs are input, not output: the generator reads
+`03_optical_modes.yml` rather than writing it. Fifteen sites, of
+which fourteen are PoPs, 21 optical multiplex sections, 133 fiber spans, 12
+conduits, 441 devices, 1488 ports, 40 wavelengths, the 40 line containers riding
+them, and three O-E-O devices. Those three are last in the load order, because
+each names the wavelengths it terminates and a carrier has to exist before a
+device can point at it. The same reason put the Raman pumps in `15`.
+
+Transponders are the one device count the generator sizes per site instead of
+fixing. A PoP gets `max(2, ceil(terminations / 2))` of them and two line ports
+on each, so Milan holds 19, Frankfurt 13, and the eight PoPs that terminate no
+wavelength hold two apiece. Fifty-nine in total, 118 line ports, of which 80
+carry a wavelength and 38 are dark.
+[Concepts](./concepts.mdx) says why the spread is that wide. The per-kind counts
+live in `scripts/geant_manifest.json`, and the totals a reader sees are on
+[Installation and setup](./installation-setup.mdx), where
+`tests/unit/test_doc_claims.py` reads them back off the page.
+
+The exception is `objects/00_groups.yml`, which creates the generator target
+group that `.infrahub.yml` names twice. It is part of the configuration, not a
+fact about the network and not scenario data. A registration that does not
+create it produces a generator with no target, a pipeline that goes green, and
+no output.
+
+`demo/` is scenario input. It holds twenty-three service requests, six Raman
+pumps, three O-E-O regenerators and a fourth on the branch that closes. It also
+holds three extra wavelengths that exist to spend the last usable spectrum on
+one corridor, and twenty-two client containers that exist to make the same
+corridor full of slots. Three pairs of scenarios each demonstrate one thing
+twice.
+
+| Pair | What the two halves show |
+| --- | --- |
+| `04_odu_ten_in_one.yml`, `05_odu_mixed_fill.yml` | Ten circuits packed into one wavelength and the eleventh refused, with the refusal signed for so the branch merges; then all five [ODU map](./odu-map.mdx) bands on one branch. |
+| `06_mad_waw_16qam.yml`, `07_mad_waw_qpsk.yml` | Three regenerator sites all refused at DP-16QAM and nobody signs, so this is the one scenario whose proposed change is blocked; then the same Frankfurt split closing at DP-QPSK, which refuses nothing at all. Two branches, because the pair is a before and after. |
+| `08_diversity_mil_feeds.yml`, `09_diversity_fra_feeds.yml` | A declared diversity group that holds; then one that does not. One branch, so a single check run reports both. |
+
+None of it is a fact about the network,
+`.infrahub.yml` does not reference it, and
+`tests/unit/test_repository_config.py` asserts that it never will. Loading
+`demo/90_fra_mil_saturated.yml` with the dataset would make the published
+capacity claim of 4,134,400 MHz occupied and 665,600 MHz free false. It would
+also make every published occupancy figure for `oms-fra-mil` false at the ODU
+layer.
+
+If you are adding data, the question is which of the three it is. Facts go in
+`objects/` through the generator. Things the repository configuration names go
+in `objects/` manually. Things that exist to make a demo step happen go in
+`demo/`.
+
+### `src/infrahub_demo_otn/`
+
+| Module | Job |
+| --- | --- |
+| `units.py` | Every scale factor in the project. The only file allowed to hold one. |
+| `budget.py` | Loss, OSNR, dispersion and latency over an ordered chain, in both directions. |
+| `routing.py` | Route and mode selection. Pure functions over plain inputs. |
+| `plant.py` | GraphQL payloads into engine inputs. The adapter layer. |
+| `impact.py` | Occupancy, reach, exposure and latency verdicts. The reporting layer. |
+| `cartography.py` | Projection, framing and label placement. Geometry, no optics. |
+| `basemap.py` | Generated coastline data. Coordinates and nothing else. |
+| `containers.py` | The tributary slot table and the capacity rule. One implementation, called by the generator, the check and the ODU map. |
+| `chains.py` | The carrier cover over a section route: which wavelengths, joined at which device, make one circuit. Bounded and pure. |
+| `drift.py` | Configured gain against what each stage last reported delivering. |
+| `mapchrome.py` | What both maps draw the same way: frame, basemap, node glyphs, title block, panel rhythm. |
+| `mapengine.py` | The one drawing engine both maps run through: band classification, section ordering, layout, routes, title and panel. Generic over a section type, driven by a dialect, and unable to tell which map it is drawing. |
+| `mapdraw.py` | The network map's dialect plus `render_map`: the margin bands and their edges, the panel columns, the distance labels, the totals. |
+| `odudraw.py` | The ODU map's dialect plus `render_odu_map`: the headroom bands and their edges, the panel columns, the branch-named empty caption, and the totals rule that counts a wavelength once across the sections it crosses. |
+
+None of these imports `infrahub_sdk`. That is the rule that keeps the whole
+decision layer testable with no server running, and it is why
+`uv run invoke test-unit` finishes in a couple of seconds.
+
+The checks, transforms and generators are the layer that imports the SDK. They
+unwrap a payload, call into the modules above, and write or format the answer.
+
+The workers import this package from the image, not from the branch. There is no
+bind mount. The package is installed into the image's virtualenv, and the git
+worker that clones a branch to run a check against it still resolves
+`import infrahub_demo_otn` inside the container. A branch that edits `budget.py`
+runs the copy that was baked in. Run `uv run invoke build` and `uv run invoke
+start --rebuild` after any change under `src/`, or the check goes green against
+logic that is not on the branch.
+
+A **new module** under `src/infrahub_demo_otn/` is the sharper case, and it has
+caught this repository more than once. Until the image is rebuilt and the
+workers restart, that module does not exist for the process that has to import
+it. The repository syncs, the definition registers, the pipeline reports
+success, and every render raises `ImportError`. Rebuild first, then check that
+the import works inside the container, and treat a rendered output rather than a
+green pipeline as the evidence that it did.
+
+### Regenerating the basemap
+
+`src/infrahub_demo_otn/basemap.py` is generated. The coastlines and borders come
+from Natural Earth 1:50m, which is public domain. The script clips them to the
+window the map draws and simplifies them into Python literals:
+
+```bash
+node scripts/extract_basemap.mjs countries-50m.json src/infrahub_demo_otn/basemap.py
+```
+
+The input is the `world-atlas` release named at the top of the script. Run the
+extraction manually when the window or the source release changes, and commit
+the result. It never runs in CI, and the renderer reaches the network at no
+point: the data is already in the image by the time a map is drawn.
+
+The clip has to contain the frame the map draws, which is wider than the box the
+sites sit in: `Frame.fit` grows the short axis to the canvas aspect. A clip that
+stops inside the drawn frame paints sea where land is, with a straight vertical
+edge, and every other basemap test still passes.
+`test_the_clip_contains_the_frame_the_map_actually_draws` compares the two.
+
+### Two kinds of committed render, and only one kind may be refreshed
+
+Ten rendered SVG files are checked in. Two are illustrations and eight are test
+references. They look alike and they are opposites. Read this before touching
+any of them.
+
+| File | What it is | When it changes |
+| --- | --- | --- |
+| `docs/docs/media/network-map.svg` | The illustration on the overview and network map pages | Deliberately, when the network, the palette or the basemap changes |
+| `docs/docs/media/odu-map.svg` | The illustration on the overview and ODU map pages | On the same terms |
+| `tests/unit/fixtures/network_map_*.svg` | Four test references, invariants | Effectively never |
+| `tests/unit/fixtures/odu_map_*.svg` | Four test references, invariants | Effectively never |
+
+#### The illustrations on the documentation pages
+
+`docs/docs/media/network-map.svg` is Berlin's rendered artifact, checked in so
+the pages have a picture without a running stack.
+`docs/docs/media/odu-map.svg` is the same idea for the ODU map. Both are
+snapshots, not generated files: refresh them when the network, the palette or the
+basemap changes, by fetching the artifact off a loaded stack.
+
+```bash
+uv run invoke load-repository        # if the stack has no repository yet
+# then, from the Artifacts tab on Berlin, download network-map and odu-map and
+# save them as docs/docs/media/network-map.svg and docs/docs/media/odu-map.svg
+```
+
+#### The golden renders under tests
+
+There are eight, four per map. None is an illustration and none is fetched from
+anywhere. Each is rendered from the fixture sites and sections in
+`tests/unit/test_mapdraw.py` or `tests/unit/test_odudraw.py`, and the four cases
+per map are picked to hold down different parts of the drawing.
+
+| Fixture | What it holds down |
+| --- | --- |
+| `network_map_golden.svg` | The render that already shipped: focused on Paris, read from a named branch, so the focus ring and the provenance line in the footer are both in the bytes |
+| `network_map_no_focus.svg` | The same sections with no focus site, so the ring and its label are absent |
+| `network_map_focused_on_milan.svg` | A second focus site, so a focus wired to one node would show |
+| `network_map_unknown_margin.svg` | A section whose margin cannot be classified, gating `UNKNOWN_BAND`'s own colour and caption |
+| `odu_map_golden.svg` | The ODU render that already shipped, focused on Frankfurt |
+| `odu_map_no_focus.svg` | The same sections with no focus site |
+| `odu_map_focused_on_milan.svg` | A second focus site |
+| `odu_map_one_section_per_band.svg` | One section landing in each headroom band, `NO_ODU_BAND` included, so every band's colour and caption sit in one file |
+
+**All eight were captured before the two maps were merged onto one engine**,
+from unmodified `src/`, and watched passing against the unmodified code first.
+That ordering is the whole point: a reference taken after a move asserts only
+that the moved code matches itself. `network_map_golden.svg` was captured on the
+same terms one refactor earlier, before `mapchrome.py` was extracted from
+`mapdraw.py`.
+
+The ODU map used to have none of these. The reason given here was that the golden
+render is specifically about not disturbing an artifact that already shipped. The
+ODU map does ship, to every PoP, so the argument was followed to its conclusion
+rather than reversed. The seven missing references were captured from pre-merge
+code, before `mapengine.py` existed, and then the merge had something to fail
+against.
+
+**No fixture may be refreshed to make a failing test pass.** A failure means a
+pixel moved, which is the entire reason the files exist.
+
+So a failure here has exactly two readings, and you have to decide which:
+
+1. **A refactor moved a pixel.** The refactor is wrong. Fix the code, not the
+   file. This is the case the invariant is for, and it is what gated merging the
+   two maps into `mapengine.py`.
+2. **You changed a map on purpose.** Then refreshing is a decision, it belongs in
+   its own commit, and the commit message says what moved and why. Regenerate
+   from the fixtures rather than from a stack, one case at a time:
+
+   ```bash
+   uv run python -c "from tests.unit.test_mapdraw import regenerate; regenerate('network_map_golden')"
+   uv run python -c "from tests.unit.test_odudraw import regenerate; regenerate('odu_map_golden')"
+   ```
+
+   The case name is the fixture's file name without its suffix. The failure
+   message prints the exact command for the case that failed, so nobody has to
+   assemble it by hand.
+
+Neither kind of file is the other's substitute. The illustrations are real
+artifacts off real data and they move whenever the dataset does. The golden
+renders are fixture data and they are supposed to be boring.
+
+Determinism is asserted separately and still is: every case renders twice in one
+process and the two outputs are compared, and both maps also render their records
+in reverse order. That asks whether arrival order reaches the bytes, which is a
+different failure from a moved pixel and needs no committed file to catch.
+
+## Adding an optical element
+
+Say you want an `OtnDcm`, a dispersion-compensating module, that sits inline and
+adds loss.
+
+1. **Ask whether it needs to exist, then whether it already does.**
+   `OtnOpticalElement` may already have the attributes you need, in which case
+   a new kind adds nothing.
+2. **Add the node** to `schemas/otn_devices.yml`, inheriting `OtnGenericDevice`
+   and `OtnOpticalElement`. Generics cannot inherit generics in this version, so
+   composition happens on the concrete node.
+3. **Every quantity is a scaled integer** with the unit in the attribute name,
+   because Infrahub has no floating-point attribute kind. Loss in millidecibels,
+   length in metres, frequency in megahertz, latency in nanoseconds.
+4. **Add the scale factor to `units.py`** if it is new, with a docstring saying
+   what it is for. Writing `* 1000` anywhere else fails review. A `_display`
+   template that divides by the wrong constant fails
+   `tests/unit/test_schema_contract.py`, which reads the divisor back out of
+   every Jinja template and checks it against the attribute's unit suffix.
+5. **Add the paired `_display` computed attribute**, then add its name to
+   `EXPECTED_DISPLAY_ATTRIBUTES` in the same test. The guard is deliberately not
+   automatic: a new display attribute should be a decision, not a side effect.
+6. **Teach `plant.py` to build it** if the budget has to see it, and `budget.py`
+   to sum it. Both have exhaustive offline tests; add yours there before
+   touching the schema, not after.
+7. **Decide whether it belongs in `menus/otn.yml`.** Most new kinds do not: the
+   sidebar has thirteen leaves and everything else is reached from an object
+   page. `tests/unit/test_menu.py` asserts that every kind outside the sidebar
+   is the peer of a relationship on one inside it, so a kind with no route in
+   fails there. If it does belong in the sidebar, set `include_in_menu: false`
+   on the node too: custom menus and the auto-generated per-kind sidebar are
+   additive, so a kind in both appears twice.
+8. **Ship the documentation page in the same change.** A change is not done
+   until its page exists and the site builds.
+
+## Adding a report
+
+Ten transforms exist. An eleventh is four files:
+
+1. `queries/<name>.gql`, selecting `id` and `__typename` on the top-level nodes.
+2. A derivation in `src/infrahub_demo_otn/impact.py`, pure, with tests in
+   `tests/unit/test_impact.py`.
+3. `transforms/<name>.py` with `query = "<name>"` on the class. The query name
+   is bound there and never in the YAML: `python_transforms` forbids a
+   top-level `query:` key and the repository configuration model rejects extras.
+4. Registration in `.infrahub.yml` under `queries:` and `python_transforms:`,
+   plus a payload in `tests/unit/test_transforms.py`. That last one is not
+   optional: the test module reads the registrations and fails if a transform
+   has no payload, precisely so a new report cannot ship untested.
+
+Give it its own query. Several of the existing ten overlap heavily and none of
+them shares, because a query two artifacts share is a query neither can change.
+
+A transform that renders rather than reports puts its pure layer somewhere other
+than `impact.py`. The two maps keep their geometry in `cartography.py`, their
+primitives in `mapchrome.py` and their drawing order in `mapengine.py`. Each one
+declares what is its own alone in `mapdraw.py` or `odudraw.py`: its bands, its
+panel columns, its wording and its totals. A third map is a third dialect,
+not a third renderer. The transform under `transforms/` stays a shim that holds
+neither a colour nor a formula.
+
+## Generator tracking, and the object that has to opt out of it
+
+This one is not in the Infrahub documentation in a form that answers the question
+it raises here, it was measured against a live stack, and it decides how the
+provisioning generator is allowed to write a shared object. Read it before
+changing anything under `generators/`.
+
+**A tracking group is per target, not per definition.** The SDK names the group
+from the generator definition name plus a hash of the run's parameters. This
+repository's generator declares one parameter, `service`, so every service gets
+its own group. At the end of a run, the SDK deletes the members of *that* group
+which the run did not write again.
+
+**Every `save()` joins the group, including an upsert of an object that already
+existed.** That is the sharp edge. A line container written by two services is a
+member of both services' groups, and it survives a re-run of either one only as
+long as that run keeps writing it.
+
+**The dangerous run is not a re-provision, it is a run that stops writing.** A
+refusal, a de-provision or a re-route onto a different carrier writes no
+container, so the shared one becomes an unused member and is deleted. A sibling
+service is still holding a child under it. Measured on a live branch: the
+sibling's own container survived, because every `OtnContainer` relationship
+carries `on_delete: no-action`. What was left was a client container reporting a
+carrier with the line container it multiplexed into missing. That is worse than a
+cascade, because nothing in the sibling's history says it happened.
+
+**`save(..., update_group_context=False)` opts out completely.** The default only
+applies when the flag is left unset, and an explicit `False` skips the group
+membership write. A node that was never a member of any run's group appears in
+neither side of the delete set, so nothing can reclaim it.
+
+Two rules follow, and they are both load-bearing:
+
+- Every line container save passes `update_group_context=False`. That is what lets
+  a generator create a wavelength's container at all.
+- A line container the current run did not create is never written, not even
+  upserted. An upsert is what joins the second group.
+
+The cost is stated rather than hidden: nothing reclaims a line container when its
+last child goes away. A lit wavelength stays lit until someone turns it down,
+which is what happens in the plant too, so the demo is not lying. Untracked
+objects still accumulate on a branch that provisions and then de-provisions.
+
+One more divergence worth knowing before you treat a local run as a rehearsal.
+`infrahubctl generator service=<name>` builds its parameters as
+`{"service": name}`, while the group-driven path the pipeline takes builds
+`{"name": name}`. Different dict, different hash, different group. A local run
+cannot reclaim what a pipeline run created, so a local re-run is not a faithful
+rehearsal of the pipeline and should not be quoted as one.
+
+## Running it
+
+### The gates
+
+```bash
+uv run invoke lint          # ruff format, ruff check, mypy, yamllint, rumdl
+uv run invoke test-unit     # 855 tests, no Docker
+uv run invoke lint-prose    # vale over the documentation pages
+uv run invoke schema-check  # schema formatting, offline
+uv run invoke docs          # the documentation site
+```
+
+Each linter also has its own task: `lint-format`, `lint-ruff`, `lint-mypy`,
+`lint-yaml`, `lint-markdown`, `lint-prose`. All of them run in CI on every
+change, and none needs a running Infrahub.
+
+`lint-prose` needs `vale` on your PATH; every other task needs only `uv sync`.
+
+There is no schema-validate subcommand. `invoke schema-check` is the offline
+schema gate, and it checks formatting rather than semantics; the semantic guard
+is `tests/unit/test_schema_contract.py`.
+
+### The sixth gate, which needs Docker
+
+```bash
+uv run invoke stop              # first, and this is not optional
+uv run invoke test-integration  # about seven minutes
+```
+
+It loads this repository into a throwaway Infrahub through testcontainers and
+reads it back, which is the only layer that catches a load regression: a renamed
+attribute, an unresolvable reference, a bound violation, a relationship declared
+on both sides. None of those is visible offline.
+
+**Stop the demo stack first.** The two share no port and no database, but they do
+share the machine's memory. During feature 016 the pair exhausted the container
+runtime, the test database was killed, and twelve of thirteen tests failed for a
+reason that had nothing to do with the code. `invoke stop` keeps the volumes, so
+`invoke start` brings the demo back as it was.
+
+**Run the whole class or nothing.** The tests run in definition order and each
+depends on the state the previous one left. `pytest -k` deselects the methods
+that create the branch and load the data. Every survivor then fails with
+`Branch: geant-integration not found` at HTTP 404, which reads like a broken test
+rather than a broken selection.
+
+Feature 017 is why this section exists. `OtnOduSwitch` inherits
+`OtnOpticalElement`, the pinned list of that generic's implementers was not
+updated, and every offline gate stayed green: the schema loads, the queries pass,
+and nothing offline enumerated the live generic. Only a query against a loaded
+graph could tell. There is now a unit test pinning the same set from the YAML, so
+the next one costs a second rather than seven minutes. The integration assertion
+stays: it proves the server returns those kinds, which is a different claim from
+the schema declaring them.
+
+### Against a running stack
+
+```bash
+uv run invoke start
+uv run invoke branch-create --name probe
+uv run invoke load --branch probe
+uv run invoke info --branch probe
+```
+
+The command-line tool underneath resolves the address from `.env` but **not**
+the token, so a read succeeds and the first write fails with an authentication
+error. Every task passes both, through the subprocess environment rather than
+on the command line, so a token never reaches `ps` or your shell history.
+
+`uv run invoke list` prints all of them. The demo scenarios are tasks too:
+`demo-setup`, `demo-capacity`, `demo-reach`, `demo-provision`,
+`demo-provision-all`, `demo-trace`, `demo-impact`, `demo-srlg`, `demo-latency`,
+`demo-infiniband`, `demo-refusal` and `demo-clean`. `demo-raman` is a task as
+well, but it runs on its own branch as a comparison rather than as one of the
+nine numbered scenarios.
+
+### A fail-closed default costs a second load
+
+`OtnClientSignal.auto_selectable` decides whether the rate rule may pick a signal
+when a service names none. It defaults to **false**, and the direction is the
+point: a client signal added later is excluded from automatic selection until
+somebody decides otherwise in a diff. A default of true would admit it silently,
+which is the failure the flag replaced.
+
+**The consequence is an ordering rule.** Loading the schema onto a branch applies
+the default to every row that already exists, so every signal becomes
+non-selectable at that moment. The generator then refuses a service that states
+no client signal, correctly, until `objects/04_client_signals.yml` is loaded on
+top and restores the nine true values.
+
+```bash
+uv run infrahubctl schema load schemas/ --branch <name>
+uv run infrahubctl object load objects/04_client_signals.yml --branch <name>
+```
+
+A schema load alone is no longer enough on any branch holding client signals.
+This was measured during the migration rather than predicted: the refusal
+appeared, and it was the flag working rather than a fault.
+
+The same shape applies to any mandatory attribute given a fail-closed default on
+a kind that already has rows. The schema load is half the migration.
+
+### Registering the repository
+
+Infrahub pulls a git repository and runs its checks, transforms, generators and
+artifacts inside the proposed-change pipeline. Until a repository is registered
+none of those definitions exist, so no check runs on a change and no artifact is
+attached to an object.
+
+`uv run invoke init` registers it as its last step, so a stack built from that
+one command already has the pipeline on. To do it against a stack you already
+have:
+
+```bash
+uv run invoke load-repository
+```
+
+It exports the committed tree into `.remote/`, which the containers see as
+`/remote`. It points a `CoreRepository` at that path and waits for the import.
+Then it counts what the sync created, which is the part worth watching: a
+repository can reach in-sync and create nothing, and the count is the only thing
+that says so. On this repository it creates eight check definitions, ten Python
+transforms, three artifact definitions, one generator definition and nineteen
+GraphQL queries.
+
+Two details decide whether this works.
+
+**The location is resolved inside the container.** A path on your machine is a
+path the server cannot reach. That is why `docker-compose.override.yml`
+bind-mounts `./.remote` to `/remote` on the server and both workers. Containers
+that were running before that mount was added do not have it; `load-repository`
+checks and tells you to restart rather than leaving the import to fail.
+
+**The export is `git archive HEAD`, not a copy of your working tree.** What
+Infrahub imports is what you committed. An uncommitted change is not in the
+export, and a copy of the working tree would carry `.venv/` and
+`docs/node_modules/` into a directory the containers have to read.
+
+`tests/integration/test_infrahub.py` does the same thing a different way, with
+`GitRepo` from `infrahub_sdk.testing.repository` against the `/remote` directory
+the testcontainers stack mounts. That is what CI exercises.
+
+You can still run any artifact directly. That is faster than opening a change
+while you iterate on one:
+
+```bash
+uv run invoke check --name <name>
+uv run invoke demo-capacity          # and the other demo-* tasks
+uv run invoke demo-provision --service <name>
+```
+
+**Order matters.** Infrahub creates a matching git branch in every registered
+repository at the moment an Infrahub branch is created. A branch that already
+existed when the repository was added has no branch on the repository side, and
+the proposed-change pipeline then has no commit to run that repository's checks
+from. Register the repository first, branch second. `init` does them in that
+order; if you add the repository to a stack that already has branches on it,
+recreate those branches.
+
+`tests/unit/test_repository_config.py` checks the configuration offline, with no
+server. It parses `.infrahub.yml` with the loader the SDK ships. It then checks
+that every registered path exists, every named class is defined, every query
+binding sits on the side of the fence its artifact type requires, and every
+artifact definition names a real transform and a content type from the
+eight-value allowlist.
+
+## The rules that constrain a change
+
+**No floating point.** Infrahub's `Number` is an integer, and JSON attributes
+are not filterable, sortable or usable in computed attributes. Everything is
+scaled.
+
+**Generics cannot inherit generics.** Compose flat generics on the concrete
+node.
+
+**Every `Number` needs both bounds.** `min_value` and `max_value`, always. The
+schema contract test rejects one-sided bounds, including for the one attribute
+whose lower bound is negative.
+
+**No hand-written graph walk.** Path discovery is `client.traverse_paths()`, and
+`included_kinds` does not constrain the walk; `relationship_filter` does.
+
+**Absolute imports only.** `from infrahub_demo_otn.x import y`. Never relative,
+never through `sys.path`.
+
+**State the negative results.** If the model says 400ZR does not reach, or a
+route is too slow, the documentation says so. A demo that reports only its
+successes has not been tested against its own data.
+
+**A test earns its place if a change to a file in this repository can make it
+fail, and a change to Infrahub alone cannot.** Test the model, the data and the
+Python here. Do not test that Infrahub stores what it was told to store, that a
+pin is pinned, or that another test would fail if it were wrong. One test is a
+stated exception and says so in its own docstring. It is the integration test
+that asserts a rejected write arrives as HTTP 200 with a GraphQL `errors` array,
+because every check, generator and transform here reads its errors that way.
