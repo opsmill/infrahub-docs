@@ -439,6 +439,12 @@ const config: Config = {
             },
             {
               type: "docSidebar",
+              sidebarId: "aristaAvdSidebar",
+              label: "Arista AVD",
+              docsPluginId: "docs-arista-avd",
+            },
+            {
+              type: "docSidebar",
               sidebarId: "exporterSidebar",
               label: "Infrahub Exporter",
               docsPluginId: "docs-exporter",
