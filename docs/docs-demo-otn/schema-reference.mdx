@@ -344,10 +344,25 @@ node, the same shape `OtnMuxDemux` uses.
 | --- | --- |
 | `switching_mode` | `regenerator` carries the whole payload across without looking inside it. `cross_connect` demultiplexes to containers and regroups them, which is what lets the two segments carry different clients. |
 | `framing_latency_ns` | What the junction charges for reframing. Nanoseconds as an integer, the unit `fec_latency_ns` and `latency_ns` already use. |
-| `carriers` | The wavelengths this device terminates. Many, optional. |
+| `carriers` | The wavelengths patched to this shelf. Many, optional. Attachment, not termination: a regenerator does terminate the two it joins and a cross-connect grooms containers behind a transponder and terminates nothing, so one edge cannot mean both. `OtnLinePort.carrier` is what answers "what terminates this wavelength". |
 
 It inherits `OtnOpticalElement` because `OtnPathHop.element` peers that generic,
 and a segment's route has to be able to name the device it terminates on.
+
+**A regenerator has line-side optics, and they are where termination is read
+from.** Two `OtnLinePort` components on the shelf, one facing each segment it
+joins, each naming its wavelength through `OtnLinePort.carrier`. A regenerated
+circuit then answers the same question a direct one does: every wavelength has a
+port at each of its two ends, a transponder on the outside and the regenerator on
+the inside. `checks/carrier_termination.py` reads those ports and nothing else,
+which is why the answer is the same relationship in both cases.
+
+A cross-connect has none, and the difference is the reason the two modes are
+separate values rather than a flag. It sits at the electrical layer behind a
+transponder that has already taken the light off the fibre, so it has no
+line-side optics to give. `oxc-mil-01` is patched to 37 wavelengths that all
+terminate on Milan transponders; reading that edge as termination would make
+every one of them terminated three times.
 
 **Its insertion loss belongs to one side only.** `insertion_loss_mdb` arrives
 with the generic and applies to the **incoming** segment. The device terminates

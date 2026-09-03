@@ -90,7 +90,7 @@ the task rather than the tool.
 
 The schema gives you 44 empty kinds. This step fills them with a European core
 network: 15 sites, of which 14 are PoPs, 21 ROADM-to-ROADM sections and 133 fiber
-spans. On that plant sit 441 devices, 1488 ports, 40 pre-provisioned wavelengths
+spans. On that plant sit 441 devices, 1490 ports, 40 pre-provisioned wavelengths
 and one line container on each of them.
 
 Which branch to load onto depends on what is already there.
@@ -109,7 +109,7 @@ uv run invoke branch-create --name geant
 uv run invoke load --branch geant
 ```
 
-The object load takes a few minutes for 2342 objects. Files load in sorted
+The object load takes a few minutes for 2344 objects. Files load in sorted
 order and that order matters, which is why they have numeric prefixes. The
 catalogs load first, then tags, sites, conduits, devices, ports, spans, sections,
 carriers and the line containers riding them. The O-E-O devices load last,

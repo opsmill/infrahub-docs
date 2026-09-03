@@ -37,7 +37,7 @@ to one of those fails the regenerate-and-diff test on the next run. The five
 `objects/0*.yml` catalogs are input, not output: the generator reads
 `03_optical_modes.yml` rather than writing it. Fifteen sites, of
 which fourteen are PoPs, 21 optical multiplex sections, 133 fiber spans, 12
-conduits, 441 devices, 1488 ports, 40 wavelengths, the 40 line containers riding
+conduits, 441 devices, 1490 ports, 40 wavelengths, the 40 line containers riding
 them, and three O-E-O devices. Those three are last in the load order, because
 each names the wavelengths it terminates and a carrier has to exist before a
 device can point at it. The same reason put the Raman pumps in `15`.
@@ -469,8 +469,8 @@ It exports the committed tree into `.remote/`, which the containers see as
 `/remote`. It points a `CoreRepository` at that path and waits for the import.
 Then it counts what the sync created, which is the part worth watching: a
 repository can reach in-sync and create nothing, and the count is the only thing
-that says so. On this repository it creates eight check definitions, ten Python
-transforms, three artifact definitions, one generator definition and nineteen
+that says so. On this repository it creates nine check definitions, ten Python
+transforms, three artifact definitions, one generator definition and twenty
 GraphQL queries.
 
 Two details decide whether this works.

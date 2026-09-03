@@ -468,10 +468,21 @@ electrically: the light is received, the payload is reframed, and a fresh
 transmitter starts the second half. Each half carries its own OSNR budget, so a
 route too long for any single wavelength can still be built.
 
-`OtnOduSwitch` is the kind. Its `carriers` relationship names the wavelengths it
-terminates, and `src/infrahub_demo_otn/chains.py` reads that to decide whether a
-junction is real. The two wavelengths must meet at a site, that site must host
-the device, and the device must terminate both.
+`OtnOduSwitch` is the kind. Its `carriers` relationship names the wavelengths
+patched to the shelf, and `src/infrahub_demo_otn/chains.py` reads that to decide
+whether a junction is real. The two wavelengths must meet at a site, that site
+must host the device, and the device must be patched to both.
+
+**What terminates each half is a line port, on the regenerator itself.** The
+shelf carries two, one facing each segment, and each names its wavelength. So the
+Madrid to Paris half ends on a Madrid transponder at one end and on the
+regenerator at the other, and the Paris to Warsaw half starts on the same shelf
+and ends on a Warsaw transponder. Ask either wavelength what terminates it and it
+answers with hardware at both ends, the same way a direct circuit does.
+
+That is also what makes the split affordable. The inner ends need no transponder
+at the junction site, which matters because Paris and Frankfurt each hold one
+spare line port and a split needs two.
 
 ### Madrid to Warsaw, where one regenerator is not enough
 
