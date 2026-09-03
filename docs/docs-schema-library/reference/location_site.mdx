@@ -1,8 +1,8 @@
 ---
-title: Location Minimal
+title: Location Site
 ---
 
-This schema extension is minimal but will provide you with basic items to store location related data, as a Region -> Country -> Site hierarchy. It defines the same Location.Site node as extensions/location_site, so load one or the other, not both. Note that LocationGeneric.name is unique across every location kind, so a name used at one tier cannot be reused at another; a single-country deployment therefore enters the hierarchy at Country (with Region as the national node) rather than duplicating a country under several regions.
+This schema extension introduces a standalone Location.Site node (with facility, physical address, timezone, and status). It defines the same Site node as extensions/location_minimal, so load one or the other, not both.
 
 ## Details
 
@@ -10,22 +10,6 @@ This schema extension is minimal but will provide you with basic items to store 
     - [base](dcim)
 
 ## Nodes
-
-### Region
-
-- **Label:** Region
-- **Description:** A geographical region grouping countries and sites.
-- **Namespace:** Location
-- **Icon:** carbon:cics-region-target
-- **Inherit From:** LocationGeneric, IpamPrefixScope
-
-### Country
-
-- **Label:** Country
-- **Description:** A country, sitting between a region and the sites it contains.
-- **Namespace:** Location
-- **Icon:** gis:search-country
-- **Inherit From:** LocationGeneric
 
 ### Site
 
@@ -49,29 +33,6 @@ This schema extension is minimal but will provide you with basic items to store 
 ```yaml
 version: '1.0'
 nodes:
-- name: Region
-  namespace: Location
-  description: A geographical region grouping countries and sites.
-  label: Region
-  icon: carbon:cics-region-target
-  include_in_menu: true
-  menu_placement: LocationGeneric
-  inherit_from:
-  - LocationGeneric
-  - IpamPrefixScope
-  parent: ''
-  children: LocationCountry
-- name: Country
-  namespace: Location
-  description: A country, sitting between a region and the sites it contains.
-  label: Country
-  icon: gis:search-country
-  include_in_menu: true
-  menu_placement: LocationGeneric
-  inherit_from:
-  - LocationGeneric
-  parent: LocationRegion
-  children: LocationSite
 - name: Site
   namespace: Location
   description: A physical location hosting equipment, such as a data center or an
@@ -85,7 +46,6 @@ nodes:
   - LocationHosting
   - IpamPrefixScope
   - IpamVLANGroupScope
-  parent: LocationCountry
   display_label: name__value
   attributes:
   - name: status
