@@ -40,8 +40,9 @@ only when it is missing; pass `--rebuild` to force it.
 Infrahub is then available at
 [http://localhost:8000](http://localhost:8000).
 
-`uv run invoke list` prints every task. `uv run invoke info` reports the
-address, the image, whether the stack answers and what is loaded on a branch.
+`uv run invoke list` prints the tasks you need, and `--all` adds the rest.
+`uv run invoke info` reports the address, the image, whether the stack answers
+and what is loaded on a branch.
 
 ## Verify the shared package reached the worker
 
@@ -49,18 +50,9 @@ address, the image, whether the stack answers and what is loaded on a branch.
 uv run invoke check --name units_import
 ```
 
-This check fails by name if the worker image loses the shared package. An
-opaque `ModuleNotFoundError` in an unrelated generator is much harder to
-diagnose.
-
-To confirm inside the container itself:
-
-```bash
-docker exec infrahub-demo-otn-task-worker-1 /.venv/bin/python \
-  -c "from infrahub_demo_otn.units import db_to_mdb; print(db_to_mdb(0.21))"
-```
-
-Expected output is `210`.
+The check exists to prove the worker can import the shared package. It fails by
+name if the worker image loses it. An opaque `ModuleNotFoundError` in an
+unrelated generator is much harder to diagnose.
 
 ## Load the schema
 
@@ -119,30 +111,24 @@ against something already loaded.
 ### Check the load
 
 ```bash
-cat scripts/geant_manifest.json
+uv run invoke inventory --branch geant
 ```
 
-That file is written by the generator and is the only place the per-kind counts
-live. The unit tests and the CI integration test read it directly. The figures
-on this page are copied by hand and then checked against it by
+It counts 554 optical elements and 40 carriers, then ranks the sections by
+spectrum in use and lists every conduit two spans share. `oms-fra-mil` carries
+all 40 of those carriers, holding 4,134,400 MHz of the 4,800,000 MHz the C-band
+gives that section, or 86.1 percent.
+
+Routers are absent from the element count on purpose. Light terminates at a
+router, so a router adds no insertion loss and does not inherit the optical
+element generic. The three ODU switches are present, because they inherit the
+same generic.
+
+The per-kind counts live in `scripts/geant_manifest.json`, written by the
+generator. The unit tests and the CI integration test read it directly. The
+figures on this page are copied by hand and then checked against it by
 `tests/unit/test_doc_claims.py`, which reads this page and fails when a number
 here stops matching the data.
-
-Two queries at `http://localhost:8000/graphql/geant`:
-
-```graphql
-# Every element the link budget has to sum, plus the three ODU switches,
-# which inherit the same generic. Returns 554.
-{ OtnOpticalElement { count } }
-
-# Carriers on the busiest corridor. Returns 40, holding 4,134,400 MHz
-# of the 4,800,000 MHz the C-band gives that section.
-{ OtnOpticalCarrier(sections__name__value: "oms-fra-mil") { count } }
-```
-
-Routers are absent from the first count on purpose. Light terminates at a
-router, so a router adds no insertion loss and does not inherit the optical
-element generic.
 
 ### Regenerating the data
 
@@ -151,14 +137,14 @@ the top of `scripts/generate_geant_dataset.py`: a site table, a section table, a
 conduit table and a carrier plan. Change a number there and re-run:
 
 ```bash
-uv run python scripts/generate_geant_dataset.py
-uv run pytest tests/unit -q
+uv run invoke dataset-generate
+uv run invoke test-unit
 ```
 
 To check the committed files still match the seed without writing anything:
 
 ```bash
-uv run python scripts/generate_geant_dataset.py --check
+uv run invoke dataset-check
 ```
 
 Editing a file under `objects/` manually is not supported. Each generated file
@@ -207,12 +193,8 @@ spectrum by a 79,600 MHz carrier width would have promised eight more services.
 
 Both candidate routes also leave Frankfurt through the same conduit,
 `cd-fra-south`, so a service split across the two is exposed to one backhoe
-outside the city:
-
-```graphql
-{ OtnFiberSpan(conduit__name__value: "cd-fra-south") {
-    edges { node { name { value } oms { node { name { value } } } } } }
-```
+outside the city. The shared-conduit table `invoke inventory` prints has the
+pair: `span-fra-gva-01` on `oms-fra-gva` and `span-fra-mil-01` on `oms-fra-mil`.
 
 ### Tear the branch down
 

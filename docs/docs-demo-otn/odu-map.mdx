@@ -191,12 +191,12 @@ the branch it was read from and of nothing else.
 ## The scenarios that put something on the map
 
 Neither scenario file is loaded by `.infrahub.yml`. Both are scenario input under
-`demo/`, loaded by hand onto a branch, and they can share one.
+`demo/`, and they can share one branch. One task makes that branch, loads both
+files, provisions the eleven circuits the first one asks for and runs the
+capacity check over what is left:
 
 ```bash
-uv run infrahubctl branch create odu-demo
-uv run infrahubctl object load demo/04_odu_ten_in_one.yml --branch odu-demo
-uv run infrahubctl object load demo/05_odu_mixed_fill.yml --branch odu-demo
+uv run invoke demo-odu
 ```
 
 **`demo/04_odu_ten_in_one.yml`, ten circuits in one wavelength.** Ten STM-64

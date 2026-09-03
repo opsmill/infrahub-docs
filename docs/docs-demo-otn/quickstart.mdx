@@ -86,25 +86,31 @@ Infrahub is then at [http://localhost:8000](http://localhost:8000).
 ## Provision Berlin to Amsterdam at 400G
 
 ```bash
-set -a && source .env && set +a
-uv run infrahubctl branch create provision-ber-ams-400g --sync-with-git
-uv run invoke demo-setup --branch provision-ber-ams-400g
-uv run invoke demo-provision --branch provision-ber-ams-400g
+uv run invoke demo-provision
 ```
 
-The first command creates the branch in Git as well as in the graph, which is
-what lets a proposed change from it read the checks, the generator and the
-artifact definitions out of this repository. `invoke demo-setup` on its own
-would make a data-only branch, and a proposed change from one of those runs the
-two built-in validators and stops.
+It does not ask you for a branch. It makes the `demo` branch if it is not there,
+in Git as well as in the graph, and that second half is what lets a proposed
+change from it read the checks, the generator and the artifact definitions out of
+this repository. A branch that exists only in the graph runs the two built-in
+validators and stops.
 
-The second command loads five service requests onto it. Each one is intent and
-nothing else: `svc-ber-ams-400g` asks for 400 Gbps between two routers and names
-no route, no wavelength and no channel.
+Nor does it reload the network. An Infrahub branch inherits the data on the
+branch it forks from, and `invoke init` put the dataset on the default branch, so
+`demo` has the whole network the moment it exists. What it does load is the five
+service requests, which are scenario input rather than plant. It says so:
 
-The third runs the generator. It budgets six candidate routes at every
-transponder mode that reaches 400 Gbps and takes the narrowest mode that
-closes:
+```text
+- branch demo does not exist yet, creating it in Git and in the graph
+- the dataset is already there, branch demo is ready
+- loading the 2 scenario file(s) branch demo needs
+```
+
+Each request is intent and nothing else: `svc-ber-ams-400g` asks for 400 Gbps
+between two routers and names no route, no wavelength and no channel.
+
+The generator then runs. It budgets six candidate routes at every transponder
+mode that reaches 400 Gbps and takes the narrowest mode that closes:
 
 ```text
 svc-ber-ams-400g: chose oms-ham-ber|oms-ams-ham on DP-16QAM 64GBd 400G, channel 2,
@@ -132,46 +138,24 @@ rather than channel 1.
   </figcaption>
 </figure>
 
-Open a proposed change from `provision-ber-ams-400g` and the pipeline runs nine
-checks, the generator and three artifact definitions, reporting each on the
-change. No service on the branch is refused, so `provisionable` passes.
-`osnr_margin` is still red on the Paris to Madrid deficit, as it is on every
-branch. That red is the shipped finding above, not anything this branch did.
-
-:::note
-
-**A branch only runs those checks if it exists in Git as well.** The checks, the
-generator and the artifact definitions all live in this repository, so Infrahub
-needs a matching Git branch to read them from. `infrahubctl branch create`
-defaults to `--no-sync-with-git`, and a proposed change from a branch made that
-way runs the two built-in validators and nothing else. That is why both branches
-on this page are created with `--sync-with-git` before anything is loaded onto
-them. `invoke demo-setup` and `invoke branch-create` do not pass the flag, so a
-branch either of them makes on its own carries data only.
-
-:::
+Open a proposed change from `demo` and the pipeline runs nine checks, the
+generator and three artifact definitions, reporting each on the change. No
+service on the branch is refused, so `provisionable` passes. `osnr_margin` is
+still red on the Paris to Madrid deficit, as it is on every branch. That red is
+the shipped finding above, not anything this branch did.
 
 ## The refusal that blocks the merge
 
 ```bash
-set -a && source .env && set +a
-uv run infrahubctl branch create oeo-refused --sync-with-git
-uv run infrahubctl object load demo/06_mad_waw_16qam.yml --branch oeo-refused
-uv run invoke demo-provision --service svc-mad-waw-400g --branch oeo-refused
+uv run invoke demo-regenerator
 ```
-
-The first line exports `.env` for the shell. `infrahubctl` resolves the address
-from that file but never the token, and the invoke tasks are the ones that pass
-both.
 
 Madrid to Warsaw is 2970 km over four sections, and no single wavelength closes
-it on any of the ten modes in the catalog. The loaded file puts a regenerator
-at each of the three sites on that route where one could go. All three splits
-are refused for optical budget, and one run reports all three:
-
-```bash
-uv run invoke check --name provisionable --branch oeo-refused
-```
+it on any of the ten modes in the catalog. The task makes `oeo-refused`, loads a
+file that puts a regenerator at each of the three sites on that route where one
+could go, and asks for the service. All three splits are refused for optical
+budget, and one run reports all three. It then runs the check, which reads the
+refusal off the service:
 
 ```text
 svc-mad-waw-400g cannot be provisioned and was refused for budget: neither a
@@ -199,6 +183,13 @@ Two other checks are red on this branch, and neither of them is the point.
 `osnr_margin` fails on the Paris to Madrid deficit that sits on every branch,
 and `channel_collision` fails because the three regenerator wavelength pairs
 this file loads overlap in spectrum on purpose.
+
+The command does not stop there. It goes on to make a second branch,
+`oeo-closed`, adds one more wavelength pair at a lower modulation order and asks
+for the same service again. That one provisions as two segments and
+`provisionable` passes, so a single run shows you the refusal and the fix for it.
+[Loadable scenarios](./loadable-scenarios.mdx#two-loadable-scenarios-for-the-regenerator)
+has the figures for both halves.
 
 <figure className="doc-figure">
   <a href={refusal} target="_blank" rel="noopener noreferrer">
@@ -236,9 +227,12 @@ this file loads overlap in spectrum on purpose.
 ## Clean up
 
 ```bash
-uv run invoke demo-clean --branch provision-ber-ams-400g
-uv run invoke demo-clean --branch oeo-refused
+uv run invoke demo-clean
 ```
+
+With no argument it deletes every branch a scenario task creates, naming each one
+as it goes and reporting how many of them it found, so nothing is removed without
+saying so. That is all three branches this page made.
 
 The default branch is back to the state it shipped in: the plant, no services,
 and the OSNR check still failing on Paris to Madrid. Every service you

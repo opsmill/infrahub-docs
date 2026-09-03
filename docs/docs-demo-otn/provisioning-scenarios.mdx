@@ -21,19 +21,8 @@ uv run invoke list
 
 Every numbered scenario below is an invoke task. The tasks read the address and
 the API token from `.env` and pass both to whatever they run, so nothing in the
-runbook asks you to export a credential first.
-
-**[Loadable scenarios and the runbook](./loadable-scenarios.mdx) is the
-exception.** Those sections call `infrahubctl` directly to create a branch and
-load a file, and `infrahubctl` resolves the address from `.env` but never the
-token. Without it the first write fails with `Authentication is required to
-perform this operation` and the branch lookup that follows fails with
-`BranchNotFoundError`, which points at the wrong thing. Export the file once per
-shell before you start that page:
-
-```bash
-set -a && source .env && set +a
-```
+runbook asks you to export a credential first. That holds on every scenario page,
+including [loadable scenarios and the runbook](./loadable-scenarios.mdx).
 
 :::note
 

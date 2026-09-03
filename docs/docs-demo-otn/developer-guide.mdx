@@ -105,7 +105,7 @@ in `objects/` manually. Things that exist to make a demo step happen go in
 
 None of these imports `infrahub_sdk`. That is the rule that keeps the whole
 decision layer testable with no server running, and it is why
-`uv run invoke test-unit` finishes in a couple of seconds.
+`uv run invoke test-unit` finishes in seconds rather than minutes.
 
 The checks, transforms and generators are the layer that imports the SDK. They
 unwrap a payload, call into the modules above, and write or format the answer.
@@ -136,9 +136,10 @@ window the map draws and simplifies them into Python literals:
 node scripts/extract_basemap.mjs countries-50m.json src/infrahub_demo_otn/basemap.py
 ```
 
-The input is the `world-atlas` release named at the top of the script. Run the
-extraction manually when the window or the source release changes, and commit
-the result. It never runs in CI, and the renderer reaches the network at no
+The input is the `world-atlas` release named at the top of the script. This is
+the one step with no invoke task behind it: it needs Node and a file you
+downloaded, and it is run by hand when the window or the source release changes.
+Commit the result. It never runs in CI, and the renderer reaches the network at no
 point: the data is already in the image by the time a map is drawn.
 
 The clip has to contain the frame the map draws, which is wider than the box the
@@ -219,13 +220,14 @@ So a failure here has exactly two readings, and you have to decide which:
    from the fixtures rather than from a stack, one case at a time:
 
    ```bash
-   uv run python -c "from tests.unit.test_mapdraw import regenerate; regenerate('network_map_golden')"
-   uv run python -c "from tests.unit.test_odudraw import regenerate; regenerate('odu_map_golden')"
+   uv run invoke maps-regenerate --case network_map_golden
+   uv run invoke maps-regenerate --case odu_map_golden
    ```
 
-   The case name is the fixture's file name without its suffix. The failure
-   message prints the exact command for the case that failed, so nobody has to
-   assemble it by hand.
+   The case name is the fixture's file name without its suffix, and
+   `maps-regenerate` with no `--case` re-renders all eight. The failure message
+   prints the exact command for the case that failed, so nobody has to assemble
+   it by hand.
 
 Neither kind of file is the other's substitute. The illustrations are real
 artifacts off real data and they move whenever the dataset does. The golden
@@ -353,18 +355,17 @@ rehearsal of the pipeline and should not be quoted as one.
 ### The gates
 
 ```bash
-uv run invoke lint          # ruff format, ruff check, mypy, yamllint, rumdl
-uv run invoke test-unit     # 855 tests, no Docker
-uv run invoke lint-prose    # vale over the documentation pages
+uv run invoke lint          # ruff format, ruff check, mypy, yamllint, rumdl, vale
+uv run invoke test-unit     # no Docker, about ten seconds
 uv run invoke schema-check  # schema formatting, offline
 uv run invoke docs          # the documentation site
 ```
 
-Each linter also has its own task: `lint-format`, `lint-ruff`, `lint-mypy`,
-`lint-yaml`, `lint-markdown`, `lint-prose`. All of them run in CI on every
-change, and none needs a running Infrahub.
+`lint` runs all six linters. All of them run in CI on every change, and none
+needs a running Infrahub.
 
-`lint-prose` needs `vale` on your PATH; every other task needs only `uv sync`.
+The prose linter needs `vale` on your PATH. Everything else needs only `uv sync`,
+so `lint` skips vale when it is absent and says loudly that it did.
 
 There is no schema-validate subcommand. `invoke schema-check` is the offline
 schema gate, and it checks formatting rather than semantics; the semantic guard
@@ -417,12 +418,15 @@ the token, so a read succeeds and the first write fails with an authentication
 error. Every task passes both, through the subprocess environment rather than
 on the command line, so a token never reaches `ps` or your shell history.
 
-`uv run invoke list` prints all of them. The demo scenarios are tasks too:
-`demo-setup`, `demo-capacity`, `demo-reach`, `demo-provision`,
-`demo-provision-all`, `demo-trace`, `demo-impact`, `demo-srlg`, `demo-latency`,
-`demo-infiniband`, `demo-refusal` and `demo-clean`. `demo-raman` is a task as
-well, but it runs on its own branch as a comparison rather than as one of the
-nine numbered scenarios.
+`uv run invoke list` prints the tasks a reader needs, grouped, and `--all` adds
+the rest. The demo scenarios are tasks too: `demo-setup` prepares the branch,
+`demo` runs the whole walkthrough, and `demo-capacity`, `demo-reach`,
+`demo-provision`, `demo-provision-all`, `demo-trace`, `demo-impact`,
+`demo-srlg`, `demo-latency`, `demo-infiniband`, `demo-refusal`, `demo-budget`
+and `demo-drift` run one step each. Five more load a scenario file onto a branch
+of their own rather than one of the nine numbered scenarios: `demo-raman`,
+`demo-odu`, `demo-regenerator`, `demo-diversity` and `demo-monitor-gap`.
+`demo-clean` deletes the branches they leave behind.
 
 ### A fail-closed default costs a second load
 
@@ -439,8 +443,8 @@ no client signal, correctly, until `objects/04_client_signals.yml` is loaded on
 top and restores the nine true values.
 
 ```bash
-uv run infrahubctl schema load schemas/ --branch <name>
-uv run infrahubctl object load objects/04_client_signals.yml --branch <name>
+uv run invoke load-schema --branch <name>
+uv run invoke load-objects --branch <name> --file objects/04_client_signals.yml
 ```
 
 A schema load alone is no longer enough on any branch holding client signals.
