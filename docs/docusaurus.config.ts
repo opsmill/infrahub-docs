@@ -318,6 +318,17 @@ const config: Config = {
       },
     ],
     [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-demo-otn',
+        path: 'docs-demo-otn',
+        routeBasePath: 'demo-otn',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-demo-otn.ts',
+        editUrl: 'https://github.com/opsmill/infrahub-demo-otn/tree/main/docs',
+      },
+    ],
+    [
       '@docusaurus/plugin-google-tag-manager',
       {
         containerId: 'GTM-MQ2RZ3SP',
@@ -479,6 +490,12 @@ const config: Config = {
               sidebarId: "InfrahubDemoSpSidebar",
               label: "demo-sp",
               docsPluginId: "docs-infrahub-demo-sp",
+            },
+            {
+              type: "docSidebar",
+              sidebarId: "otnSidebar",
+              label: "demo-otn",
+              docsPluginId: "docs-demo-otn",
             },
             {
               type: "docSidebar",
