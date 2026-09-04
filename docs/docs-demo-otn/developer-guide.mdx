@@ -374,14 +374,26 @@ is `tests/unit/test_schema_contract.py`.
 ### The sixth gate, which needs Docker
 
 ```bash
-uv run invoke stop              # first, and this is not optional
-uv run invoke test-integration  # about seven minutes
+uv run invoke stop                          # first, and this is not optional
+uv run invoke test-integration --tier=core  # 13 tests, about six minutes
+uv run invoke test-integration              # all 37, about fifty
 ```
 
 It loads this repository into a throwaway Infrahub through testcontainers and
 reads it back, which is the only layer that catches a load regression: a renamed
 attribute, an unresolvable reference, a bound violation, a relationship declared
 on both sides. None of those is visible offline.
+
+**Two tiers, and CI picks between them by what you changed.** `core` is the load,
+the repository sync and the proposed-change pipeline: what proves this repository
+still works against Infrahub. `full` adds the module that drives all 48 tasks and
+every scenario, which is forty of the fifty minutes and can only be broken by a
+change to the demo's own logic. `.github/file-filters.yml` lists the paths that
+mean full, and everything else runs core. Nineteen of this repository's
+twenty-four commits touched none of them.
+
+Run `full` yourself before changing anything under `src/`, `tasks.py` or the six
+Infrahub directories, or push and let CI decide.
 
 **Stop the demo stack first.** The two share no port and no database, but they do
 share the machine's memory. During feature 016 the pair exhausted the container
