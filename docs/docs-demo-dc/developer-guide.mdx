@@ -33,9 +33,12 @@ infrahub-demo-dc/
 │   ├── spine.py
 │   ├── leaf.py
 │   ├── edge.py
-│   └── loadbalancer.py
+│   ├── loadbalancer.py
+│   ├── virtualization_vm.py
+│   ├── virtualization_host.py
+│   └── virtualization_capacity.py
 ├── objects/                   # Demo data
-│   ├── bootstrap/             # Initial data (19 files: groups, locations, platforms, roles, devices, etc.)
+│   ├── bootstrap/             # Initial data (21 files: groups, locations, platforms, hypervisor types, device types, templates, etc.)
 │   ├── cloud_security/        # Cloud security examples (services, devices, gateways)
 │   ├── dc/                    # Data center design files
 │   │   ├── dc-arista-s.yml    # DC-3 design data (Arista)
@@ -48,11 +51,16 @@ infrahub-demo-dc/
 │   ├── pop/                   # Point of presence design files
 │   │   ├── pop-1.yml          # POP-1 design data
 │   │   └── pop-2.yml          # POP-2 design data
-│   └── security/              # Security zones, policies, rules (15 files)
+│   ├── security/              # Security zones, policies, rules (16 files)
+│   └── virtualization/        # Clusters, physical hosts, and VMs
 ├── generators/                # Topology generators
 │   ├── generate_dc.py         # Data center generator
 │   ├── generate_pop.py        # POP generator
 │   ├── generate_segment.py    # Network segment generator
+│   ├── generate_virtualization_cabling.py      # Host rack placement and leaf cabling
+│   ├── generate_virtualization_vm_security.py  # VM addressing and HTTPS-only policy
+│   ├── generate_vm_artifact_groups.py          # Per-hypervisor VM artifact group assignment
+│   ├── generate_dc_firewall_policy.py          # Attach VM policy to DC firewalls
 │   ├── common.py              # Shared utilities
 │   └── schema_protocols.py    # Type protocols
 ├── menus/                     # UI menu definitions
@@ -60,19 +68,22 @@ infrahub-demo-dc/
 ├── queries/                   # GraphQL queries
 │   ├── config/                # Configuration queries
 │   ├── topology/              # Topology queries
-│   └── validation/            # Validation queries
+│   ├── validation/            # Validation queries
+│   └── virtualization/        # Host cabling, VM security, and artifact group queries
 ├── schemas/                  # Data model definitions
 │   ├── base/                # Core models
 │   │   ├── dcim.yml
 │   │   ├── ipam.yml
 │   │   ├── location.yml
-│   │   └── topology.yml
+│   │   ├── topology.yml
+│   │   └── virtualization.yml
 │   └── extensions/          # Extended models
 │       ├── console/
 │       ├── routing/
 │       ├── security/
 │       ├── service/
-│       └── topology/
+│       ├── topology/
+│       └── virtualization/
 ├── docs/                     # Documentation (Docusaurus)
 │   ├── docs/                # Documentation content (.mdx files)
 │   ├── static/              # Static assets
@@ -85,7 +96,8 @@ infrahub-demo-dc/
 │   └── get_configs.py       # Retrieve device configurations
 ├── service_catalog/         # Streamlit Service Catalog application
 │   ├── pages/               # Streamlit pages
-│   │   └── 1_Create_DC.py  # DC creation UI
+│   │   ├── 1_Create_DC.py  # DC creation UI
+│   │   └── 4_Create_VM.py  # VM creation UI
 │   ├── utils/               # Utility modules
 │   │   ├── api.py           # Infrahub API client
 │   │   ├── config.py        # Configuration
@@ -225,6 +237,56 @@ The `create_dc` generator in `generators/generate_dc.py`:
 5. **Creates connections** - Establishes fabric peering between spines and leaves
 6. **Configures routing** - Sets up BGP or OSPF underlay and BGP EVPN overlay
 7. **Assigns IP addresses** - Allocates addresses from pools for all interfaces
+
+### A generator run is a desired state, not a script
+
+This is the single most important thing to know before writing or editing a
+generator here, because getting it wrong deletes data rather than failing.
+
+Infrahub wraps `generate()` in a tracking context. Every object the run saves is
+recorded as belonging to that generator instance, and **anything the previous run
+saved that this run does not save is deleted on the next run**. Component
+children go with it: deleting a host deletes its interfaces and its virtual
+machines.
+
+The consequence is counter-intuitive. The natural way to make a generator
+idempotent is to skip work that is already done:
+
+```python
+# Wrong: the skip drops the interface out of the tracking group,
+# so the next run deletes it.
+if interface.connector.peer:
+    self.logger.info("already cabled, skipping")
+    continue
+```
+
+That reads as a safe no-op and behaves as a delete one run later. The fix is to
+re-save the object even when nothing about it changed:
+
+```python
+# Right: "still mine". A save with no changed attribute is cheap.
+if interface.connector.peer:
+    self.logger.info("already cabled, keeping it")
+    await interface.save(allow_upsert=True)
+    continue
+```
+
+Practical rules for this repository:
+
+- Every `save()` uses `allow_upsert=True`. Without it the second run errors on
+  the first existing object and aborts, leaving the tracking group half written
+- Re-save every object the generator owns on every run, including the target
+  itself. `generators/generate_virtualization_cabling.py` does this through a
+  `_keep_tracked()` helper, and re-saves the host, its cabled NICs, the leaf
+  ports they land on, and the cables between them
+- Only nodes you `save()` join the tracking group. `add_relationships()` issues a
+  relationship mutation and does not, which is why the generators that only add
+  group members carry no deletion risk
+- An early `return` is a decision to delete: if the run bails out before saving
+  the target, the target goes on the next run. Save it first, then return
+
+Reviewing a generator means asking "what did this run *not* save?", because that
+is the blast radius.
 
 ### Generator registration
 

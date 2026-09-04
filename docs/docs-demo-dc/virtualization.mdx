@@ -1,0 +1,427 @@
+---
+title: Virtual machine management
+---
+
+This tutorial shows how the demo models a virtualization layer on top of the data center fabric: hypervisor clusters, the physical hosts that form them, and the virtual machines running on those hosts. You'll load the demo data, follow what the generators do with it, and create a VM of your own through the Service Catalog.
+
+## Overview
+
+The virtualization schema tracks:
+
+- **Hypervisor types** - one row per hypervisor family holding what follows from it: the OS its hosts run, the artifact group its VMs join, the transform that renders their provisioning script, the template image prefix, and the overcommit ratios its capacity is judged against
+- **Clusters** - groups of hypervisor hosts, created from a per-family object template (VMware vSphere, KVM, Proxmox VE, Hyper-V) that carries the `hypervisor_type` relationship
+- **Physical hosts** - rack-mounted servers that run a hypervisor and appear in the DCIM model like any other device, created from a sized object template that carries the server model, its capacity and its ports
+- **Virtual machines** - VMs with compute sizing (vCPUs, memory, disk) supplied by a t-shirt sized profile, a hypervisor VM ID, and an optional customer link
+
+Everything around a VM is automated. When you load a host, a generator places it in a rack, cables it to the fabric, and gives it a management address out of the fabric's own hypervisor-management network. When you load a VM, another generator assigns it a primary IP address and puts it behind an HTTPS-only firewall policy. A validation check keeps the data consistent in every proposed change.
+
+## Prerequisites
+
+Before starting this tutorial:
+
+- Complete the [installation guide](./install.mdx) and have Infrahub running
+- Load the bootstrap data and schemas
+- Have access to the Infrahub web interface at `http://localhost:8000`
+
+## Loading the virtualization demo
+
+The virtualization data loads automatically as part of every DC demo task:
+
+```bash
+uv run invoke demo-dc-arista   # or demo-dc-juniper, demo-dc-cisco
+```
+
+Each task runs the same pipeline:
+
+1. Creates a branch and loads the DC topology design
+2. Waits for the DC generator to build the fabric
+3. Loads the hypervisor-management segment and the virtualization security policy, then the clusters, hosts, and VMs
+4. Creates a proposed change for review
+
+The order matters, and the task handles it for you. Host cabling needs the leaf switches that the DC generator creates, so the virtualization objects load only after the generator finishes. The hypervisor-management segment loads before the first host, because host creation immediately triggers the cabling generator, which allocates the host's address from that network. The security policy loads before the first VM, for the same reason: VM creation triggers the security generator, which expects the policy to exist.
+
+### Sample data
+
+The demo ships one virtualization environment in the Frankfurt metro:
+
+| Kind | Objects |
+| ---- | ------- |
+| Clusters | `FRA1-PROXMOX-CLUSTER` (Proxmox VE), `FRA1-KVM-CLUSTER` (KVM), `FRA1-ESXI-CLUSTER` (VMware ESXi), `FRA1-HYPERV-CLUSTER` (Microsoft Hyper-V) |
+| Physical hosts | `fra1-pve-01`, `fra1-pve-02`, `fra1-kvm-01`, `fra1-kvm-02`, `fra1-esx-01`, `fra1-hv-01` |
+| Virtual machines | `fra1-vm-web01`, `fra1-vm-web02`, `fra1-vm-app01`, `fra1-vm-app02`, `fra1-vm-db01`, `fra1-vm-cache01` (VM IDs 100-105), plus the Windows VMs `fra1-vm-win01` (ESXi) and `fra1-vm-win02` (Hyper-V), which don't use a VM ID |
+
+Each customer's VMs form one coherent stack: OpsMill runs the Linux web and
+database tier, Customer 2 the two Windows servers, Customer 3 the application
+pair, and Customer 4 the cache. Every VM carries its owning customer's SSH
+public key, which cloud-init or cloudbase-init installs into the guest.
+
+### Physical host hardware
+
+Hosts are created from a sized object template, so a host record only names what
+is specific to it: its name, description, location, hypervisor type and groups.
+Everything about the hardware comes from the template it clones.
+
+| Template | Server | Height | vCPUs | Memory | Disk | NICs |
+| -------- | ------ | ------ | ----- | ------ | ---- | ---- |
+| `VIRTUALIZATION_HOST_SMALL` | Dell PowerEdge R650 | 1U | 32 | 256 GB | 2000 GB | `eth0`, `eth1`, `idrac` |
+| `VIRTUALIZATION_HOST_MEDIUM` | HPE ProLiant DL380 Gen11 | 2U | 48 | 384 GB | 3000 GB | `eth0`-`eth3`, `ilo` |
+| `VIRTUALIZATION_HOST_LARGE` | Dell PowerEdge R760 | 2U | 64 | 512 GB | 4000 GB | `eth0`-`eth3`, `idrac` |
+| `VIRTUALIZATION_HOST_XLARGE` | HPE ProLiant DL385 Gen11 | 2U | 96 | 768 GB | 8000 GB | `eth0`-`eth5`, `ilo` |
+
+Only `eth0` and `eth1` are cabled to the fabric. Further NICs are spare capacity
+and stay free, and the `idrac` / `ilo` port is out-of-band management, which
+nothing cables either. The demo uses LARGE for the Proxmox hosts, SMALL for KVM,
+and MEDIUM for the ESXi and Hyper-V hosts; XLARGE ships unused, as a size to
+pick from.
+
+Hosts carry a `role` of `hypervisor`. The vocabulary also offers `compute`, for a
+server that runs its workload directly on the hardware without a hypervisor, and
+a `compute` host is rejected as a cluster member by the validation below. This is
+a separate attribute from the network device roles (leaf, spine, dc_firewall and
+so on), which `DcimDevice` declares for itself: a switch cannot be a hypervisor,
+and a server cannot be a spine.
+
+Because each template names a real server model, and the model carries a height,
+hosts appear in rack elevations at the right size once the cabling generator has
+placed them. Look at the `rack_elevation` artifact on any `LocationRack`, or open
+**Rack Visualization** in the Service Catalog.
+
+### Cluster templates and VM sizes
+
+Clusters and VMs get the same pick-instead-of-type treatment as hosts, from
+`objects/bootstrap/08_virtualization_templates.yml`.
+
+A cluster has no capacity of its own - that is the sum of its hosts - so its
+templates carry the hypervisor family rather than a size. Creating a cluster is
+a name plus a family pick:
+
+| Template | Hypervisor family |
+| -------- | ----------------- |
+| `VIRTUALIZATION_CLUSTER_PROXMOX` | Proxmox VE |
+| `VIRTUALIZATION_CLUSTER_KVM` | KVM |
+| `VIRTUALIZATION_CLUSTER_VMWARE` | VMware vSphere |
+| `VIRTUALIZATION_CLUSTER_HYPERV` | Microsoft Hyper-V |
+
+VM compute sizing comes from t-shirt sized profiles, at the 1:4 vCPU-to-memory
+ratio the demo workloads run at. A profile rather than a template because a
+VM's `host` is a mandatory parent relationship, which a template object may not
+leave unset - a size template would have to name a host. A size is a starting
+point, not a contract: an explicit value on the VM overrides the profile, which
+is how `fra1-vm-db01` (LARGE, 500 GB disk) and `fra1-vm-win02` (MEDIUM, 250 GB
+disk) get their bigger disks.
+
+| Profile | vCPUs | Memory | Disk |
+| ------- | ----- | ------ | ---- |
+| `VIRTUALIZATION_VM_SMALL` | 2 | 8 GB | 40 GB |
+| `VIRTUALIZATION_VM_MEDIUM` | 4 | 16 GB | 100 GB |
+| `VIRTUALIZATION_VM_LARGE` | 8 | 32 GB | 250 GB |
+| `VIRTUALIZATION_VM_XLARGE` | 16 | 64 GB | 500 GB |
+
+The demo's web and cache VMs are SMALL, the application and Windows VMs are
+MEDIUM, and the database VM is LARGE. XLARGE ships unused, as a size to pick
+from - the same idea as the XLARGE host template.
+
+## Adding a hypervisor
+
+Everything a hypervisor family implies lives in one row of
+`objects/bootstrap/07_hypervisor_types.yml`: the OS its hosts run, the artifact
+group its VMs join, the artifact definition that renders their provisioning
+script, the script language, and the template image prefix. Adding a fifth
+family is four steps:
+
+1. Add the row, pointing `platform` at a `DcimPlatform` and `artifact_group` at a
+   `CoreStandardGroup`.
+2. Add that group to `objects/bootstrap/00_groups.yml`.
+3. Write the provisioning template under `templates/configs/`, including the
+   shared `partials/vm_userdata.j2`. Follow the conventions the four existing
+   templates share: guard unset `vcpus`/`memory`/`disk`/`os_version` with an
+   error block instead of doing arithmetic on them, and keep interpolations
+   shell-safe (quoted heredoc delimiters, single-quoted free text) - see
+   [the scripts fail closed](#the-scripts-fail-closed).
+4. Register the transform and the artifact definition in `.infrahub.yml`.
+
+Nothing else changes. The generator that assigns artifact groups, the validation
+check, and the Service Catalog form all read the row rather than carrying their
+own copy of the mapping, and a cluster names its family through the
+`hypervisor_type` relationship, so the row is the only place it is written.
+
+## What the generators do
+
+Four generators react to the loaded data. You don't run any of them by hand.
+
+### Rack placement, fabric cabling and addressing
+
+The `cable_virtualization_host` generator runs whenever a physical host is created. For each host, scoped to the host's own metro:
+
+1. **Placement** - if racks exist in the metro (from whichever DC design was generated there), the host moves into the emptiest one and takes a free rack unit, stacking downward from the top the same way the DC generator places switches. The rack unit matters beyond tidiness: the `rack_elevation` artifact skips any device without a position, so a host placed in a rack but given no rack unit never appears in the rack drawing. Occupancy is counted in rack units rather than devices, so a rack holding one tall chassis does not read as emptier than a rack of 1U switches
+2. **Cabling** - the host's `eth0` and `eth1` interfaces are dual-homed to the two leaf switches with the most free `customer`-role ports, so cabling load-balances across leafs
+3. **Addressing** - the host takes a management address from the `virtualization_host_pool` address pool, which sits on the prefix of the [hypervisor-management segment](#the-hypervisor-management-network) the leaves render a gateway for. The address belongs to this generator rather than one of its own because it is a property of the connection: it is only reachable through the ports cabled in the step above
+
+The host's NICs come from the sized `VIRTUALIZATION_HOST_SMALL` / `_MEDIUM` / `_LARGE` / `_XLARGE` object templates in the bootstrap data, not from the generator. Each template also carries the server model, its capacity, and an out-of-band management NIC; only `eth0` and `eth1` are cabled to the fabric. The generator is idempotent: a placed host stays in its rack, cabled interfaces are left alone, and a leaf port is never handed out twice.
+
+### Virtual machine addressing and HTTPS-only security
+
+The `secure_virtualization_vm` generator runs whenever a VM is created:
+
+1. Allocates a primary IP address from the `virtualization_vm_pool` address pool (backed by the `100.64.0.0/16` prefix in the bootstrap data)
+2. Registers that address in the shared `virtualization-vms` security address group
+
+The static rules in `virtualization-vms-policy` reference that group, so every new VM is covered without editing a rule:
+
+- `allow-https-to-virtualization-vms` permits HTTPS traffic to the group
+- `deny-all-other-to-virtualization-vms` denies everything else
+
+### Firewall policy attachment
+
+A third generator attaches `virtualization-vms-policy` to every firewall with the `dc_firewall` role as soon as the firewall is created, regardless of which DC design created it. The HTTPS-only rules then render in that firewall's `juniper_firewall_config` artifact. See the [security management tutorial](./security-management.mdx) for how policy data becomes firewall configuration.
+
+## The hypervisor management network
+
+A host address is only worth recording if a packet can reach it, so the hosts are
+addressed out of the fabric rather than out of a pool of their own. The
+management network is an ordinary `ServiceNetworkSegment`, the same kind the demo
+uses for tenant networks, defined in
+`objects/segments/hypervisor-mgmt-dc-arista.yml`:
+
+| Field | Value |
+| ----- | ----- |
+| `customer_name` | `Hypervisor-Management` |
+| `vlan_id` | 900 |
+| `segment_type` | `l3_gateway` |
+| `prefix` | `172.25.9.0/24` |
+| `deployment` | `dc-arista` |
+
+Loading it triggers the existing `create_segment` generator, which binds the
+segment to every `customer`-role interface on the deployment's leaf switches. Those are the ports the hosts are cabled to, so one segment
+covers every host in the DC without naming any of them. On the Arista DC that is
+192 interfaces across four leaves.
+
+The leaf configuration then carries three things for the segment, in the
+`leaf_config` artifact of any leaf in the deployment:
+
+```text
+vlan 900
+   name Hypervisor-Management
+interface Ethernet1
+   switchport access vlan 900
+interface Vlan900
+   description Hypervisor-Management Gateway
+   ip address virtual 172.25.9.1/24
+vxlan vlan 900 vni 10900
+```
+
+The gateway address comes from the segment's prefix. Before this the templates
+built it from the VLAN ID, as `192.168.<vlan_id>.1/24`, which is fine while VLAN
+IDs stay under 256 and produces an address that does not exist at all above
+that: VLAN 900 would have rendered `192.168.900.1/24`. `get_anycast_gateway` in
+`transforms/common.py` now derives the first usable address of the recorded
+prefix instead, and a segment with no prefix renders a comment rather than an
+invented address.
+
+### Automatic address allocation
+
+No object file gives a host an address. The `cable_virtualization_host` generator
+does it, in the same run that racks and cables the host, and it allocates from
+the `virtualization_host_pool` address pool over the segment's prefix:
+
+```text
+- Placed fra1-pve-01 in rack dc-arista-Rack-1 at U39
+- Cabled fra1-pve-01:eth0 -> dc-arista-leaf-01:Ethernet7
+- Cabled fra1-pve-01:eth1 -> dc-arista-leaf-02:Ethernet7
+- fra1-pve-01 is served by segment dc-arista - OpsMill - production - Hypervisor-Management (VLAN 900)
+- Allocated 172.25.9.2/24 to fra1-pve-01 from virtualization_host_pool
+```
+
+The address lands on the host's `primary_address`, which is where this demo keeps
+a device's management address: the switches the DC generator creates hold theirs
+the same way, with interface-bound addresses reserved for loopbacks. So a
+hypervisor host shows its address on the host object, not on `eth0`.
+
+**Two conditions gate the allocation, and both are about reachability.**
+
+The host must have at least one cabled NIC. An address on a host with no path to
+the fabric would be a number in a database rather than something you can reach,
+so a host that could not be cabled is left unaddressed and says so.
+
+The deployment its leafs belong to must carry a routed segment over the pool's
+prefix. Checking only that the pool exists is not enough, and this is the subtle
+part: the pool is bootstrap data on the default branch, so it is visible from
+*every* branch, while segments are loaded per DC design. A branch with the pool
+but no segment would otherwise hand out addresses for a subnet no leaf routes.
+The generator therefore walks host → its leafs → their deployment → that
+deployment's segments, and allocates only when one of them carries the pool's
+prefix and renders a gateway (`l3_gateway` or `l3_vrf`).
+
+**The generator never reallocates.** A host that already has a primary address
+keeps it, and the allocation identifier is the host name, so even a host whose
+address was removed gets the same one back from the pool.
+
+Three further details are worth knowing if you extend this:
+
+**The gateway is a real object, not just rendered text.** `172.25.9.1/24` exists
+as an `IpamIPAddress` in the bootstrap data. Allocation takes the next free
+address in the prefix, and an address that exists is not free, so materialising
+the gateway is what stops the pool handing `.1` to a host. Hosts start at
+`172.25.9.2`.
+
+**One segment names one deployment.** `ServiceNetworkSegment.deployment` is
+mandatory and points at a single DC, so the segment lives in a per-design file
+(`objects/segments/hypervisor-mgmt-dc-arista.yml`). To address hosts in another
+design, copy that file, change `deployment`, and give it its own prefix and VLAN.
+A design with no segment file leaves its hosts cabled but unaddressed, which both
+the demo task and the generator say out loud rather than inventing a subnet the
+fabric does not route.
+
+**`topology` is what ties a host's fabric together.** The DC generator stamps
+that relationship on every switch it creates, which is how the generator gets
+from a leaf to its deployment and so to the right segment. Hosts inherit the same
+field from the generic device model but do not need it set: their fabric is found
+through the leafs they are cabled to.
+
+## Exploring the virtualization objects
+
+After the demo task finishes, switch to the demo branch (for example `add-dc3`) in the web interface:
+
+1. Navigate to **Virtualization Cluster** to see the four Frankfurt clusters and their member hosts
+2. Open a **Physical Host** such as `fra1-pve-01` and check its rack location, its cabled interfaces, and the
+   management address the generator allocated from `172.25.9.0/24`
+3. Open a **Virtual Machine** such as `fra1-vm-web01` and check its host, cluster, customer, and the primary IP address the generator assigned
+
+To confirm the security wiring, open the `virtualization-vms` address group and verify it contains one address per VM.
+
+## Provisioning artifacts
+
+Every VM gets two artifacts: a provisioning script that matches its hypervisor, and a cloud-init user-data file that's the same artifact everywhere but branches on the guest OS.
+
+### Per-hypervisor provisioning scripts
+
+| Cluster type | Provisioning artifact | Target group | What it does |
+| ------------ | ---------------------- | ------------- | ------------ |
+| `proxmox` | `proxmox_vm_config` (bash) | `proxmox_vms` | `qm clone`s the template, attaches a cloud-init drive, injects user-data with `--cicustom` |
+| `kvm` | `kvm_vm_config` (bash) | `kvm_vms` | Builds a NoCloud seed ISO with `cloud-localds`, boots the clone with `virt-install` |
+| `hyperv` | `hyperv_vm_config` (PowerShell) | `hyperv_vms` | Builds a NoCloud ISO with `oscdimg`, creates a Generation 2 VM with `New-VM` |
+| `vmware` | `esxi_vm_config` (bash/govc) | `esxi_vms` | Clones the template with `govc`, passes user-data through `guestinfo.userdata` (base64) |
+
+The guest OS still changes a few settings inside each script:
+
+| Cluster type | Linux guest | Windows guest |
+| ------------ | ----------- | -------------- |
+| Proxmox VE | `--ostype l26` | `--ostype win11` |
+| KVM/libvirt | `--os-variant ubuntu22.04` | `--os-variant win2k22` |
+| Hyper-V | Secure Boot disabled (template signing varies) | Secure Boot left on |
+| VMware ESXi | cloud-init's VMware guestinfo datasource | cloudbase-init's `VMwareGuestInfoService` |
+
+### The scripts fail closed
+
+`vcpus`, `memory`, `disk` and `os_version` are optional in the schema - the
+size profiles normally set the first three, but nothing forces a VM written
+straight through the SDK or API to carry them. A script that did arithmetic on
+an unset value would either fail to render or, worse, render something that
+only breaks at deploy time (`-MemoryStartupBytes NoneGB`). So every
+provisioning template checks first and renders a short script that prints an
+error and exits non-zero instead. The same applies to a Proxmox VM without a
+VMID. The artifact always renders; what changes is whether running it
+provisions a VM or tells you what to fix.
+
+The scripts also run as root on the hypervisor, so nothing free-form may reach
+the shell unquoted. The schema holds device names to hostname-safe characters
+(`^[a-zA-Z0-9._-]+$`), metadata heredocs use quoted delimiters (`<<'METADATA'`),
+the Hyper-V metadata here-string is literal (`@'...'@`), and free text such as
+the Proxmox description is single-quoted with quote escaping.
+
+### The `vm_userdata` artifact
+
+`vm_userdata` (content type `application/yaml`) targets the `vm_userdata_targets` group - every VM, regardless of hypervisor. It renders a `#cloud-config` document:
+
+- Windows guests get a cloudbase-init `cloud-config`: hostname, an `Admin` user in the `Administrators` group, and the SSH key if one is set
+- Everything else gets a cloud-init `cloud-config`: hostname, an `admin` user with passwordless sudo, and the SSH key if one is set
+
+The SSH key comes from the VM's `ssh_public_key` attribute. No password is ever stored in Infrahub - set the first-boot password at deploy time instead (console access, or a cloudbase-init inject for Windows). Every per-hypervisor script includes `vm_userdata` directly, so the two stay in sync.
+
+### Group membership
+
+The `assign_vm_artifact_groups` generator runs whenever a VM is created, the same trigger as the security generator. It follows the VM's cluster to its hypervisor type and adds the VM to the artifact group that row names (`proxmox_vms`, `kvm_vms`, `hyperv_vms`, or `esxi_vms`) plus `vm_userdata_targets`. The demo data carries no static `member_of_groups` entry for the hypervisor groups, and the generator holds no hypervisor mapping of its own: which group a VM joins is data on `VirtualizationHypervisorType`, so a new hypervisor is a row in `objects/bootstrap/07_hypervisor_types.yml` rather than an edit to the generator. The generator only adds, and only on create, so moving a VM to a cluster of a different type leaves the old group membership behind; correct that by editing the groups directly.
+
+## Image prerequisites
+
+Each provisioning script expects a template image already on the target hypervisor, named `<image_prefix><os_version slug>`: lowercase the VM's `os_version` and replace spaces with dashes. The prefix comes from the cluster's hypervisor type (`tpl-` for every family the demo ships), so changing the convention is a data edit rather than a change to four templates. `Ubuntu 22.04` becomes `tpl-ubuntu-22.04`; `Windows Server 2022` becomes `tpl-windows-server-2022`.
+
+| Hypervisor | Where the template lives |
+| ---------- | ------------------------- |
+| Proxmox VE | A template VM (`qm template`), found by name via `qm list` |
+| KVM/libvirt | A qcow2 image in `/var/lib/libvirt/images/` |
+| Hyper-V | A VHDX in `C:\HyperV\Templates\` |
+| VMware ESXi | A template VM, cloned with `govc vm.clone` |
+
+The template must have cloud-init (Linux) or cloudbase-init (Windows) preinstalled. The provisioning scripts only inject user-data and metadata - they never install the agent, so a template without it boots without applying the SSH key or user configuration.
+
+## Creating a VM from the Service Catalog
+
+The Service Catalog includes a **Create VM** page for form-based provisioning. Enable the catalog first (see [using the service catalog](./service-catalog.mdx)), then open `http://localhost:8501` and select **Create VM**.
+
+The form asks for a name, the physical host, a Guest OS (Linux or Windows - it sets the OS version choices and picks cloud-init or cloudbase-init for the `vm_userdata` artifact), an optional description, customer, status, compute sizing (vCPUs, memory, disk), and an optional SSH public key. The cluster is derived from the host you pick.
+
+A VM ID field appears only for Proxmox and KVM clusters - required for Proxmox, optional for KVM - since Hyper-V and ESXi identify VMs by name instead. When shown, it's prefilled with the next unused ID and validated against the IDs already taken in the host's cluster.
+
+On submit, the page:
+
+1. Creates a new branch
+2. Creates the virtual machine on that branch
+3. Waits for the security generator to assign the IP and update the address group
+4. Creates a proposed change for review
+5. Regenerates the VM's provisioning artifacts and displays the rendered script and user-data, each with a download button
+
+Merge the proposed change to bring the VM into `main`.
+
+## Validation
+
+Two checks run automatically in every proposed change that touches this data.
+
+`validate_virtualization_vm` covers the VM: it names both its host and its cluster, and the host itself belongs to a cluster, so there are two paths to the same fact. The check fails when they disagree, for example a VM assigned to `FRA1-KVM-CLUSTER` while running on `fra1-pve-01`.
+
+`validate_virtualization_capacity` covers compute capacity: a VM's vCPUs, memory and disk are allocated on the VM, the hardware they come from is on the host, and nothing compares the sum of one against the other. The check does that at two levels and reports the numbers whether or not anything is wrong, so a proposed change shows current utilization:
+
+```text
+info  fra1-pve-01: 10/256 vCPU allocated (4% of the limit, 64 physical at 400%)
+info  FRA1-PROXMOX-CLUSTER: 12/512 vCPU allocated across 2 hosts (2%), 5% of the 256 available with the largest host lost
+error fra1-pve-01 is oversubscribed after fra1-vm-toobig: 412 vCPU allocated against a limit of 256 (64 physical at 400% overcommit)
+```
+
+Three things about how it judges:
+
+**Overcommit is expected, so the limit is not the raw hardware number.** Each hypervisor family carries the ratio it is run at, on its `VirtualizationHypervisorType` row, as a percentage because `Number` is integer-only: 400 is 4:1, 100 is no overcommit. The demo ships 4:1 vCPU for Proxmox and KVM, 3:1 for VMware, 2:1 for Hyper-V, 1:1 memory everywhere, and thin provisioning of 1.5:1 on disk (2:1 for VMware). A family with no value set is treated as 1:1.
+
+**A powered-off VM counts for disk but not for vCPU or memory.** A stopped VM still occupies its disk image, while its cores and memory are only claimed while it runs.
+
+**Only the host level fails the change.** A VM that does not fit its own host cannot start, so that is an error. The cluster level errors only if the allocation exceeds the cluster's total capacity, since nothing could place those VMs. Losing N+1 headroom, meaning the cluster no longer fits if its largest host is lost, is reported as information: it is a capacity-planning signal rather than a reason to block a change. A single-host cluster has no host to lose, so no N+1 figure is reported for it.
+
+`validate_virtualization_host` covers the host: a host names the hypervisor family it runs, and so does the cluster it joins. The check fails when a host joins a cluster of a different family, for example the Hyper-V host `fra1-hv-01` placed in `FRA1-PROXMOX-CLUSTER`, and when a host with the `compute` role, which runs its workload directly on the hardware, is made a cluster member at all.
+
+Both are comparisons rather than compatibility tables, because host and cluster point at the same `VirtualizationHypervisorType` row. A relationship picker cannot be filtered by another field's value, so the host's display label carries its hypervisor family (`fra1-hv-01 (hyperv)`) and a mismatch is visible in the picker before it is saved.
+
+## Schema architecture
+
+```text
+VirtualizationCluster
+  ├── VirtualizationPhysicalHost (member host)
+  │     └── VirtualizationVirtualMachine (parent: host)
+  └── VirtualizationVirtualMachine (cluster membership)
+
+OrganizationCustomer
+  └── VirtualizationVirtualMachine (customer link)
+```
+
+### Key relationships
+
+- **VirtualizationPhysicalHost** is a full DCIM device: it inherits the generic device and physical device models, so it has a rack position, interfaces, and can be an artifact target
+- **VirtualizationVirtualMachine** belongs to exactly one host (parent relationship) and one cluster, and optionally to a customer
+- Both hosts and VMs share the compute sizing attributes (`vcpus`, `memory`, `disk`) through the `ComputeGenericUnit` generic
+- **VirtualizationHypervisorType** is referenced by both the cluster and the host, which is what turns hypervisor compatibility into an identity comparison. It also holds the artifact group, artifact definition, script language and image prefix for that family, so those facts live in one row instead of being repeated across the generator, the Service Catalog and the templates
+- A host carries no `platform` of its own: its hypervisor type already names the OS, and a second copy of that fact is what would let a Windows host sit in a Proxmox cluster
+- The Create VM form validates that a VM ID is unique within its cluster; the schema itself does not enforce it, so two clusters can both use VM ID 100
+
+## Next steps
+
+- **[Working with security management](./security-management.mdx)** - how the HTTPS-only policy renders into firewall configuration
+- **[Using the service catalog](./service-catalog.mdx)** - enable the catalog application used to create VMs
+- **[Developer guide](./developer-guide.mdx)** - generator, check, and schema implementation details
