@@ -138,7 +138,7 @@ unprovisioned pair would be the same failure as the text label, arriving later.
 
 The provisioning generator either builds a service or refuses it, and a refusal
 is written onto the node: `status` goes to `rejected`, `rejection_code` takes one
-of six values, and `rejection_detail` holds the prose. `checks/provisionable.py`
+of <span data-fact="rejection-codes">six</span> values, and `rejection_detail` holds the prose. `checks/provisionable.py`
 reads those three fields and fails the proposed change for every service that is
 refused and **not accepted**, naming the service, the code and the detail.
 
@@ -480,11 +480,13 @@ last known reading"]
 ```
 
 **Each row is its own kind.** Five kinds, not one kind with a field saying which
-family it belongs to. The readings barely overlap: of the fourteen in the model,
-eleven appear on exactly one family. The names suggest more sharing than there
+family it belongs to. The readings barely overlap: of the <span data-fact="monitor-readings">fourteen</span> in the model,
+<span data-fact="monitor-readings-alone">eleven</span> appear on exactly one family. The names suggest
+more sharing than there
 is, because input power, total power, pump power and received power are four
 different measurements that happen to have "power" in four different names.
-Three readings are shared, and only in two pairs: measured gain between an
+<span data-fact="monitor-readings-shared">Three</span> readings are shared, and only in two pairs:
+measured gain between an
 amplifier and a Raman pump, and total power and channel count between a ROADM
 degree and a multiplexer.
 

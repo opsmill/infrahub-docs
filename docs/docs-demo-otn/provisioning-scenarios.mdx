@@ -51,7 +51,7 @@ join a group that does not exist yet.
 The task skips the dataset load when the branch already holds it, so a second
 run costs seconds rather than minutes.
 
-A schema load onto a branch already holding the 2344-object dataset runs longer
+A schema load onto a branch already holding the <span data-fact="objects">2344</span>-object dataset runs longer
 than the client's 120 second timeout. The server finishes anyway. Poll
 `/api/schema?branch=provision-ber-ams-400g` rather than running the load again,
 and wait until `nodes` plus `generics` reaches the same count the endpoint
@@ -218,7 +218,7 @@ the next one every time.
 
 Open a proposed change from `provision-ber-ams-400g`. This needs the repository
 registered, which `invoke init` does and `uv run invoke load-repository` does on
-its own. The pipeline then runs the nine checks, the generator and all three
+its own. The pipeline then runs the <span data-fact="checks">nine</span> checks, the generator and all three
 artifact definitions against the change, and reports each one on it.
 
 It also needs the branch to exist in Git. The checks, the generator and the
@@ -228,7 +228,7 @@ Git branch that matches the data branch. `infrahubctl branch create` defaults to
 either of them made carries data only. A proposed change from one runs Data
 Integrity and Schema Integrity and stops there. Create the branch with
 `uv run infrahubctl branch create <name> --sync-with-git` when you intend to open
-a proposed change from it, and the count goes from two validators to seventeen.
+a proposed change from it, and the count goes from two validators to <span data-fact="validators">seventeen</span>.
 
 The generator runs **before** the checks, which is what makes `provisionable`
 safe. It gates the merge on a verdict the generator derived. That
@@ -260,7 +260,8 @@ A stack whose default branch holds no plant behaves differently: the setup step
 loads the dataset onto the branch instead, and the diff then contains the whole
 network as well.
 
-Four of the nine checks say something about this change:
+<span data-fact="checks-speaking">Four</span> of the <span data-fact="checks">nine</span> checks say
+something about this change:
 
 - `channel_collision` confirms no two carriers hold overlapping spectrum on the
   same section. It reports how much of the band the busiest one holds.
@@ -293,7 +294,7 @@ wavelength removed from the model while the equipment was left alone. What these
 four findings show is that provisioning is only half automated: the topology
 moved and the telemetry record has not caught up.
 
-The other five say nothing, for different reasons. `units_import` only asserts
+The other <span data-fact="checks-silent">five</span> say nothing, for different reasons. `units_import` only asserts
 that the worker can import the shared package. `monitor_completeness` is silent
 because this change adds no device, so nothing on the branch newly lacks a
 monitor. `carrier_termination` finds every one of the forty shipped wavelengths
@@ -398,7 +399,7 @@ svc-fra-mil-ai-400g: refused, no-slots: neither a direct wavelength nor a chain
 
 The service comes back `rejected`, with that sentence stored on it, and nothing
 else is written. The verdict is two fields rather than one: `rejection_code` is
-`no-slots`, one of six values the schema enforces, and `rejection_detail` holds
+`no-slots`, one of <span data-fact="rejection-codes">six</span> values the schema enforces, and `rejection_detail` holds
 the prose. Nothing parses the code back out of the sentence.
 
 **This scenario ends in an accepted refusal, so the branch merges.**

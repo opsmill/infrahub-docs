@@ -473,8 +473,8 @@ It exports the committed tree into `.remote/`, which the containers see as
 `/remote`. It points a `CoreRepository` at that path and waits for the import.
 Then it counts what the sync created, which is the part worth watching: a
 repository can reach in-sync and create nothing, and the count is the only thing
-that says so. On this repository it creates nine check definitions, ten Python
-transforms, three artifact definitions, one generator definition and twenty
+that says so. On this repository it creates <span data-fact="checks">nine</span> check definitions, ten Python
+transforms, three artifact definitions, one generator definition and <span data-fact="queries">twenty</span>
 GraphQL queries.
 
 Two details decide whether this works.

@@ -81,8 +81,9 @@ the task rather than the tool.
 ## Load the data
 
 The schema gives you 44 empty kinds. This step fills them with a European core
-network: 15 sites, of which 14 are PoPs, 21 ROADM-to-ROADM sections and 133 fiber
-spans. On that plant sit 441 devices, 1490 ports, 40 pre-provisioned wavelengths
+network: <span data-fact="sites">15</span> sites, of which 14 are PoPs, <span data-fact="sections">21</span> ROADM-to-ROADM
+sections and <span data-fact="spans">133</span> fiber spans. On that plant sit <span data-fact="devices">441</span> devices,
+<span data-fact="ports">1490</span> ports, 40 pre-provisioned wavelengths
 and one line container on each of them.
 
 Which branch to load onto depends on what is already there.
@@ -101,7 +102,7 @@ uv run invoke branch-create --name geant
 uv run invoke load --branch geant
 ```
 
-The object load takes a few minutes for 2344 objects. Files load in sorted
+The object load takes a few minutes for <span data-fact="objects">2344</span> objects. Files load in sorted
 order and that order matters, which is why they have numeric prefixes. The
 catalogs load first, then tags, sites, conduits, devices, ports, spans, sections,
 carriers and the line containers riding them. The O-E-O devices load last,
@@ -114,7 +115,8 @@ against something already loaded.
 uv run invoke inventory --branch geant
 ```
 
-It counts 554 optical elements and 40 carriers, then ranks the sections by
+It counts <span data-fact="optical-elements">554</span> optical elements and
+<span data-fact="wavelengths">40</span> carriers, then ranks the sections by
 spectrum in use and lists every conduit two spans share. `oms-fra-mil` carries
 all 40 of those carriers, holding 4,134,400 MHz of the 4,800,000 MHz the C-band
 gives that section, or 86.1 percent.

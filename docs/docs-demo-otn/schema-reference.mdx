@@ -22,7 +22,7 @@ shaped the way it is, and why every physical quantity is an integer.
 | --- | --- |
 | `schemas/otn_base.yml` | The five OTN generics |
 | `schemas/otn_ports.yml` | The port kinds, two generics and twelve nodes |
-| `schemas/otn_devices.yml` | The eight device kinds |
+| `schemas/otn_devices.yml` | The <span data-fact="device-kinds">eight</span> device kinds |
 | `schemas/location.yml` | `LocationGeneric`, vendored, `OtnSite` and `OtnFacility` |
 
 Infrahub loads every file in the directory into one schema, so the split has no
@@ -617,10 +617,12 @@ readings its hardware can take:
 | `OtnReceiverMonitor` | `rx_power_mdbm`, `measured_osnr_mdb`, `pre_fec_ber_ppb`, `q_factor_mdb`, `cd_fs_per_nm`, `dgd_fs` |
 
 Five kinds rather than one, because the readings barely overlap. Of the
-fourteen readings in the model, eleven appear on exactly one family. The names
+<span data-fact="monitor-readings">fourteen</span> readings in the model,
+<span data-fact="monitor-readings-alone">eleven</span> appear on exactly one family. The names
 suggest more sharing than there is: `input_power_mdbm`, `total_power_mdbm`,
 `pump_power_mdbm` and `rx_power_mdbm` are four different measurements that
-happen to have "power" in four different names. Three readings are shared, and
+happen to have "power" in four different names.
+<span data-fact="monitor-readings-shared">Three</span> readings are shared, and
 only in two pairs: `measured_gain_mdb` between an amplifier and a Raman pump,
 and `total_power_mdbm` and `channel_count` between a ROADM degree and a
 multiplexer.
@@ -714,7 +716,7 @@ the mode catalog cannot answer at all, and both are answerable for every pair of
 sites in the dataset. They are in the schema because the generator writes them,
 not because a demo scenario shows them.
 
-**The choices are the Python constants, and a test says so.** All six live in
+**The choices are the Python constants, and a test says so.** All <span data-fact="rejection-codes">six</span> live in
 `routing.py`, including `no-slots`, whose only writer is
 `generators/optical_service.py`.
 `tests/unit/test_schema_contract.py` asserts the six schema names equal the six
@@ -781,7 +783,7 @@ are two entries side by side, so an engineer opening the catalog finds both. The
 alternative is reaching a wavelength plan by first opening a multiplexer, which
 is a route nobody guesses.
 
-Devices opens on the generic kind, so one click gives all eight device kinds.
+Devices opens on the generic kind, so one click gives all <span data-fact="device-kinds">eight</span> device kinds.
 
 The sidebar names no port kind and no individual device kind, because the object
 pages already reach them. A site page lists the devices at the site; a device
