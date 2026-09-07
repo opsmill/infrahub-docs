@@ -25,18 +25,18 @@ one you would use.
 | Infrahub capability | What this demo does with it | Scenario, and where it is walked |
 | --- | --- | --- |
 | Branches | Every service is provisioned on a branch cut from the default one. The plant sits on the default branch and no service is ever written there. | Scenario one, [create the branch and the request](./provisioning-scenarios.mdx#create-the-branch-and-the-request) |
-| Proposed changes | Opening a proposed change from the branch runs the whole pipeline: <span data-fact="checks">nine</span> checks, one generator and three artifact definitions, each reported on the change. The branch has to be created with `--sync-with-git` for that, or the change runs the two built-in validators and stops. | Scenario one, [review and merge](./provisioning-scenarios.mdx#review-and-merge) |
-| Checks that gate a merge | `.infrahub.yml` registers <span data-fact="checks">nine</span> check definitions. `provisionable` reads `status` and fails the change for a service the generator left at `rejected` that nobody signed for. The reason code and the detail are what make the message readable. | Madrid to Warsaw at DP-16QAM, [the regenerator pair](./loadable-scenarios.mdx#two-loadable-scenarios-for-the-regenerator) and [the quick start](./quickstart.mdx#the-refusal-that-blocks-the-merge) |
+| Proposed changes | Opening a proposed change from the branch runs the whole pipeline: <span data-fact="checks">fourteen</span> checks, one generator and three artifact definitions, each reported on the change. The branch has to be created with `--sync-with-git` for that, or the change runs the two built-in validators and stops. | Scenario one, [review and merge](./provisioning-scenarios.mdx#review-and-merge) |
+| Checks that gate a merge | `.infrahub.yml` registers <span data-fact="checks">fourteen</span> check definitions. `provisionable` reads `status` and fails the change for a service the generator left at `rejected` that nobody signed for. The reason code and the detail are what make the message readable. | Madrid to Warsaw at DP-16QAM, [the regenerator pair](./loadable-scenarios.mdx#two-loadable-scenarios-for-the-regenerator) and [the quick start](./quickstart.mdx#the-refusal-that-blocks-the-merge) |
 | Generators | One generator definition turns a service request that names no route into a carrier, an optical path, 25 ordered hops and two containers. | Scenario one, [run the generator](./provisioning-scenarios.mdx#run-the-generator) |
 | Artifacts | Three artifact definitions: a JSON service trace on every service, and two SVG maps rendered once per PoP, each from its own stored query. | Scenario five and [the two maps every PoP carries](./reporting-scenarios.mdx#the-two-maps-every-pop-carries) |
 | Python transforms | Ten transforms, each bound to its own stored query, render every report in the demo from live data. | Scenario eight, [the AI services against their budgets](./reporting-scenarios.mdx#scenario-eight-the-ai-services-against-their-budgets) |
-| Stored GraphQL queries | <span data-fact="queries">Twenty</span> queries, one per report or check, so a query two consumers share is never a query neither can change. | [Adding a report](./developer-guide.mdx#adding-a-report) |
+| Stored GraphQL queries | <span data-fact="queries">25</span> queries, one per report or check, so a query two consumers share is never a query neither can change. | [Adding a report](./developer-guide.mdx#adding-a-report) |
 | Object files in Git | `objects/` holds the plant and loads on every init. `demo/` holds scenario input and is loaded by hand onto a branch. | [`objects/` against `demo/`](./developer-guide.mdx#objects-against-demo) |
 | Schema as code | Eight schema files loaded as one payload, with flat generics composed on the concrete nodes. | [The files](./schema-reference.mdx#the-files) |
-| Computed attributes | 29 of them across the eight files, every one Jinja2, most turning a scaled integer into a value a person can read. | [Display attributes](./schema-reference.mdx#display-attributes) |
+| Computed attributes | <span data-fact="computed-attributes">32</span> of them across the eight files, every one Jinja2, most turning a scaled integer into a value a person can read. | [Display attributes](./schema-reference.mdx#display-attributes) |
 | Schema constraints | Enums, `min_value` and `max_value`, `optional: false` with a `default_value`, and uniqueness constraints in the `["relationship", "attribute__value"]` form. | The enum and the `default_value` at [the six reason codes](./schema-reference.mdx#the-six-reason-codes-and-the-signature-beside-them), the bounds at [the rules that constrain a change](./developer-guide.mdx#the-rules-that-constrain-a-change), the uniqueness constraint at [a regenerated circuit](./client-mapping.mdx#a-regenerated-circuit-has-containers-on-both-sides) |
 | `on_delete: cascade` | Used on the two relationships that own their children: a device's ports, and an optical path's hops. No page walks it. | Not walked |
-| Custom menus | `menus/otn.yml` builds the sidebar as five top-level entries and thirteen leaves, and every kind sets `include_in_menu: false` so nothing appears twice. | [Menu and navigation](./schema-reference.mdx#menu-and-navigation) |
+| Custom menus | `menus/otn.yml` builds the sidebar as five top-level entries and fifteen leaves, and every kind sets `include_in_menu: false` so nothing appears twice. | [Menu and navigation](./schema-reference.mdx#menu-and-navigation) |
 | Groups as targets | A `CoreGeneratorGroup` fires the generator. A `CoreStandardGroup` scoped to the PoPs is what the two map artifacts render against. | Scenario one, [create the branch and the request](./provisioning-scenarios.mdx#create-the-branch-and-the-request) |
 | The repository as a Git integration | The schema, the object files, the checks, the generator and the transforms all come from this repository. `invoke init` registers it, and that is what turns the pipeline on. | [Registering the repository](./developer-guide.mdx#registering-the-repository) |
 
@@ -94,7 +94,7 @@ full list.
 | What is committed but not yet built, across vendors | Inside one project file | As planned objects, inside one domain | On a branch, across the whole plant |
 | Why this route and not the other one | With whoever ran the tool | No | The path, its ordered hops, the running budget, and the proposed change where a person signed |
 | What drops if one duct is cut | Within its own project | Within its own domain | [Scenario four](./reporting-scenarios.mdx#scenario-four-cut-the-frankfurt-to-amsterdam-fiber) |
-| Where a 400ZR in a router lands on the line system | It is not that tool's transponder | Split across two controllers | One chain of objects, the one below |
+| Where a coloured pluggable in a router lands on the line system | It is not that tool's transponder | Split across two controllers | One chain of objects, the one below. Three OpenZR+ wavelengths run router to router here. A 400ZR reaches none of these sections, and the model says so and says why |
 | Which IP link rides which wavelength rides which duct | No | No | One query, and [scenario seven](./reporting-scenarios.mdx#scenario-seven-which-services-are-not-diverse) reads it |
 | What the plan looked like last quarter | An older file, if anyone kept it | Rarely | The branch and the commit history |
 
@@ -111,6 +111,7 @@ two tools.
 | Insertion loss and noise figure | `vendor` and `model` on `OtnOpticalElement`, with the loss fields beside them | Objects per model |
 | An alien wavelength on a line system another operator built | A transponder whose carrier crosses sections built from other equipment | Nothing. No relationship in the hop chain is scoped to a vendor |
 | Framing and correction latency | `fec_latency_ns` on the mode, `framing_latency_ns` on the ODU switch | Values per model, added up by [scenario eight](./reporting-scenarios.mdx#scenario-eight-the-ai-services-against-their-budgets) |
+| Which optic supplies a mode | `OtnTransceiverType`, with the modes each part number supports | More catalog entries. `transceiver_mode_support` refuses a mode the fitted part cannot run, whoever made it |
 | Naming and slot conventions | The `human_friendly_id` on each kind | A different string |
 
 Every racked element in this plant loads as `vendor: Generic`. The field
@@ -123,12 +124,12 @@ objects in `objects/`, reviewed on a branch like any other change.
 | Layer | What the demo holds | Kinds |
 | --- | --- | --- |
 | Duct and shared risk | Which routes share a duct, which is what makes two services not diverse | `OtnConduit` |
-| Fiber | Attenuation, dispersion, group index, and Raman gain where it is pumped | `OtnFiberSpan`, `OtnFiberType`, `OtnRamanPump` |
-| Spectrum | The 50 GHz grid, the coarse grid, and what each carrier occupies on both | `OtnFrequencyGrid`, `OtnCwdmChannel` |
+| Fiber | Attenuation, dispersion, group index, Raman gain where it is pumped, and loss added on purpose | `OtnFiberSpan`, `OtnFiberType`, `OtnRamanPump`, `OtnFixedAttenuator`, `OtnVariableAttenuator` |
+| Spectrum | The 50 GHz grid, the coarse grid, what each carrier occupies on both, and which fiber a channel lands on | `OtnFrequencyGrid`, `OtnCwdmChannel`, `OtnMuxClientPort`, `OtnMuxLinePort` |
 | Optical carrier | One provisioned wavelength, the mode it runs, and every section it crosses | `OtnOpticalCarrier`, `OtnOpticalMode` |
 | Digital wrapper | The container hierarchy, tributary slots, and where a wavelength terminates and the next one starts | `OtnContainer`, `OtnOduSwitch` |
 | Client handover | Ethernet, SDH, PDH, Fibre Channel and InfiniBand, each with the container it maps into | `OtnClientSignal` |
-| Router edge | The router and its grey port, as the endpoint a service names | `OtnRouter`, `OtnRouterPort` |
+| Router edge | The router, its grey port as the endpoint a service names, and the coloured line port where a pluggable puts a wavelength straight on the line system | `OtnRouter`, `OtnRouterPort`, `OtnLinePort`, `OtnTransceiver`, `OtnTransceiverType` |
 | Above that | Nothing. No VLAN, no prefix, no routing protocol | [Not exercised](#what-this-demo-does-not-exercise) |
 
 The last row counts as much as the others. This model stops at the router port.
@@ -181,9 +182,9 @@ Each row was checked against the repository rather than recalled.
 | Profiles, `generate_profile` | Not used. Shared default values are written into the object files. |
 | Object templates, `generate_template` | Not used. The generator writes structure instead, because what it writes depends on which route closed. |
 | IPAM, prefixes and addresses | Not used. There is no `IpamPrefix` and no address anywhere in the schema. The vendored location generic drops `LocationHosting` deliberately, and that is the relationship that would have brought IPAM in. |
-| Transform-backed computed attributes | Not used. All 29 computed attributes are Jinja2 over the node's own fields. Nothing here aggregates over a cardinality-many relationship inside the schema. |
+| Transform-backed computed attributes | Not used. All <span data-fact="computed-attributes">32</span> computed attributes are Jinja2 over the node's own fields. Nothing here aggregates over a cardinality-many relationship inside the schema. |
 | Jinja2 transforms and device configuration artifacts | Not used. All ten transforms are Python, and no artifact in this demo is a router configuration. |
-| Hierarchical locations | Declared and then switched off. The vendored generic carries `hierarchical: true`, but `OtnSite` sets `parent: ""` and `children: ""`, so the fifteen sites are one flat set with no region or country above them. |
+| Hierarchical locations | Declared and then switched off. The vendored generic carries `hierarchical: true`, but `OtnSite` sets `parent: ""` and `children: ""`, so the <span data-fact="sites">fifteen</span> sites are one flat set with no region or country above them. |
 | Webhooks and event-driven integration | Not used. Every run here is a command you type or a proposed change you open. |
 | Accounts, roles and permissions | Not used. The repository ships no account, no account group and no permission object, and every command runs as the admin token in `.env`. |
 | Synchronisation with an external system | Not used. Nothing in this repository reads from or writes to anything outside Infrahub, a management system or a planning tool included. The monitor readings in `objects/` are loaded from files, not polled from equipment. |

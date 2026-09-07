@@ -233,6 +233,36 @@ counted twice. Over the 17 spans of the longest route the allowance alone is
 So the OSNR this demo reports is a **beginning-of-life** figure, and the 1.0 dB
 system margin is what covers implementation penalty and aging on top.
 
+## An attenuator costs two numbers, and the model keeps them apart
+
+Every other element on a path costs one figure, its `insertion_loss_mdb`. An
+attenuator costs two:
+
+```text
+hop loss = insertion_loss_mdb + attenuation_mdb
+```
+
+`insertion_loss_mdb` is what the device costs by being in the path at all, and
+`attenuation_mdb` is what it is deliberately set to. A fixed pad is `0 + 5.0 dB`,
+because a pad is nothing but its value. A variable attenuator is `1.0 + 3.0 dB`,
+because the optics and the switching cost a decibel before anything is dialled
+in. Every other element leaves `attenuation_mdb` at zero, so the same expression
+covers a ROADM, a multiplexer and a patch panel unchanged.
+
+**Nothing stores the sum**, and that is the point of keeping the two apart. A
+stored total cannot answer "how much pad range is left", and that is the question
+an operator actually asks. On a variable attenuator the answer is
+`max_attenuation_mdb - attenuation_mdb`, which on the two shipped VOAs is 17.0 dB
+of range still available out of 20.0. `attenuator_range` is the check that holds
+that difference at zero or above, because Infrahub's `max_value` takes a constant
+rather than another attribute of the same object.
+
+**Negative result: no optical path in this dataset runs through an attenuator
+yet.** The four racked units, two pads and two VOAs, sit in the inventory and on
+no path, so no budget on this page moves because of them. The arithmetic is in
+the engine and the objects are loaded; the demo does not yet place one in a
+route.
+
 ## Raman, and what it does to a link budget
 
 Raman amplification puts the gain inside the fiber. A pump laser injects light
@@ -292,7 +322,7 @@ accepts one will eventually hold one.
 
 ### What that is worth on this network
 
-Nine spans have a pump on the default branch, all of them on Vienna to Milan,
+<span data-fact="pumped-spans">Nine</span> spans have a pump on the default branch, all of them on Vienna to Milan,
 all injected at the Milan end and firing against the signal, which amplifies
 Vienna towards Milan. Each pump quotes 10.0 dB of on-off gain, and each combiner
 costs 0.5 dB.
@@ -302,14 +332,14 @@ costs 0.5 dB.
 | Vienna towards Milan | 9.5 dB lower |
 | Milan towards Vienna | 0.5 dB higher |
 
-Nine spans are pumped, so the section total is nine times each figure. This is
+<span data-fact="pumped-spans">Nine</span> spans are pumped, so the section total is nine times each figure. This is
 the one place in the network where the two directions of a section produce
 different answers, and it is why the reports show both.
 
 The budget report shows the arithmetic on the rows it applies to and nowhere
 else. A pumped span row shows its on-off gain, its combiner loss, and what the
 span would have cost unpumped, so the improvement is traceable to its source.
-The other 123 spans have no Raman columns at all, because a column of zeros
+The other <span data-fact="unpumped-spans">124</span> spans have no Raman columns at all, because a column of zeros
 across the rest of the network reads as a fault rather than as a correct answer.
 
 ### Where the treatment stops being predictive
@@ -340,7 +370,7 @@ number, because someone reading the code will not have this page open.
 | Regeneration and 3R placement | The network is transparent end to end by design. |
 | Flexgrid media channels | Anchors are quantised onto the 50 GHz grid. A carrier's occupied **width** is modelled and checked against the band. A `128 GBd` wavelength is 150,000 MHz wide rather than one channel, but its centre may only sit on a grid position. See [the spectral model](./spectral-model.mdx). |
 | Raman pump noise | The on-off gain is credited and the pump's own noise is not charged, so a pumped span reads slightly better than it would in a full distributed model. |
-| Any CWDM link | `OtnFiberType.attenuation_mdb_per_km` is a 1550 nm figure, and applying it to a 1471 nm wavelength understates the loss. This repository holds no per-band attenuation figure, so it cannot say by how much. The coarse tail therefore belongs to no optical multiplex section, which is what keeps it out of the engine. See [optical plant concepts](./concepts.mdx). |
+| Any CWDM link | `OtnFiberType.attenuation_coefficient_mdb_per_km` is a 1550 nm figure, and applying it to a 1471 nm wavelength understates the loss. This repository holds no per-band attenuation figure, so it cannot say by how much. The coarse tail therefore belongs to no optical multiplex section, which is what keeps it out of the engine. See [optical plant concepts](./concepts.mdx). |
 
 ## Three findings the budget produced
 
@@ -395,10 +425,44 @@ directions of Paris to Madrid, 1250 km over 14 spans, each short by 0.535 dB.
 That is the longest single section in the network, and it is the only place the
 higher-order modulation does not fit.
 
-The coherent pluggables, whose 120 km reach clears nothing on a network whose
-shortest section is 220 km, complete the reach picture. Pluggables are out,
 16QAM 400G covers every section except the longest one, and QPSK 400G covers
-every route except the longest one.
+every route except the longest one. The coherent pluggables complete the
+picture, and the section below is about them.
+
+## A DCI pluggable runs out of dispersion, not power
+
+`400ZR` fails on the three shortest sections in the network, and it does not
+fail on OSNR. Amsterdam to Brussels at 220 km hands it **+7.890 dB** of margin
+against its 26.0 dB requirement, and the same section refuses it on chromatic
+dispersion:
+
+| Section | km | Accumulated CD | 400ZR tolerance | Over by | 400ZR OSNR margin |
+| --- | --- | --- | --- | --- | --- |
+| `oms-ams-bru` | 220 | 3740 ps/nm | 2400 ps/nm | 1340 | +7.890 dB |
+| `oms-ber-prg` | 330 | 5610 ps/nm | 2400 ps/nm | 3210 | +4.747 dB |
+| `oms-ham-ber` | 330 | 5610 ps/nm | 2400 ps/nm | 3210 | +4.747 dB |
+
+That is 2400 ps/nm, the lowest dispersion tolerance in the catalog, against a
+plant with 17 ps/nm/km of uncompensated G.652 fibre. 400ZR was specified for a
+data-centre interconnect: a short span with almost no accumulated dispersion and
+nothing in front of it to compensate. Put it on a regional section and it has
+power to spare and no dispersion budget left.
+
+**`OpenZR+ 400G` runs the same constellation, the same baud rate and the same
+cage, and closes on all three.** It tolerates 50,000 ps/nm rather than 2400,
+which is the oFEC doing the work, and the dataset lights three wavelengths on it
+router to router: `oc-ch003-ams-bru` at **+10.890 dB**, `oc-ch004-ber-prg` at
+**+7.747 dB** and `oc-ch006-ham-ber` at **+7.747 dB**. All three close at the
+top rung and none had to drop to 300G or 200G.
+
+So "the 120 km pluggables reach no section" is true and it is a statement about
+cFEC. Pluggable does not mean short reach. `OpenZR+ 200G` reaches 3000 km, the
+same as the long-haul 100G transponder. The distinction that matters when
+ordering optics is the FEC on the part, not the form factor it comes in.
+
+Every figure in this section is recomputed from `objects/` by
+`tests/unit/test_budget_claims.py` on each test run, the same way the three
+findings above are.
 
 ## Paris to Madrid does not close, and the check says so
 
@@ -549,8 +613,9 @@ before the change can merge.
 **The section sweep** budgets every section on its own, in both directions,
 against one reference mode, `DP-16QAM 64GBd 400G`. That is 42 evaluations over
 21 sections, and it exists because the carrier loop cannot reach most of the
-network. Only five sections carry a wavelength, so sixteen of the twenty-one
-were never evaluated by anything. Paris to Madrid was one of the sixteen. The
+network. Only <span data-fact="lit-sections">eight</span> sections carry a wavelength,
+so <span data-fact="unlit-sections">thirteen</span> of the twenty-one were never
+evaluated by anything. Paris to Madrid was one of the thirteen. The
 sweep is also the only place the N+1-amplifiers-per-direction rule becomes a
 gate rather than a unit test, because nothing in the graph enforces how many
 amplifiers a section holds.

@@ -51,7 +51,7 @@ join a group that does not exist yet.
 The task skips the dataset load when the branch already holds it, so a second
 run costs seconds rather than minutes.
 
-A schema load onto a branch already holding the <span data-fact="objects">2344</span>-object dataset runs longer
+A schema load onto a branch already holding the <span data-fact="objects">2490</span>-object dataset runs longer
 than the client's 120 second timeout. The server finishes anyway. Poll
 `/api/schema?branch=provision-ber-ams-400g` rather than running the load again,
 and wait until `nodes` plus `generics` reaches the same count the endpoint
@@ -138,7 +138,7 @@ lower-order fallback as the cost it is.
 
 ### Read the result
 
-The generator wrote 29 objects and changed one:
+The generator wrote <span data-fact="provisioned-objects">29</span> objects and changed one:
 
 | Kind | Count | What it holds |
 | --- | --- | --- |
@@ -162,7 +162,7 @@ container, because forty wavelengths are already lit there. Scenario two is that
 case.
 
 **The carrier it wrote has an empty `line_ports` list, and that is a limitation
-rather than a bug.** Every one of the forty wavelengths in the shipped dataset
+rather than a bug.** Every one of the 43 wavelengths in the shipped dataset
 names the two line ports that terminate it, one at each end, because the
 generator that writes `objects/` binds them. `generators/optical_service.py`
 names no line port and no transponder: it writes the carrier, the path, the hops
@@ -218,7 +218,7 @@ the next one every time.
 
 Open a proposed change from `provision-ber-ams-400g`. This needs the repository
 registered, which `invoke init` does and `uv run invoke load-repository` does on
-its own. The pipeline then runs the <span data-fact="checks">nine</span> checks, the generator and all three
+its own. The pipeline then runs the <span data-fact="checks">fourteen</span> checks, the generator and all three
 artifact definitions against the change, and reports each one on it.
 
 It also needs the branch to exist in Git. The checks, the generator and the
@@ -228,7 +228,7 @@ Git branch that matches the data branch. `infrahubctl branch create` defaults to
 either of them made carries data only. A proposed change from one runs Data
 Integrity and Schema Integrity and stops there. Create the branch with
 `uv run infrahubctl branch create <name> --sync-with-git` when you intend to open
-a proposed change from it, and the count goes from two validators to <span data-fact="validators">seventeen</span>.
+a proposed change from it, and the count goes from two validators to <span data-fact="validators">22</span>.
 
 The generator runs **before** the checks, which is what makes `provisionable`
 safe. It gates the merge on a verdict the generator derived. That
@@ -249,8 +249,9 @@ OtnService          ADDED    5     the five requests the setup loaded
 The plant is not in the diff. `invoke init` loads the schema, the menu and the
 dataset onto the default branch. A branch cut from it inherits all of that,
 and the diff contains only what the branch added. That is the five service
-requests the setup step loaded, and the 29 objects the generator wrote for the
-one you provisioned. The line container is in the diff even though it joined no
+requests the setup step loaded, and the
+<span data-fact="provisioned-objects">29</span> objects the generator wrote for the one
+you provisioned. The line container is in the diff even though it joined no
 tracking group: tracking decides what a re-run may reclaim, not what a branch
 diff shows. The service it changed is one of the five, which is why
 the services appear here as added rather than modified: the default branch has
@@ -260,13 +261,13 @@ A stack whose default branch holds no plant behaves differently: the setup step
 loads the dataset onto the branch instead, and the diff then contains the whole
 network as well.
 
-<span data-fact="checks-speaking">Four</span> of the <span data-fact="checks">nine</span> checks say
+<span data-fact="checks-speaking">Four</span> of the <span data-fact="checks">fourteen</span> checks say
 something about this change:
 
 - `channel_collision` confirms no two carriers hold overlapping spectrum on the
   same section. It reports how much of the band the busiest one holds.
-- `osnr_margin` re-evaluates every wavelength on the branch, now 41 rather than
-  40, and separately sweeps all 21 sections in both directions against one
+- `osnr_margin` re-evaluates every wavelength on the branch, now 44 rather than
+  43, and separately sweeps all 21 sections in both directions against one
   reference mode. It reports the worst margin from each loop.
 - `container_capacity` walks the container tree and confirms no parent's children
   commit more tributary slots than it offers. The 400G client here fills its
@@ -294,10 +295,10 @@ wavelength removed from the model while the equipment was left alone. What these
 four findings show is that provisioning is only half automated: the topology
 moved and the telemetry record has not caught up.
 
-The other <span data-fact="checks-silent">five</span> say nothing, for different reasons. `units_import` only asserts
+The other <span data-fact="checks-silent">ten</span> say nothing, for different reasons. `units_import` only asserts
 that the worker can import the shared package. `monitor_completeness` is silent
 because this change adds no device, so nothing on the branch newly lacks a
-monitor. `carrier_termination` finds every one of the forty shipped wavelengths
+monitor. `carrier_termination` finds every one of the 43 shipped wavelengths
 still terminated at both ends, and it names the new one as skipped rather than
 judging it: the generator writes a carrier as `planned` and binds no line port,
 because provisioning allocates spectrum on a route and does not place hardware.
@@ -309,6 +310,17 @@ service on this branch provisioned, so there is no refusal to gate on. It prints
 its counts rather than passing quietly. A green check on a branch with
 no services and a green check on a provisioned network look identical from the
 proposed change. Only one of them is evidence of anything.
+
+The five hardware checks are quiet for one reason between them: **this change
+racks nothing.** `mux_channel_binding` reads every multiplexer against the client
+ports it carries, `attenuator_range` holds each variable attenuator to its own
+maximum, `transceiver_placement` asks whether each pluggable sits in a port with
+a cage, and `connector_polish` reads the endfaces at both ends of every
+Raman-pumped span. The generator writes a carrier, a path, its hops and two
+containers, and it fits no module and touches no span, so all four report on
+plant that did not move. `transceiver_mode_support` does see the new wavelength
+and skips it, for the reason `carrier_termination` skips it: the carrier binds no
+line port, so there is no fitted optic to hold its mode against.
 
 That collision check **is** the reservation. Nothing in this model stores
 occupancy as state, so nothing has to be released when a service is torn down.

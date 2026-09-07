@@ -50,15 +50,17 @@ uv run invoke load-repository   # if the stack has no repository yet
 
 <figure className="doc-figure">
 
-![The fourteen PoPs of the modelled European optical core, with the 21 multiplex sections coloured by the largest ODU that still fits on the roomiest lit carrier. Vienna to Milan is red at 240 of 240 slots committed, Paris to Frankfurt amber at 953 of 960, Berlin to Frankfurt blue at 1552 of 1600, Amsterdam to Frankfurt and Frankfurt to Milan green, and the remaining sixteen routes grey and dashed.](./media/odu-map.svg)
+![The fourteen PoPs of the modelled European optical core, with the 21 multiplex sections coloured by the largest ODU that still fits on the roomiest lit carrier. Amsterdam to London is red at 80 of 80 slots committed and Vienna to Milan red at 240 of 240, Paris to Frankfurt amber at 953 of 960, Berlin to Frankfurt blue at 1552 of 1600, five routes green, and the remaining twelve grey and dashed.](./media/odu-map.svg)
 
   <figcaption>
 
   Frankfurt's copy of `odu-map`, off a branch carrying
   `demo/05_odu_mixed_fill.yml`, so all five bands are on one picture. The default
-  branch shows only two of them: `odu4` on five sections and `no-odu` on sixteen.
-  The measured split here is `odu4` 2, `odu2` 1, `odu0` 1, `full` 1 and `no-odu`
-  16. Every figure in the panel was checked against the containers on the
+  branch shows only two of them: `odu4` on <span data-fact="lit-sections">eight</span> sections and `no-odu` on
+  <span data-fact="unlit-sections">thirteen</span>. The measured split in this picture is `odu4` 5, `odu2` 1, `odu0` 1,
+  `full` 2 and `no-odu` 12. Three of the five green routes are the
+  router-to-router OpenZR+ wavelengths, each an empty ODUC4 offering all 320 of
+  its slots. Every figure in the panel was checked against the containers on the
   branch rather than taken from the drawing.
 
   </figcaption>
@@ -140,13 +142,13 @@ it.
 
 ## `no-odu` does not mean empty and available
 
-On a clean `main` the grey band covers **16 of the 21 sections**, and most of the
+On a clean `main` the grey band covers **<span data-fact="unlit-sections">13</span> of the 21 sections**, and most of the
 map is grey. That is the honest picture and not a broken render.
 
-The 16 are sections with **no wavelength at all**, not sections whose wavelengths
+The <span data-fact="unlit-sections">13</span> are sections with **no wavelength at all**, not sections whose wavelengths
 are unlit. Every pre-provisioned carrier in the dataset arrives carrying an empty
-line container, so a section with a carrier is lit. The 40 wavelengths in
-`objects/17_geant_carriers.yml` cover five sections and nothing else:
+line container, so a section with a carrier is lit. The 43 wavelengths in
+`objects/17_geant_carriers.yml` cover <span data-fact="lit-sections">eight</span> sections and nothing else:
 
 | Section | Lit carriers | Committed over offered | Band |
 | --- | --- | --- | --- |
@@ -155,9 +157,12 @@ line container, so a section with a carrier is lit. The 40 wavelengths in
 | `oms-ber-fra` | 5 | 0 / 1600 | Green |
 | `oms-par-fra` | 3 | 0 / 960 | Green |
 | `oms-vie-mil` | 3 | 0 / 240 | Green |
+| `oms-ams-bru` | 1 | 0 / 320 | Green |
+| `oms-ber-prg` | 1 | 0 / 320 | Green |
+| `oms-ham-ber` | 1 | 0 / 320 | Green |
 
-The other sixteen have no carrier, so they have no slot figure, so they are grey.
-The band split on `main` is `odu4` 5 and `no-odu` 16, and
+The other thirteen have no carrier, so they have no slot figure, so they are grey.
+The band split on `main` is `odu4` 8 and `no-odu` 13, and
 `tests/unit/test_odudraw.py` asserts that pair against the shipped dataset.
 
 ## The panel
@@ -220,8 +225,10 @@ and both of those still carry empty `ODUC4` wavelengths offering 320 slots.
 **`demo/05_odu_mixed_fill.yml`, every band at once.** Five bands are five
 different sentences about a section, and a map showing one of them proves nothing
 about the other four. This file puts at least one section in each, on one branch,
-so the legend can be read against the picture. The measured split is `odu4` 2,
-`odu2` 1, `odu0` 1, `full` 1, `no-odu` 16, over 21 sections.
+so the legend can be read against the picture. The measured split is `odu4` 5,
+`odu2` 1, `odu0` 1, `full` 2, `no-odu` 12, over 21 sections. Three of the five
+`odu4` sections are the router-to-router OpenZR+ wavelengths, which this file
+does not touch and which arrive empty.
 
 It writes client containers directly rather than running the generator twenty
 times, because the scenario is about what the map states and not about how the

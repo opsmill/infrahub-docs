@@ -53,7 +53,7 @@ lossless. A span's loss is not a property anyone measures once and writes down.
 It is computed from four things the span does store:
 
 ```text
-loss = length_m x fiber_type.attenuation_mdb_per_km / 1000
+loss = length_m x fiber_type.attenuation_coefficient_mdb_per_km / 1000
      + splice_count x splice_loss_mdb
      + connector_count x connector_loss_mdb
      + aging_margin_mdb
@@ -363,8 +363,10 @@ carry.
 
 ## The coarse tail is outside the budget engine, deliberately
 
-`OtnFiberType.attenuation_mdb_per_km` is one number per fiber family, measured
-at 1550 nm. The budget engine applies it to every span it is handed. On the
+`OtnFiberType.attenuation_coefficient_mdb_per_km` is one number per fiber
+family, measured at 1550 nm. It is a coefficient rather than a loss, and the
+name says so because the attenuators are the things in this model that have an
+attenuation. The budget engine applies it to every span it is handed. On the
 dense grid that is accurate to a few thousandths of a decibel. On a coarse
 wavelength it is not. Silica attenuates more outside the C band, and the further
 out the wavelength sits the larger the gap.
@@ -393,45 +395,73 @@ the tail, so a core multiplexer cannot quietly acquire one.
 Modelling a coarse budget honestly needs an attenuation figure per wavelength
 band, which is a schema change rather than a note.
 
-## Negative result: the 120 km pluggables reach no section
+## Negative result: cFEC reaches no section here, and oFEC reaches almost all of them
 
 The optical-mode catalog is data precisely so this kind of question is answered
-by a query rather than by an assumption. For the coherent pluggables the answer
-is discouraging.
+by a query rather than by an assumption. The answer is not "pluggables do not
+reach". It is a statement about forward error correction.
 
-The shortest nominal reach in the catalog is **120 km**, shared by `400ZR` and
-`800ZR`. The shortest section in the loaded network is **220 km**, Amsterdam to
-Brussels, and the next two are 320 km and 330 km. Both parts therefore reach
-zero of the twenty-one sections, and the ordering does not change if the reach
-figure moves by a few tens of kilometres.
+| Mode | FEC | Reach | Required OSNR | Dispersion tolerance | Sections reached |
+| --- | --- | --- | --- | --- | --- |
+| `400ZR` | cFEC | 120 km | 26.0 dB | 2400 ps/nm | 0 of 21 |
+| `800ZR` | cFEC | 120 km | 29.0 dB | 1400 ps/nm | 0 of 21 |
+| `OpenZR+ 400G` | oFEC | 1000 km | 23.0 dB | 50,000 ps/nm | 20 of 21 |
+| `OpenZR+ 300G` | oFEC | 2000 km | 20.5 dB | 60,000 ps/nm | 21 of 21 |
+| `OpenZR+ 200G` | oFEC | 3000 km | 17.5 dB | 80,000 ps/nm | 21 of 21 |
 
-The two `OpenZR+` modes, at 1000 km to 3000 km, are the pluggables that do
-reach. `OpenZR+ 400G` covers twenty of the twenty-one sections and misses only
-Paris to Madrid at 1250 km.
+The shortest section in the loaded network is **220 km**, Amsterdam to Brussels,
+and the next two are 320 km and 330 km. Both cFEC parts are 120 km parts, so both
+reach zero, and the ordering does not change if the reach figure moves by a few
+tens of kilometres. `OpenZR+ 400G` misses only Paris to Madrid at 1250 km, and
+the 200G rung reaches as far as the 100G transponder does.
+
+**The mechanism is dispersion, not power, and that is the part worth knowing.**
+Put a 400ZR on Amsterdam to Brussels and the OSNR gate passes with **+7.890 dB**
+of margin. The dispersion gate is what refuses it: 220 km accumulates 3740 ps/nm
+against a 2400 ps/nm tolerance, over by 1340. On the two 330 km sections it is
+over by 3210. A DCI optic has power to spare on a regional section and no
+dispersion budget at all, because it was designed for a span with almost no
+accumulated dispersion and no compensation in front of it. That is what oFEC
+buys, and it is why OpenZR+ exists.
+
+Three wavelengths in this dataset run `OpenZR+ 400G` router to router, on those
+same three sections, and all three close at the top rung: **+10.890 dB** on
+Amsterdam to Brussels and **+7.747 dB** on each of Berlin to Prague and Hamburg
+to Berlin. Nothing had to drop to the 300G or 200G rung.
 
 What matters to a planner is when the answer arrives. A network built on the
-assumption "pluggables are cheaper, so use pluggables" would have discovered
-this after buying them.
+assumption "pluggables are cheaper, so use pluggables" would have found this out
+after buying them, and would have blamed the link budget rather than the FEC.
 
 ## Milan carries nineteen transponders and Brussels two
 
 Each PoP gets `max(2, ceil(terminations / 2))` transponders, with two line ports
 on each. That gives Milan 19, Frankfurt 13, Amsterdam 4, Berlin 3 and every
 other PoP the floor of 2. Fifty-nine transponders, 118 line ports, of which 80
-carry a wavelength.
+carry a wavelength. The dataset holds <span data-fact="line-ports">126</span> line ports in all: six more sit on
+routers and carry the three OpenZR+ wavelengths, and two are the line side of
+the Frankfurt regenerator.
 
 The spread is not a modelling choice. It is what the carrier plan already said
-and the device count used to hide. All forty wavelengths in the shipped plan
-ride the Frankfurt to Milan corridor, so Milan is an endpoint of 37 of them and
+and the device count used to hide. Forty of the 43 wavelengths in the shipped
+plan ride the Frankfurt to Milan corridor, so Milan is an endpoint of 37 of them and
 Frankfurt of 25. When every site held the same two or four transponders,
 nothing in the inventory showed that. Now the transponder count is the traffic
 map.
 
 **The negative result is the other half of the same sentence.** Eight of the
-fourteen PoPs terminate no wavelength at all: Brussels, Copenhagen, Geneva,
-Hamburg, London, Madrid, Prague and Warsaw. Each sits at the floor of two
+fourteen PoPs terminate no wavelength on a transponder: Brussels, Copenhagen,
+Geneva, Hamburg, London, Madrid, Prague and Warsaw. Each sits at the floor of two
 transponders, and all four of its line ports are dark. Thirty-eight of the 118
-line ports in the dataset carry nothing.
+transponder line ports carry nothing, and 40 of the <span data-fact="line-ports">126</span> line ports in the dataset
+do.
+
+Three of those eight are not idle any more, and the reason is a different piece
+of hardware. Brussels, Hamburg and Prague each terminate one of the router
+wavelengths on a pluggable in a router line port, which is the whole point of IP
+over DWDM: reach short enough that the transponder buys nothing. Five PoPs
+terminate no wavelength by any route: Copenhagen, Geneva, London, Madrid and
+Warsaw.
 
 They keep two transponders rather than none because five of those eight are
 endpoints of shipped demo scenarios, and the scenarios live in `demo/`, which
@@ -444,8 +474,8 @@ run with no transponder at those sites, because
 is the network a reader is looking at: a PoP that can never terminate a
 wavelength is not a credible node, and someone who provisions a 400G service at
 Madrid and then finds no transponder in Madrid's inventory is reading a network
-that does not hold together. Only Brussels, Copenhagen and Hamburg are
-genuinely idle.
+that does not hold together. Only Copenhagen is genuinely idle now: Brussels and
+Hamburg terminate a router wavelength each.
 
 ## What the equipment reports, and what the model predicts
 

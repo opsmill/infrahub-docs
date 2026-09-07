@@ -117,8 +117,8 @@ svc-ber-ams-400g: chose oms-ham-ber|oms-ams-ham on DP-16QAM 64GBd 400G, channel 
   800 km, margin +2.284 dB, 3923.026 us
 ```
 
-That run wrote 29 objects, among them one carrier, one optical path, 25 hops in
-order and two containers, and moved the service to `active`. [Scenario
+That run wrote <span data-fact="provisioned-objects">29</span> objects, among them
+one carrier, one optical path, 25 hops in order and two containers, and moved the service to `active`. [Scenario
 one](./provisioning-scenarios.mdx#scenario-one-berlin-to-amsterdam-at-400g)
 walks all six candidates, including why the winning route anchors on channel 2
 rather than channel 1.
@@ -138,7 +138,8 @@ rather than channel 1.
   </figcaption>
 </figure>
 
-Open a proposed change from `demo` and the pipeline runs nine checks, the
+Open a proposed change from `demo` and the pipeline runs
+<span data-fact="checks">fourteen</span> checks, the
 generator and three artifact definitions, reporting each on the change. No
 service on the branch is refused, so `provisionable` passes. `osnr_margin` is
 still red on the Paris to Madrid deficit, as it is on every branch. That red is
@@ -211,15 +212,17 @@ has the figures for both halves.
   <a href={blocked} target="_blank" rel="noopener noreferrer">
   <img
     src={blocked}
-    alt="The Checks tab of a proposed change in Infrahub, headed Admin wants to merge oeo-refused into main, listing sixteen validators. Summary rings across the top read Artifact, Data, Generator, Repository and Schema in green and User in red. Thirteen rows carry a green tick; three carry a red warning triangle: Check: provisionable, Check: channel_collision and Check: osnr_margin."
+    alt="The Checks tab of a proposed change in Infrahub, headed Admin wants to merge oeo-refused into main, listing 22 validators. Summary rings across the top read Artifact, Data, Generator, Repository and Schema in green and User in red. Nineteen rows carry a green tick; three carry a red warning triangle: Check: channel_collision, Check: provisionable and Check: osnr_margin."
   />
   </a>
   <figcaption>
 
-  The merge held shut. Sixteen validators ran; `provisionable` is the one this
-  page is about. `osnr_margin` is the shipped Paris to Madrid deficit, and
-  `channel_collision` fires because this scenario overlaps three regenerator
-  pairs in spectrum on purpose.
+  The merge held shut. Twenty-two validators ran and three of them said no.
+  `provisionable` is the one this page is about. `osnr_margin` is the shipped
+  Paris to Madrid deficit, and `channel_collision` fires because this scenario
+  overlaps three regenerator pairs in spectrum on purpose. The five hardware
+  checks are all green here: this branch changes a mode and a regenerator, and
+  touches no optic, pad or multiplexer port.
 
   </figcaption>
 </figure>

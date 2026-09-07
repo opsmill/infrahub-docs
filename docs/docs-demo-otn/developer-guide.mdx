@@ -10,7 +10,7 @@ not break anything.
 ## Layout
 
 ```text
-schemas/          Infrahub schema YAML. Eight files, 44 kinds.
+schemas/          Infrahub schema YAML. Eight files, 50 kinds.
 objects/          The GÉANT dataset plus the generator target group. Loaded by .infrahub.yml.
 demo/             Scenario input for the walkthrough. NOT loaded by .infrahub.yml.
 src/              infrahub_demo_otn: the pure Python nobody needs a server to test.
@@ -30,14 +30,15 @@ docs/             This site.
 The distinction matters more than it looks.
 
 `objects/` is the network, plus the one object the repository configuration
-depends on. Ten of its sixteen files, the `objects/1*.yml` series, are produced
+depends on. Eleven of its eighteen files, the `objects/1*.yml` series, are produced
 by `scripts/generate_geant_dataset.py` from a fixed seed, guarded by
 `tests/unit/test_geant_dataset.py`, and loaded by `.infrahub.yml`. A manual edit
-to one of those fails the regenerate-and-diff test on the next run. The five
+to one of those fails the regenerate-and-diff test on the next run. The seven
 `objects/0*.yml` catalogs are input, not output: the generator reads
 `03_optical_modes.yml` rather than writing it. Fifteen sites, of
 which fourteen are PoPs, 21 optical multiplex sections, 133 fiber spans, 12
-conduits, 441 devices, 1490 ports, 40 wavelengths, the 40 line containers riding
+conduits, <span data-fact="devices">445</span> devices, <span data-fact="ports">1612</span> ports,
+<span data-fact="wavelengths">43</span> wavelengths, the 43 line containers riding
 them, and three O-E-O devices. Those three are last in the load order, because
 each names the wavelengths it terminates and a carrier has to exist before a
 device can point at it. The same reason put the Raman pumps in `15`.
@@ -45,8 +46,15 @@ device can point at it. The same reason put the Raman pumps in `15`.
 Transponders are the one device count the generator sizes per site instead of
 fixing. A PoP gets `max(2, ceil(terminations / 2))` of them and two line ports
 on each, so Milan holds 19, Frankfurt 13, and the eight PoPs that terminate no
-wavelength hold two apiece. Fifty-nine in total, 118 line ports, of which 80
-carry a wavelength and 38 are dark.
+wavelength on a transponder hold two apiece. Fifty-nine in total, 118 line ports,
+of which 80 carry a wavelength and 38 are dark.
+
+The dataset holds <span data-fact="line-ports">126</span> line ports, not 118. Six sit on routers and carry the
+three OpenZR+ wavelengths on pluggable optics, and two are the line side of the
+Frankfurt regenerator. Nine transceiver units against five part numbers go with
+them: six fitted and in service, two spares on a shelf and one returned to the
+vendor. Four attenuators, two fixed pads and two VOAs, are racked and on no path
+yet.
 [Concepts](./concepts.mdx) says why the spread is that wide. The per-kind counts
 live in `scripts/geant_manifest.json`, and the totals a reader sees are on
 [Installation and setup](./installation-setup.mdx), where
@@ -174,6 +182,29 @@ uv run invoke load-repository        # if the stack has no repository yet
 # then, from the Artifacts tab on Berlin, download network-map and odu-map and
 # save them as docs/docs/media/network-map.svg and docs/docs/media/odu-map.svg
 ```
+
+#### The screenshots on the quick start
+
+`docs/docs/media/quickstart-*.png` are captures of the web interface against a
+loaded stack. They go stale when the thing they show changes: `quickstart-blocked.png`
+lists every validator the pipeline runs, so it moves whenever a check is added.
+
+There is no interactive step. Drive a headless browser over the DevTools protocol
+and write a lossless PNG:
+
+```bash
+# 1. put the scenario on the stack, then open a proposed change from its branch
+uv run invoke demo-regenerator
+
+# 2. capture at 1512 wide, the width the other figures use, with the viewport
+#    tall enough to hold the whole list. The rows sit in an inner scroll
+#    container, so a viewport-sized capture silently cuts the bottom off.
+```
+
+Two things to check before committing one. Log in, or the sidebar reads
+`anonymous` where every other figure reads `Admin`. And confirm the rows the alt
+text names are actually in the image, because the alt text on these figures
+enumerates them and is the part a screen reader gets.
 
 #### The golden renders under tests
 
@@ -485,8 +516,8 @@ It exports the committed tree into `.remote/`, which the containers see as
 `/remote`. It points a `CoreRepository` at that path and waits for the import.
 Then it counts what the sync created, which is the part worth watching: a
 repository can reach in-sync and create nothing, and the count is the only thing
-that says so. On this repository it creates <span data-fact="checks">nine</span> check definitions, ten Python
-transforms, three artifact definitions, one generator definition and <span data-fact="queries">twenty</span>
+that says so. On this repository it creates <span data-fact="checks">fourteen</span> check definitions, ten Python
+transforms, three artifact definitions, one generator definition and <span data-fact="queries">25</span>
 GraphQL queries.
 
 Two details decide whether this works.

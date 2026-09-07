@@ -42,11 +42,11 @@ rather than whether a wavelength **closes** on it. Where the network map shows
 OSNR margin against a reference mode, this one shows free tributary slots inside
 the wavelengths already lit. The first map is about the optical layer, the second
 about the digital layer carried inside it. See [the ODU map](./odu-map.mdx) for
-the five bands and why 16 of the 21 sections are grey on the default branch.
+the five bands and why <span data-fact="unlit-sections">13</span> of the 21 sections are grey on the default branch.
 
 <figure className="doc-figure">
 
-![The same fourteen PoPs and 21 multiplex sections, coloured instead by the largest ODU that still fits on the roomiest lit carrier of each section. Vienna to Milan is red with nothing left, Paris to Frankfurt amber, Berlin to Frankfurt blue, Amsterdam to Frankfurt and Frankfurt to Milan green, and the remaining sixteen routes grey and dashed because they carry no wavelength at all.](./media/odu-map.svg)
+![The same fourteen PoPs and 21 multiplex sections, coloured instead by the largest ODU that still fits on the roomiest lit carrier of each section. Amsterdam to London and Vienna to Milan are red with nothing left, Paris to Frankfurt amber, Berlin to Frankfurt blue, five routes green, and the remaining twelve grey and dashed because no carrier on them holds a container.](./media/odu-map.svg)
 
   <figcaption>
 
@@ -54,7 +54,8 @@ the five bands and why 16 of the 21 sections are grey on the default branch.
   off a branch carrying `demo/05_odu_mixed_fill.yml` so that all five bands appear
   at once. Compare it with the map above. A route can have decibels of margin and
   still have nowhere to put a 10G circuit, which is the question no other artifact
-  in this demo answers.
+  in this demo answers. Grey means no carrier on the route holds a container, which
+  on this branch is the same twelve routes that carry no wavelength at all.
 
   </figcaption>
 </figure>
@@ -137,11 +138,19 @@ missed by. The model decides that before anything is provisioned.
 
 **IP over DWDM moves the optical budget into the router.** 400ZR, OpenZR+ and
 800ZR put coherent optics in the router's own pluggable. That removes the
-transponder and makes reach a property of the pluggable you buy. This
-demo shows the cost of that: the 120 km parts reach zero of the twenty-one
-sections in the network. That answer comes from a query against the mode
-catalog rather than from an assumption. The
-[AI and HPC payloads](./ai-payloads.mdx) page has the full working.
+transponder and makes reach a property of the part you buy, so the model records
+the part: a catalog of five part numbers, and nine modules with serials on them
+that sit in ports. Three wavelengths in this network run router to router on
+`OpenZR+ 400G` pluggables and close with margin to spare.
+
+The demo also shows where that stops working, and the reason is not the one most
+people expect. The 120 km parts reach zero of the twenty-one sections, and on the
+shortest section a 400ZR still holds nearly 8 dB of OSNR margin. What refuses it
+is chromatic dispersion. The difference between the parts that work here and the
+parts that do not is the forward error correction, cFEC against oFEC, not the
+form factor. Both answers come from a query against the mode catalog rather than
+from an assumption. The [link budget](./link-budget.mdx) has the working, and
+[AI and HPC payloads](./ai-payloads.mdx) has the payload side.
 
 ## What it answers
 
@@ -236,7 +245,7 @@ branch, which is deliberate. The [link budget](./link-budget.mdx) page says
 which route and what the fix costs.
 
 The ODU map is the same discipline drawn rather than printed. Most of it is grey
-on the default branch, because 16 of the 21 sections carry no wavelength at all,
+on the default branch, because <span data-fact="unlit-sections">13</span> of the 21 sections carry no wavelength at all,
 and grey there means "not known" rather than "empty and available". A section
 where nothing fits and a section nobody measured are two different cells in its
 panel, and the map refuses to average them together.

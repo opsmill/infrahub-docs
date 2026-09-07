@@ -579,14 +579,18 @@
 <text x="1486.0" y="666.2" text-anchor="end" fill="#54666f" font-size="11">78.6</text>
 <text x="1534.0" y="666.2" text-anchor="end" fill="#2f9e63" font-size="11">+6.25</text>
 <text x="1578.0" y="666.2" text-anchor="end" fill="#2f9e63" font-size="11">+6.25</text>
-<text x="1644.0" y="666.2" text-anchor="end" fill="#c2ced5" font-size="10">0</text>
+<rect x="1586.0" y="658.7" width="22" height="7" rx="3.5" fill="#eaeff3"/>
+<rect x="1586.0" y="658.7" width="0.3" height="7" rx="3.5" fill="#8ba3b1"/>
+<text x="1644.0" y="666.2" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">75</text>
 <circle cx="1332.0" cy="678.3" r="3.2" fill="#2f9e63"/>
 <text x="1341.0" y="681.8" fill="#3a4c56" font-size="11">HAM – BER</text>
 <text x="1438.0" y="681.8" text-anchor="end" fill="#54666f" font-size="11">330</text>
 <text x="1486.0" y="681.8" text-anchor="end" fill="#54666f" font-size="11">78.6</text>
 <text x="1534.0" y="681.8" text-anchor="end" fill="#2f9e63" font-size="11">+6.25</text>
 <text x="1578.0" y="681.8" text-anchor="end" fill="#2f9e63" font-size="11">+6.25</text>
-<text x="1644.0" y="681.8" text-anchor="end" fill="#c2ced5" font-size="10">0</text>
+<rect x="1586.0" y="674.3" width="22" height="7" rx="3.5" fill="#eaeff3"/>
+<rect x="1586.0" y="674.3" width="0.3" height="7" rx="3.5" fill="#8ba3b1"/>
+<text x="1644.0" y="681.8" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">75</text>
 <circle cx="1332.0" cy="693.9" r="3.2" fill="#2f9e63"/>
 <text x="1341.0" y="697.4" fill="#3a4c56" font-size="11">HAM – CPH</text>
 <text x="1438.0" y="697.4" text-anchor="end" fill="#54666f" font-size="11">380</text>
@@ -607,14 +611,16 @@
 <text x="1486.0" y="728.6" text-anchor="end" fill="#54666f" font-size="11">53.0</text>
 <text x="1534.0" y="728.6" text-anchor="end" fill="#2f9e63" font-size="11">+9.39</text>
 <text x="1578.0" y="728.6" text-anchor="end" fill="#2f9e63" font-size="11">+9.39</text>
-<text x="1644.0" y="728.6" text-anchor="end" fill="#c2ced5" font-size="10">0</text>
+<rect x="1586.0" y="721.1" width="22" height="7" rx="3.5" fill="#eaeff3"/>
+<rect x="1586.0" y="721.1" width="0.3" height="7" rx="3.5" fill="#8ba3b1"/>
+<text x="1644.0" y="728.6" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">75</text>
 <line x1="1328.0" y1="740.6" x2="1644.0" y2="740.6" stroke="#e2e9ee" stroke-width="1"/>
 <text x="1328.0" y="752.6" fill="#5a6d78" font-size="11.5">Route distance</text>
 <text x="1644.0" y="752.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">11,040 km</text>
 <text x="1328.0" y="772.6" fill="#5a6d78" font-size="11.5">Fiber spans</text>
 <text x="1644.0" y="772.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">132</text>
 <text x="1328.0" y="792.6" fill="#5a6d78" font-size="11.5">Spectrum in use</text>
-<text x="1644.0" y="792.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">6,518 GHz</text>
+<text x="1644.0" y="792.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">6,744 GHz</text>
 <text x="1328.0" y="812.6" fill="#5a6d78" font-size="11.5">C-band per section</text>
 <text x="1644.0" y="812.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">4,800 GHz</text>
 </svg>

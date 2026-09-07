@@ -4,8 +4,8 @@ title: Schema reference
 
 # Schema reference
 
-The OTN schema is forty-four kinds across eight files in `schemas/`. Eight of
-them are generics and thirty-six are concrete nodes.
+The OTN schema is <span data-fact="kinds">50</span> kinds across eight files in `schemas/`. Eight
+of them are generics and 42 are concrete nodes.
 
 Four of those files define the equipment layer: the generics, the port kinds,
 the device kinds, and the site. They are the subject here. The plant, container,
@@ -21,8 +21,8 @@ shaped the way it is, and why every physical quantity is an integer.
 | File | Holds |
 | --- | --- |
 | `schemas/otn_base.yml` | The five OTN generics |
-| `schemas/otn_ports.yml` | The port kinds, two generics and twelve nodes |
-| `schemas/otn_devices.yml` | The <span data-fact="device-kinds">eight</span> device kinds |
+| `schemas/otn_ports.yml` | The port kinds, the monitors and the pluggable optics: two generics and sixteen nodes |
+| `schemas/otn_devices.yml` | The <span data-fact="device-kinds">ten</span> device kinds |
 | `schemas/location.yml` | `LocationGeneric`, vendored, `OtnSite` and `OtnFacility` |
 
 Infrahub loads every file in the directory into one schema, so the split has no
@@ -38,7 +38,7 @@ apart on purpose.
 - **`OtnOpticalElement`** is anything light passes through and loses power in.
   It has an insertion loss, a vendor, a model, and an element class.
 
-Eight device kinds inherit `OtnGenericDevice`. Seven of those eight also inherit
+Ten device kinds inherit `OtnGenericDevice`. Nine of those ten also inherit
 `OtnOpticalElement`, and one kind inherits `OtnOpticalElement` alone. There is
 no edge between the two generics:
 
@@ -51,7 +51,9 @@ OtnAmplifier
 OtnMuxDemux
 OtnPatchPanel
 OtnRamanPump
-OtnOduSwitch"]
+OtnOduSwitch
+OtnFixedAttenuator
+OtnVariableAttenuator"]
   oe(["OtnOpticalElement"]) --> both
   oe --> fs["OtnFiberSpan"]
 ```
@@ -61,7 +63,7 @@ tidier and would be wrong in both directions.
 
 **It would be wrong about the router.** Light terminates at a router. A router
 has no insertion loss, so a query for everything that attenuates light must
-return seven kinds, not eight. Put the router under a combined chain and the
+return nine kinds, not ten. Put the router under a combined chain and the
 optical budget starts counting a loss that does not exist.
 
 **It would be wrong about the fiber span.** `OtnFiberSpan` contributes the
@@ -89,7 +91,7 @@ composed instead: a concrete node lists the generics it needs.
 | `OtnGenericPort` | `name`, `role`, `enabled`, `admin_state`, `oper_state`, the parent `device`, and `connected_to` |
 | `OtnGenericDevice` | `name`, `status`, `role`, the `site`, and the `ports` list |
 | `OtnOpticalElement` | `insertion_loss_mdb`, `vendor`, `model`, `element_class` |
-| `OtnOpticalPort` | `center_frequency_mhz`, `tx_power_mdbm`, `rx_sensitivity_mdbm`, `connector_type` |
+| `OtnOpticalPort` | `center_frequency_mhz`, `tx_power_mdbm`, `rx_sensitivity_mdbm`, `connector_type`, `polish` |
 | `OtnCopperPort` | `speed_kbps`, `impedance_ohm`, `connector_type` |
 
 Composition is the whole design. `OtnLinePort` is `OtnGenericPort` plus
@@ -98,7 +100,7 @@ Composition is the whole design. `OtnLinePort` is `OtnGenericPort` plus
 
 One inherited attribute is restated, and only to default it. `element_class` is
 determined by the kind: an amplifier is an `amplifier`, a span is a
-`fiber_span`. Each of the seven concrete kinds that inherit `OtnOpticalElement`
+`fiber_span`. Each of the ten concrete kinds that inherit `OtnOpticalElement`
 declares it with the matching `default_value`, so no object file writes it.
 
 That restatement has to repeat the ten choices, because overriding an
@@ -108,8 +110,23 @@ that. Omitting the `choices` key is rejected at load with
 nine of the ten loads in silence, and the divergence appears only when an
 object tries to write the value the override left out.
 `tests/unit/test_schema_contract.py` asserts every override matches the
-generic's list, and it is the only thing that does. The tenth choice,
-`odu_switch`, cost nine blocks, and the test is what tells you one was missed.
+generic's list, and it is the only thing that does. Adding a choice means
+editing eleven blocks, the generic and its ten kinds, and the test is what tells
+you one was missed.
+
+`connector_type` is restated the same way, and for a reason that is about
+history rather than defaults. It became a `Dropdown` on `OtnOpticalPort` after
+six kinds already inherited it as `Text`, and Infrahub refuses to change an
+attribute's kind underneath them:
+
+```text
+OtnAmplifierPort.connector_type inherited from OtnOpticalPort must be the same
+kind ["Dropdown", "Text"]
+```
+
+So those six restate the full nine-choice list. The two mux port kinds arrived
+after the change and need no restatement. `OtnCopperPort.connector_type` stays
+`Text`, and no node inherits both port generics, so the two never meet.
 
 Nothing else is restated. Restating an attribute would let it drift from the
 generic, and the drift would break the guarantee that one query against
@@ -117,20 +134,36 @@ generic, and the drift would break the guarantee that one query against
 
 ## Ports
 
-Seven kinds, six optical and one copper.
+Nine kinds, eight optical and one copper.
 
 | Kind | Composes | What it is |
 | --- | --- | --- |
 | `OtnRouterPort` | generic + optical | Grey optics on an IP router |
 | `OtnClientPort` | generic + optical | Transponder client side |
-| `OtnLinePort` | generic + optical | Transponder DWDM line side |
+| `OtnLinePort` | generic + optical | DWDM line side, on a transponder or a router |
 | `OtnRoadmAddDropPort` | generic + optical | Local add and drop on a ROADM |
 | `OtnRoadmDegreePort` | generic + optical | Line-facing degree, one per direction |
 | `OtnAmplifierPort` | generic + optical | Amplifier input or output |
+| `OtnMuxClientPort` | generic + optical | One channel of a multiplexer, facing what lights it |
+| `OtnMuxLinePort` | generic + optical | The common side of a multiplexer |
 | `OtnTributaryPort` | generic + copper | E1 or T1 G.703 electrical tributary |
 
 There is no management or console port kind. This model covers the transmission
 path, and a management port is not on it.
+
+The two mux port kinds declare nothing but their channel binding.
+`OtnMuxClientPort` carries an optional `dwdm_channel` and an optional
+`cwdm_channel`, because the dense and coarse plans are two kinds and the schema
+has no way to say "exactly one of these two". Getting that right is
+`mux_channel_binding`'s job, and it owns both the neither case and the both
+case. `OtnMuxLinePort` binds nothing at all: the common side carries every
+channel the device lights, so naming one would be wrong.
+
+Neither mux port kind has an insertion loss of its own. The loss belongs to the
+multiplexer, through `OtnOpticalElement`, and that is where the budget engine
+reads it. A second per-port figure would give one loss two sources and invite
+double counting. Real AWG loss does vary across the passband, worst at the edge
+channels, and modelling that needs a passband this demo does not have.
 
 Two behaviours matter before you load data.
 
@@ -141,7 +174,7 @@ second write. The explicit identifier is what stops Infrahub deriving a
 different string per side and splitting the link into two one-way halves. The
 identifier is immutable once loaded.
 
-**Port names are unique per device across all seven kinds.** The constraint
+**Port names are unique per device across all nine kinds.** The constraint
 `["device", "name__value"]` is declared on the generic, and Infrahub enforces it
 over every kind that inherits it. Creating `OtnRouterPort` `dup/1` and then
 `OtnTributaryPort` `dup/1` on the same device fails on the second write.
@@ -155,8 +188,15 @@ sides pin `identifier: otn_carrier__line_ports` by hand, for the same reason
 and changing it afterwards costs a remove-and-re-add on both peers. Many on the
 carrier side, because a wavelength is terminated at each of its two ends by two
 ports on two devices at two sites. Optional on the port side, because a line
-port with no colour on it is a legal state: 38 of the 118 in the dataset are
+port with no colour on it is a legal state: 40 of the <span data-fact="line-ports">126</span> in the dataset are
 exactly that.
+
+**A line port is not only a transponder's.** Six of the <span data-fact="line-ports">126</span> sit on routers, and
+each holds a pluggable coherent optic rather than a laser on a line card. The
+kind is the same either way, because the port does the same thing: it terminates
+one wavelength on the DWDM grid. What differs is where the optics come from, and
+that is a separate record. See [pluggable optics](#pluggable-optics-are-a-part-and-a-unit)
+below.
 
 Before this edge existed, the only thing tying a transponder to a wavelength was
 that both names carried the same site code. That is a naming convention
@@ -192,6 +232,60 @@ either end, which gives a wavelength two owners rather than one. And
 the per-direction amplifier lists on a section, and in the path traversal that
 walks them. The model already has a way to say the light stopped, which is
 `oper_state` on the port and `status` on the carrier, not deletion.
+
+## Pluggable optics are a part and a unit
+
+A coherent pluggable is two records. `OtnTransceiverType` is the part number and
+`OtnTransceiver` is the module with a serial on it.
+
+| Kind | Holds |
+| --- | --- |
+| `OtnTransceiverType` | `part_number`, `vendor`, `description`, `form_factor`, `tunable`, and `supported_modes` |
+| `OtnTransceiver` | `serial`, `status`, the `type` it is, and the `port` it sits in |
+
+**What an optic can do is a property of the part, not of the unit.** A
+`QDD-400G-ZR` runs one mode and a `QDD-400G-ZRP` runs three, and that is true of
+every unit ever built to those numbers. Putting `supported_modes` on the unit
+would copy the same list onto every module of the same part and let two of them
+disagree. It also has to be a relationship rather than a list of strings: the
+modes are `OtnOpticalMode` objects with the OSNR, reach and dispersion figures
+the budget engine reads, and a string cannot be budgeted.
+
+The catalog ships five parts. One 400ZR, one 800ZR, and three that carry all
+three OpenZR+ rungs in a QSFP-DD, an OSFP and a CFP2-DCO cage.
+
+**Neither kind inherits anything.** A part number is not racked and light does
+not pass through it, so it is neither an `OtnGenericDevice` nor an
+`OtnOpticalElement`. The module's loss belongs to the port it lights, and the
+port already has `tx_power_mdbm` and `rx_sensitivity_mdbm`. The type says what
+optic is fitted; the port says what it is doing.
+
+**A port holds at most one module, and that is the schema saying so rather than
+a check.** `OtnLinePort`, `OtnClientPort` and `OtnRouterPort` each declare a
+cardinality-one `transceiver` on the same `otn_optical_port__transceiver`
+identifier `OtnTransceiver.port` uses, so both ends of the edge are cardinality
+one and the server refuses the second write:
+
+```text
+Node 18d19871-0d7f-6758-306b-1188b66bb9eb has 2 peers for
+otn_optical_port__transceiver, maximum of 1 allowed
+```
+
+The reverse edge is declared on those three kinds rather than on
+`OtnOpticalPort`, because the generic would hand the field to the five port
+kinds that hold no module. A uniqueness constraint on `port` was tried first and
+Infrahub accepts one only where the relationship is mandatory, and a mandatory
+port leaves a spare, an RMA and a decommissioned unit with nowhere to sit.
+
+What is left for `transceiver_placement` is the port kind alone, and the reason
+is a limit worth naming: `OtnTransceiver.port` peers the `OtnOpticalPort`
+generic, and a relationship to a generic cannot be filtered by the kind of its
+peers. The schema can offer the field or withhold it. It cannot say "any of
+these three kinds and none of the other five".
+
+**Negative result: nothing here says the cage fits.** A part carries a
+`form_factor` and a port does not, so "a QSFP-DD module in a QSFP-DD cage" is a
+comparison this model cannot make.
 
 ## Amplification is per direction
 
@@ -292,6 +386,32 @@ The ceiling on `on_off_gain_mdb` is 15.0 dB rather than 20.0 dB. The smallest
 fiber loss on any shipped span is 16.167 dB, so one pump can never reduce a span
 to zero loss. It takes two on one span to reach the floor.
 
+### `terminating_ports`, and why the span had to gain an edge
+
+`OtnFiberSpan.terminating_ports` points at the ports at the two ends of a span.
+It peers `OtnGenericPort`, is optional and many, and the dataset generator fills
+it for every span.
+
+It exists because the polish check could not be written without it. Before it, no
+port kind had any relationship to a span or an optical multiplex section in either
+direction. The nearest reachable ports were three hops away, through the section
+and its ROADMs, and a ROADM carries one degree port per direction whose
+`connected_to` is unset. The only thing that named the right one was the far site
+shortname inside the port's own name string.
+
+Parsing that string would have put a naming convention back in a relationship's
+job, which this repository has already been bitten by once. The edge is declared
+on the span alone, for the same reason the transceiver's port edge is one-sided:
+the inverse would give the field to every port kind, and most ports terminate no
+span.
+
+A span whose `terminating_ports` is empty is reported as unjudgeable by
+`connector_polish`, never as clean. An empty relationship and a correct span look
+identical from outside, and a green result over an empty traversal would be worse
+than no check. A test over the generated data holds the other side of that trust:
+every port in a span's `terminating_ports` belongs to a device at that span's own
+`site_a` or `site_b`.
+
 ### The direction a pump amplifies is worked out, not stored
 
 A pump holds two facts about the hardware: which end of the span it is spliced
@@ -332,6 +452,39 @@ writes the value explicitly, and a test says so.
 
 What the pump does to a budget, and where that treatment stops being predictive,
 is on the [link budget](./link-budget.mdx) page.
+
+## Two attenuator kinds, not one with a type field
+
+An attenuator takes power out of a link on purpose, to keep a receiver inside
+its own input range. There are two kinds of them here.
+
+| Kind | Holds | What it is |
+| --- | --- | --- |
+| `OtnFixedAttenuator` | `attenuation_mdb` | A pad. A value set in a factory and readable off the label |
+| `OtnVariableAttenuator` | `attenuation_mdb`, `max_attenuation_mdb` | A VOA. A setting, and the top of the range it can be set to |
+
+Both inherit `OtnGenericDevice` and `OtnOpticalElement`, so both are racked at a
+site and both are on the budget's list. Neither declares any ports: they inherit
+the `ports` relationship and hold none, and they reach a path the way a fiber
+span does, through `OtnPathHop.element`.
+
+**The obvious alternative is one kind with a `variable` flag on it, and it is
+worse.** A pad has no range. On one kind with a flag, `max_attenuation_mdb` has
+to be optional, and then the schema accepts a VOA with no maximum and a pad
+that claims one. Both are impossible objects, and the only thing that would
+notice either is a check reporting after the fact.
+
+With two kinds the field is on the kind that has it, mandatory, and the server
+refuses the write. That is the whole argument, and it is the schema-first rule
+in one sentence: a wrong value is refused at write time rather than reported
+afterwards. `attenuator_range` is left holding what a schema genuinely cannot
+carry, which is a VOA whose setting is above its own maximum. That comparison is
+between two attributes of one object, and Infrahub's `max_value` takes a
+constant rather than another field.
+
+The cost is that `attenuation_display` is declared twice, once on each kind,
+from the same source and the same template. It has to be byte-identical, and
+`tests/unit/test_schema_contract.py` is what holds the two copies together.
 
 ## Regenerators and ODU cross-connects
 
@@ -574,8 +727,16 @@ generics, so every kind composing those generics gets them.
 | `tx_power_mdbm` | `tx_power_display` | `1.0 dBm` |
 | `rx_sensitivity_mdbm` | `rx_sensitivity_display` | `-28.0 dBm` |
 
-Three more sit on the device kinds that need them: `noise_figure_display` and
-`gain_display` on `OtnAmplifier`, and `on_off_gain_display` on `OtnRamanPump`.
+Five more names sit on the device kinds that need them: `noise_figure_display`
+and `gain_display` on `OtnAmplifier`, `on_off_gain_display` on `OtnRamanPump`,
+`attenuation_display` on both attenuator kinds, and `max_attenuation_display` on
+the variable one alone.
+
+A display name declared on more than one kind has to render the same way on
+each, so the source attribute and the Jinja2 template are byte-identical
+wherever the name repeats. `tests/unit/test_schema_contract.py` asserts that,
+and it is the only thing that would catch a template copied by hand and then
+edited on one side.
 
 Read-only here is stronger than greyed out. A `_display` attribute is absent
 from the generated `...UpdateInput` type. Writing to one is a GraphQL schema
@@ -768,14 +929,14 @@ port is the correct reading, not missing data.
 
 ## Menu and navigation
 
-`menus/otn.yml` defines the sidebar. Five top-level entries and thirteen leaves:
+`menus/otn.yml` defines the sidebar. Five top-level entries and fifteen leaves:
 
 | Entry | What is under it |
 | --- | --- |
 | OTN Sites | The fourteen PoPs and the customer campus. A leaf, because it is where you start |
 | OTN Services | Services, optical carriers |
-| OTN Plant | Devices, fiber spans, optical multiplex sections, conduits |
-| OTN Catalog | Frequency grid, CWDM plan, optical modes, fiber types, client signals |
+| OTN Plant | Devices, fiber spans, optical multiplex sections, conduits, transceivers |
+| OTN Catalog | Frequency grid, CWDM plan, optical modes, fiber types, transceiver types, client signals |
 | OTN Reports | Service traces |
 
 **Both wavelength plans are in the catalog.** The dense grid and the coarse plan
@@ -783,13 +944,20 @@ are two entries side by side, so an engineer opening the catalog finds both. The
 alternative is reaching a wavelength plan by first opening a multiplexer, which
 is a route nobody guesses.
 
-Devices opens on the generic kind, so one click gives all <span data-fact="device-kinds">eight</span> device kinds.
+Devices opens on the generic kind, so one click gives all <span data-fact="device-kinds">ten</span> device kinds.
 
 The sidebar names no port kind and no individual device kind, because the object
 pages already reach them. A site page lists the devices at the site; a device
 page lists its ports; an optical path lists its hops; a carrier lists its
 containers. An entry for "Patch panels" is a second route to a place you were
 already going to arrive at.
+
+**`OtnTransceiver` is the one exception, and it has to be.** A module is fitted
+into a port through a one-sided edge, so no port page lists it, and a spare on a
+shelf is fitted into nothing at all. Without its own entry the optics inventory
+is unreachable. `OtnTransceiverType` sits in the catalog beside the fiber types
+for a softer reason: a unit reaches its own part in one click, and the catalog is
+also read on its own, before any unit exists, to see which modes a part can run.
 
 **A site page lists the fiber terminating on it in two lists,** one for each
 end: "Fiber spans (A end)" and "Fiber spans (B end)". Frankfurt reads 16 and 24,
@@ -830,5 +998,5 @@ uv run invoke test-unit
 
 Runs the contract tests that guard the rules a formatter cannot see: no `Float`,
 no `JSON`, and both bounds on every scaled number. It also guards a unit suffix
-on every quantity, the four display attributes present and read-only, and no
+on every quantity, every display attribute present and read-only, and no
 generic inheriting from another generic.

@@ -77,19 +77,19 @@
 </g>
 <g>
 <line x1="534.9" y1="358.7" x2="515.8" y2="444.7" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
-<line x1="534.9" y1="358.7" x2="515.8" y2="444.7" stroke="#8ba3b1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="8 6"/>
+<line x1="534.9" y1="358.7" x2="515.8" y2="444.7" stroke="#1b6b4f" stroke-width="3.4" stroke-linecap="round"/>
 <line x1="534.9" y1="358.7" x2="668.0" y2="485.5" stroke="#1f2937" stroke-width="9.6" stroke-linecap="round" opacity="0.9"/>
 <line x1="534.9" y1="358.7" x2="668.0" y2="485.5" stroke="#1b6b4f" stroke-width="5.2" stroke-linecap="round"/>
 <line x1="534.9" y1="358.7" x2="714.1" y2="289.8" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
 <line x1="534.9" y1="358.7" x2="714.1" y2="289.8" stroke="#8ba3b1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="8 6"/>
 <line x1="534.9" y1="358.7" x2="358.5" y2="407.9" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
-<line x1="534.9" y1="358.7" x2="358.5" y2="407.9" stroke="#8ba3b1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="8 6"/>
+<line x1="534.9" y1="358.7" x2="358.5" y2="407.9" stroke="#9b2242" stroke-width="3.4" stroke-linecap="round"/>
 <line x1="833.9" y1="350.0" x2="804.5" y2="160.8" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
 <line x1="833.9" y1="350.0" x2="804.5" y2="160.8" stroke="#8ba3b1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="8 6"/>
 <line x1="833.9" y1="350.0" x2="668.0" y2="485.5" stroke="#1f2937" stroke-width="9.6" stroke-linecap="round" opacity="0.9"/>
 <line x1="833.9" y1="350.0" x2="668.0" y2="485.5" stroke="#3f9fc4" stroke-width="5.2" stroke-linecap="round"/>
 <line x1="833.9" y1="350.0" x2="870.2" y2="487.4" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
-<line x1="833.9" y1="350.0" x2="870.2" y2="487.4" stroke="#8ba3b1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="8 6"/>
+<line x1="833.9" y1="350.0" x2="870.2" y2="487.4" stroke="#1b6b4f" stroke-width="3.4" stroke-linecap="round"/>
 <line x1="515.8" y1="444.7" x2="445.6" y2="553.3" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
 <line x1="515.8" y1="444.7" x2="445.6" y2="553.3" stroke="#8ba3b1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="8 6"/>
 <line x1="668.0" y1="485.5" x2="578.8" y2="691.4" stroke="#1f2937" stroke-width="9.6" stroke-linecap="round" opacity="0.9"/>
@@ -99,7 +99,7 @@
 <line x1="578.8" y1="691.4" x2="685.8" y2="728.7" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
 <line x1="578.8" y1="691.4" x2="685.8" y2="728.7" stroke="#8ba3b1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="8 6"/>
 <line x1="714.1" y1="289.8" x2="833.9" y2="350.0" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
-<line x1="714.1" y1="289.8" x2="833.9" y2="350.0" stroke="#8ba3b1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="8 6"/>
+<line x1="714.1" y1="289.8" x2="833.9" y2="350.0" stroke="#1b6b4f" stroke-width="3.4" stroke-linecap="round"/>
 <line x1="714.1" y1="289.8" x2="804.5" y2="160.8" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
 <line x1="714.1" y1="289.8" x2="804.5" y2="160.8" stroke="#8ba3b1" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="8 6"/>
 <line x1="358.5" y1="407.9" x2="445.6" y2="553.3" stroke="#ffffff" stroke-width="7.6" stroke-linecap="round" opacity="0.9"/>
@@ -209,8 +209,8 @@
 <text x="1116.6" y="333.6" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="600">Warsaw</text>
 </g>
 <text x="34" y="44" fill="#0d3550" font-size="25" font-weight="700">ODU capacity and grooming</text>
-<text x="34" y="68" fill="#5a6d78" font-size="13">Seen from Frankfurt. 14 PoPs, 21 multiplex sections, 5 carrying an ODU layer. Line colour is the largest ODU that still fits on the roomiest lit carrier.</text>
-<text x="34" y="1064" fill="#93a5b0" font-size="11">Generated from branch odu-mixed-fill. The number inside a site is its optical degree. The bar and the figure beside it in the panel are the TIGHTEST carrier on the route, not the roomiest. Coastlines: Natural Earth.</text>
+<text x="34" y="68" fill="#5a6d78" font-size="13">Seen from Frankfurt. 14 PoPs, 21 multiplex sections, 9 carrying an ODU layer. Line colour is the largest ODU that still fits on the roomiest lit carrier.</text>
+<text x="34" y="1064" fill="#93a5b0" font-size="11">Generated from branch odu-demo. The number inside a site is its optical degree. The bar and the figure beside it in the panel are the TIGHTEST carrier on the route, not the roomiest. Coastlines: Natural Earth.</text>
 <rect x="1312.0" y="92" width="340" height="771" rx="12" fill="#ffffff" opacity="0.97" stroke="#d5dfe6"/>
 <text x="1328.0" y="120.0" fill="#0d3550" font-size="13" font-weight="700">Largest ODU that fits</text>
 <text x="1636.0" y="120.0" text-anchor="end" fill="#5a6d78" font-size="10.5">on the roomiest lit carrier</text>
@@ -249,148 +249,156 @@
 <text x="1636.0" y="430.0" text-anchor="end" fill="#93a5b0" font-size="9.5" font-weight="700" letter-spacing="0.6">FITS</text>
 <line x1="1328.0" y1="435.0" x2="1636.0" y2="435.0" stroke="#e2e9ee" stroke-width="1"/>
 <circle cx="1332.0" cy="447.1" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="450.6" fill="#3a4c56" font-size="11">AMS – BRU</text>
+<text x="1341.0" y="450.6" fill="#3a4c56" font-size="11">AMS – HAM</text>
 <text x="1446.0" y="450.6" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="450.6" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="450.6" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="450.6" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="462.7" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="466.2" fill="#3a4c56" font-size="11">AMS – HAM</text>
+<text x="1341.0" y="466.2" fill="#3a4c56" font-size="11">BER – CPH</text>
 <text x="1446.0" y="466.2" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="466.2" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="466.2" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="466.2" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="478.3" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="481.8" fill="#3a4c56" font-size="11">AMS – LON</text>
+<text x="1341.0" y="481.8" fill="#3a4c56" font-size="11">BRU – PAR</text>
 <text x="1446.0" y="481.8" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="481.8" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="481.8" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="481.8" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="493.9" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="497.4" fill="#3a4c56" font-size="11">BER – CPH</text>
+<text x="1341.0" y="497.4" fill="#3a4c56" font-size="11">FRA – GVA</text>
 <text x="1446.0" y="497.4" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="497.4" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="497.4" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="497.4" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="509.5" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="513.0" fill="#3a4c56" font-size="11">BER – PRG</text>
+<text x="1341.0" y="513.0" fill="#3a4c56" font-size="11">GVA – MIL</text>
 <text x="1446.0" y="513.0" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="513.0" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="513.0" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="513.0" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="525.1" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="528.6" fill="#3a4c56" font-size="11">BRU – PAR</text>
+<text x="1341.0" y="528.6" fill="#3a4c56" font-size="11">HAM – CPH</text>
 <text x="1446.0" y="528.6" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="528.6" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="528.6" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="528.6" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="540.7" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="544.2" fill="#3a4c56" font-size="11">FRA – GVA</text>
+<text x="1341.0" y="544.2" fill="#3a4c56" font-size="11">LON – PAR</text>
 <text x="1446.0" y="544.2" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="544.2" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="544.2" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="544.2" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="556.3" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="559.8" fill="#3a4c56" font-size="11">GVA – MIL</text>
+<text x="1341.0" y="559.8" fill="#3a4c56" font-size="11">PAR – MAD</text>
 <text x="1446.0" y="559.8" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="559.8" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="559.8" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="559.8" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="571.9" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="575.4" fill="#3a4c56" font-size="11">HAM – BER</text>
+<text x="1341.0" y="575.4" fill="#3a4c56" font-size="11">PRG – FRA</text>
 <text x="1446.0" y="575.4" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="575.4" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="575.4" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="575.4" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="587.5" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="591.0" fill="#3a4c56" font-size="11">HAM – CPH</text>
+<text x="1341.0" y="591.0" fill="#3a4c56" font-size="11">PRG – VIE</text>
 <text x="1446.0" y="591.0" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="591.0" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="591.0" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="591.0" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="603.1" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="606.6" fill="#3a4c56" font-size="11">LON – PAR</text>
+<text x="1341.0" y="606.6" fill="#3a4c56" font-size="11">PRG – WAW</text>
 <text x="1446.0" y="606.6" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="606.6" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="606.6" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="606.6" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
 <circle cx="1332.0" cy="618.7" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="622.2" fill="#3a4c56" font-size="11">PAR – MAD</text>
+<text x="1341.0" y="622.2" fill="#3a4c56" font-size="11">VIE – WAW</text>
 <text x="1446.0" y="622.2" text-anchor="end" fill="#54666f" font-size="11">0</text>
 <text x="1514.0" y="622.2" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
 <text x="1582.0" y="622.2" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
 <text x="1636.0" y="622.2" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
-<circle cx="1332.0" cy="634.3" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="637.8" fill="#3a4c56" font-size="11">PRG – FRA</text>
-<text x="1446.0" y="637.8" text-anchor="end" fill="#54666f" font-size="11">0</text>
-<text x="1514.0" y="637.8" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
-<text x="1582.0" y="637.8" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
-<text x="1636.0" y="637.8" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
-<circle cx="1332.0" cy="649.9" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="653.4" fill="#3a4c56" font-size="11">PRG – VIE</text>
-<text x="1446.0" y="653.4" text-anchor="end" fill="#54666f" font-size="11">0</text>
-<text x="1514.0" y="653.4" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
-<text x="1582.0" y="653.4" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
-<text x="1636.0" y="653.4" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
-<circle cx="1332.0" cy="665.5" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="669.0" fill="#3a4c56" font-size="11">PRG – WAW</text>
-<text x="1446.0" y="669.0" text-anchor="end" fill="#54666f" font-size="11">0</text>
-<text x="1514.0" y="669.0" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
-<text x="1582.0" y="669.0" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
-<text x="1636.0" y="669.0" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
-<circle cx="1332.0" cy="681.1" r="3.2" fill="#8ba3b1"/>
-<text x="1341.0" y="684.6" fill="#3a4c56" font-size="11">VIE – WAW</text>
-<text x="1446.0" y="684.6" text-anchor="end" fill="#54666f" font-size="11">0</text>
-<text x="1514.0" y="684.6" text-anchor="end" fill="#54666f" font-size="11">n/a</text>
-<text x="1582.0" y="684.6" text-anchor="end" fill="#93a5b0" font-size="10">n/a</text>
-<text x="1636.0" y="684.6" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">no ODU</text>
-<circle cx="1332.0" cy="696.7" r="3.2" fill="#9b2242"/>
-<text x="1341.0" y="700.2" fill="#3a4c56" font-size="11">VIE – MIL</text>
-<text x="1446.0" y="700.2" text-anchor="end" fill="#54666f" font-size="11">3</text>
-<text x="1514.0" y="700.2" text-anchor="end" fill="#54666f" font-size="11">240/240</text>
+<circle cx="1332.0" cy="634.3" r="3.2" fill="#9b2242"/>
+<text x="1341.0" y="637.8" fill="#3a4c56" font-size="11">AMS – LON</text>
+<text x="1446.0" y="637.8" text-anchor="end" fill="#54666f" font-size="11">1</text>
+<text x="1514.0" y="637.8" text-anchor="end" fill="#54666f" font-size="11">80/80</text>
+<rect x="1522.0" y="630.3" width="30" height="7" rx="3.5" fill="#eaeff3"/>
+<rect x="1522.0" y="630.3" width="30.0" height="7" rx="3.5" fill="#c94a45"/>
+<text x="1582.0" y="637.8" text-anchor="end" fill="#c94a45" font-size="10" font-weight="700">0</text>
+<text x="1636.0" y="637.8" text-anchor="end" fill="#9b2242" font-size="10" font-weight="600">none</text>
+<circle cx="1332.0" cy="649.9" r="3.2" fill="#9b2242"/>
+<text x="1341.0" y="653.4" fill="#3a4c56" font-size="11">VIE – MIL</text>
+<text x="1446.0" y="653.4" text-anchor="end" fill="#54666f" font-size="11">3</text>
+<text x="1514.0" y="653.4" text-anchor="end" fill="#54666f" font-size="11">240/240</text>
+<rect x="1522.0" y="645.9" width="30" height="7" rx="3.5" fill="#eaeff3"/>
+<rect x="1522.0" y="645.9" width="30.0" height="7" rx="3.5" fill="#c94a45"/>
+<text x="1582.0" y="653.4" text-anchor="end" fill="#c94a45" font-size="10" font-weight="700">0</text>
+<text x="1636.0" y="653.4" text-anchor="end" fill="#9b2242" font-size="10" font-weight="600">none</text>
+<circle cx="1332.0" cy="665.5" r="3.2" fill="#e0842d"/>
+<text x="1341.0" y="669.0" fill="#3a4c56" font-size="11">PAR – FRA</text>
+<text x="1446.0" y="669.0" text-anchor="end" fill="#54666f" font-size="11">3</text>
+<text x="1514.0" y="669.0" text-anchor="end" fill="#54666f" font-size="11">953/960</text>
+<rect x="1522.0" y="661.5" width="30" height="7" rx="3.5" fill="#eaeff3"/>
+<rect x="1522.0" y="661.5" width="30.0" height="7" rx="3.5" fill="#c94a45"/>
+<text x="1582.0" y="669.0" text-anchor="end" fill="#c94a45" font-size="10" font-weight="700">0</text>
+<text x="1636.0" y="669.0" text-anchor="end" fill="#e0842d" font-size="10" font-weight="600">ODU1</text>
+<circle cx="1332.0" cy="681.1" r="3.2" fill="#3f9fc4"/>
+<text x="1341.0" y="684.6" fill="#3a4c56" font-size="11">BER – FRA</text>
+<text x="1446.0" y="684.6" text-anchor="end" fill="#54666f" font-size="11">5</text>
+<text x="1514.0" y="684.6" text-anchor="end" fill="#54666f" font-size="11">1552/1600</text>
+<rect x="1522.0" y="677.1" width="30" height="7" rx="3.5" fill="#eaeff3"/>
+<rect x="1522.0" y="677.1" width="30.0" height="7" rx="3.5" fill="#c94a45"/>
+<text x="1582.0" y="684.6" text-anchor="end" fill="#c94a45" font-size="10" font-weight="700">0</text>
+<text x="1636.0" y="684.6" text-anchor="end" fill="#3f9fc4" font-size="10" font-weight="600">ODU3</text>
+<circle cx="1332.0" cy="696.7" r="3.2" fill="#1b6b4f"/>
+<text x="1341.0" y="700.2" fill="#3a4c56" font-size="11">AMS – BRU</text>
+<text x="1446.0" y="700.2" text-anchor="end" fill="#54666f" font-size="11">1</text>
+<text x="1514.0" y="700.2" text-anchor="end" fill="#54666f" font-size="11">0/320</text>
 <rect x="1522.0" y="692.7" width="30" height="7" rx="3.5" fill="#eaeff3"/>
-<rect x="1522.0" y="692.7" width="30.0" height="7" rx="3.5" fill="#c94a45"/>
-<text x="1582.0" y="700.2" text-anchor="end" fill="#c94a45" font-size="10" font-weight="700">0</text>
-<text x="1636.0" y="700.2" text-anchor="end" fill="#9b2242" font-size="10" font-weight="600">none</text>
-<circle cx="1332.0" cy="712.3" r="3.2" fill="#e0842d"/>
-<text x="1341.0" y="715.8" fill="#3a4c56" font-size="11">PAR – FRA</text>
-<text x="1446.0" y="715.8" text-anchor="end" fill="#54666f" font-size="11">3</text>
-<text x="1514.0" y="715.8" text-anchor="end" fill="#54666f" font-size="11">953/960</text>
+<rect x="1522.0" y="692.7" width="0.0" height="7" rx="3.5" fill="#8ba3b1"/>
+<text x="1582.0" y="700.2" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">320</text>
+<text x="1636.0" y="700.2" text-anchor="end" fill="#1b6b4f" font-size="10" font-weight="600">ODUC4</text>
+<circle cx="1332.0" cy="712.3" r="3.2" fill="#1b6b4f"/>
+<text x="1341.0" y="715.8" fill="#3a4c56" font-size="11">AMS – FRA</text>
+<text x="1446.0" y="715.8" text-anchor="end" fill="#54666f" font-size="11">8</text>
+<text x="1514.0" y="715.8" text-anchor="end" fill="#54666f" font-size="11">80/2320</text>
 <rect x="1522.0" y="708.3" width="30" height="7" rx="3.5" fill="#eaeff3"/>
 <rect x="1522.0" y="708.3" width="30.0" height="7" rx="3.5" fill="#c94a45"/>
 <text x="1582.0" y="715.8" text-anchor="end" fill="#c94a45" font-size="10" font-weight="700">0</text>
-<text x="1636.0" y="715.8" text-anchor="end" fill="#e0842d" font-size="10" font-weight="600">ODU1</text>
-<circle cx="1332.0" cy="727.9" r="3.2" fill="#3f9fc4"/>
-<text x="1341.0" y="731.4" fill="#3a4c56" font-size="11">BER – FRA</text>
-<text x="1446.0" y="731.4" text-anchor="end" fill="#54666f" font-size="11">5</text>
-<text x="1514.0" y="731.4" text-anchor="end" fill="#54666f" font-size="11">1552/1600</text>
+<text x="1636.0" y="715.8" text-anchor="end" fill="#1b6b4f" font-size="10" font-weight="600">ODUC4</text>
+<circle cx="1332.0" cy="727.9" r="3.2" fill="#1b6b4f"/>
+<text x="1341.0" y="731.4" fill="#3a4c56" font-size="11">BER – PRG</text>
+<text x="1446.0" y="731.4" text-anchor="end" fill="#54666f" font-size="11">1</text>
+<text x="1514.0" y="731.4" text-anchor="end" fill="#54666f" font-size="11">0/320</text>
 <rect x="1522.0" y="723.9" width="30" height="7" rx="3.5" fill="#eaeff3"/>
-<rect x="1522.0" y="723.9" width="30.0" height="7" rx="3.5" fill="#c94a45"/>
-<text x="1582.0" y="731.4" text-anchor="end" fill="#c94a45" font-size="10" font-weight="700">0</text>
-<text x="1636.0" y="731.4" text-anchor="end" fill="#3f9fc4" font-size="10" font-weight="600">ODU3</text>
+<rect x="1522.0" y="723.9" width="0.0" height="7" rx="3.5" fill="#8ba3b1"/>
+<text x="1582.0" y="731.4" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">320</text>
+<text x="1636.0" y="731.4" text-anchor="end" fill="#1b6b4f" font-size="10" font-weight="600">ODUC4</text>
 <circle cx="1332.0" cy="743.5" r="3.2" fill="#1b6b4f"/>
-<text x="1341.0" y="747.0" fill="#3a4c56" font-size="11">AMS – FRA</text>
-<text x="1446.0" y="747.0" text-anchor="end" fill="#54666f" font-size="11">7</text>
-<text x="1514.0" y="747.0" text-anchor="end" fill="#54666f" font-size="11">0/2240</text>
+<text x="1341.0" y="747.0" fill="#3a4c56" font-size="11">FRA – MIL</text>
+<text x="1446.0" y="747.0" text-anchor="end" fill="#54666f" font-size="11">41</text>
+<text x="1514.0" y="747.0" text-anchor="end" fill="#54666f" font-size="11">2825/12160</text>
 <rect x="1522.0" y="739.5" width="30" height="7" rx="3.5" fill="#eaeff3"/>
-<rect x="1522.0" y="739.5" width="0.0" height="7" rx="3.5" fill="#8ba3b1"/>
-<text x="1582.0" y="747.0" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">320</text>
+<rect x="1522.0" y="739.5" width="30.0" height="7" rx="3.5" fill="#c94a45"/>
+<text x="1582.0" y="747.0" text-anchor="end" fill="#c94a45" font-size="10" font-weight="700">0</text>
 <text x="1636.0" y="747.0" text-anchor="end" fill="#1b6b4f" font-size="10" font-weight="600">ODUC4</text>
 <circle cx="1332.0" cy="759.1" r="3.2" fill="#1b6b4f"/>
-<text x="1341.0" y="762.6" fill="#3a4c56" font-size="11">FRA – MIL</text>
-<text x="1446.0" y="762.6" text-anchor="end" fill="#54666f" font-size="11">40</text>
-<text x="1514.0" y="762.6" text-anchor="end" fill="#54666f" font-size="11">2745/12080</text>
+<text x="1341.0" y="762.6" fill="#3a4c56" font-size="11">HAM – BER</text>
+<text x="1446.0" y="762.6" text-anchor="end" fill="#54666f" font-size="11">1</text>
+<text x="1514.0" y="762.6" text-anchor="end" fill="#54666f" font-size="11">0/320</text>
 <rect x="1522.0" y="755.1" width="30" height="7" rx="3.5" fill="#eaeff3"/>
-<rect x="1522.0" y="755.1" width="30.0" height="7" rx="3.5" fill="#c94a45"/>
-<text x="1582.0" y="762.6" text-anchor="end" fill="#c94a45" font-size="10" font-weight="700">0</text>
+<rect x="1522.0" y="755.1" width="0.0" height="7" rx="3.5" fill="#8ba3b1"/>
+<text x="1582.0" y="762.6" text-anchor="end" fill="#8ba3b1" font-size="10" font-weight="600">320</text>
 <text x="1636.0" y="762.6" text-anchor="end" fill="#1b6b4f" font-size="10" font-weight="600">ODUC4</text>
 <line x1="1328.0" y1="774.6" x2="1636.0" y2="774.6" stroke="#e2e9ee" stroke-width="1"/>
 <text x="1328.0" y="786.6" fill="#5a6d78" font-size="11.5">Sections with a headroom figure</text>
-<text x="1636.0" y="786.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">5 of 21</text>
+<text x="1636.0" y="786.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">9 of 21</text>
 <text x="1328.0" y="806.6" fill="#5a6d78" font-size="11.5">Least headroom on a section</text>
 <text x="1636.0" y="806.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">0 slots</text>
 <text x="1328.0" y="826.6" fill="#5a6d78" font-size="11.5">Tightest carrier anywhere</text>
 <text x="1636.0" y="826.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">0 slots</text>
 <text x="1328.0" y="846.6" fill="#5a6d78" font-size="11.5">Sections where nothing fits</text>
-<text x="1636.0" y="846.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">1</text>
+<text x="1636.0" y="846.6" text-anchor="end" fill="#124b6e" font-size="11.5" font-weight="600">2</text>
 </svg>

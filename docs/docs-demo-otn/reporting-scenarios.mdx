@@ -57,7 +57,7 @@ anchor and sized by its mode's symbol rate. Free is the band minus that union,
 reported as blocks. Both are computed at read time, so both are branch-aware at
 no extra cost.
 
-Sixteen of the twenty-one sections carry no wavelength at all. That is the real
+<span data-fact="unlit-sections">Thirteen</span> of the twenty-one sections carry no wavelength at all. That is the real
 shape of this network: one congested corridor and twenty quiet ones. A report
 that listed only the busy sections would hide it.
 
@@ -225,7 +225,7 @@ branch. An empty result and a name that does not exist are different answers,
 and this is the second one
 ```
 
-Sixteen sections in this dataset carry nothing, so "no impact" is a
+Thirteen sections in this dataset carry nothing, so "no impact" is a
 common and correct answer. An operator who mistypes a name and is told "no
 impact" stops looking. A section that exists and carries nothing reports zero:
 
@@ -315,7 +315,16 @@ finding does not depend on the exact catalog figure.
 That is the answer a planner wants before raising a purchase order, and it is
 only available because reach is modelled data rather than an assumption. The
 same table shows what does work: `OpenZR+ 400G` covers twenty of twenty-one
-sections and misses only Paris to Madrid at 1250 km.
+sections and misses only Paris to Madrid at 1250 km, and three of the loaded
+wavelengths run it router to router.
+
+**Read the split as cFEC against oFEC rather than pluggable against
+transponder.** Every mode marked `pluggable` above is a coherent optic in a
+router cage. The two that reach nothing carry cFEC; the three that reach
+almost everything carry oFEC, and `OpenZR+ 200G` reaches as far as the 100G
+transponder does. [The link budget](./link-budget.mdx) has what happens when a
+400ZR is put on a section it cannot have: the OSNR gate passes and the
+dispersion gate refuses it.
 
 One caveat applies to every row: reach is not the budget. A mode in reach of a
 section can still miss the OSNR margin over that section's amplifier chains,
@@ -448,9 +457,9 @@ fits inside the wavelengths already there. The same geography, a different layer
 and the two can disagree about the same route without either being wrong.
 
 On the default branch this map is mostly grey, and that is the picture rather than
-a broken render. Sixteen of the twenty-one sections carry no wavelength at all, so
-they have no slot figure, and grey says "not known" rather than "empty and
-available". The five that do carry wavelengths are all green, because every
+a broken render. <span data-fact="unlit-sections">Thirteen</span> of the twenty-one
+sections carry no wavelength at all, so they have no slot figure, and grey says "not known" rather than "empty and
+available". The eight that do carry wavelengths are all green, because every
 pre-provisioned carrier ships with an empty line container on it.
 
 Infrahub renders these artifacts from this repository, so they exist wherever

@@ -4,7 +4,7 @@ title: Loadable scenarios and the runbook
 
 # Loadable scenarios and the runbook
 
-Three pairs of scenarios and one single, one task each, then the runbook that
+Three pairs of scenarios and six singles, one task each, then the runbook that
 walks the whole demo in narrative order, then how to put the default branch back.
 Each task makes its own branch, loads its own scenario input and runs its own
 check, so nothing here asks you for a branch name. Every number below is produced
@@ -52,8 +52,8 @@ green because they still carry empty `ODUC4` wavelengths at 320 free.
 
 **`demo/05_odu_mixed_fill.yml`, every band at once.** No service and no generator
 run. It writes client containers directly, spread so that at least one section
-lands in each of the five bands. The measured split is `odu4` 2, `odu2` 1,
-`odu0` 1, `full` 1, `no-odu` 16, over 21 sections. Load it, fetch `odu-map` from any PoP, and
+lands in each of the five bands. The measured split is `odu4` 5, `odu2` 1,
+`odu0` 1, `full` 2, `no-odu` 12, over 21 sections. Load it, fetch `odu-map` from any PoP, and
 the legend can be read against the picture.
 
 **Read the map, then check it.** Two minutes, and it is the step that says whether
@@ -317,6 +317,331 @@ a monitor, and that question never goes through a section.
 wavelength and no channel count changes. `container_capacity`, `diversity` and
 `provisionable` see no service and no container. A check that fired on an
 unrelated change would be a check nobody reads twice.
+
+## One loadable scenario for the multiplexer channel binding
+
+The second single, and the closest relative of the one above: both load records
+that every schema constraint accepts and that the model is nevertheless wrong
+about.
+
+```bash
+uv run invoke demo-mux-binding
+```
+
+**`demo/11_mux_channel_binding.yml`, two client ports on the wrong number of
+channels.** A multiplexer client port is one channel of the device, and it says
+which through one of two optional relationships: `dwdm_channel` to the dense
+50 GHz grid, or `cwdm_channel` to the coarse plan. `CH094` on `mux-fra-01` binds
+neither. `CH1531-2` on `mux-ams-02` binds both, naming dense channel 94 and the
+coarse 1531 nm the device already lights.
+
+**The load succeeds for both**, and the reason is a limit worth naming. The two
+plans are separate kinds, and Infrahub has no cross-relationship constraint: the
+schema can make one relationship mandatory or leave both optional, and it cannot
+say "exactly one of these two". Making either mandatory would leave the other
+plan's ports with no way to be written at all. So the schema takes what it can, which is the peer
+kind and the cardinality of each edge, and the check takes the rest.
+
+The check **fails**, with exactly one finding per port:
+
+```text
+mux-fra-01 carries client port CH094, which binds neither a dense channel nor a
+coarse wavelength. The port is one channel of the multiplexer and nothing says
+which, so no query can tell what light it passes and no service can be traced
+through it
+```
+
+```text
+mux-ams-02 carries client port CH1531-2, which binds dense channel 94 and coarse
+wavelength 1531 nm at the same time. One filter slot passes one wavelength, so
+one of the two is wrong and the port's own record does not say which
+```
+
+Two findings and not three. The double binding names a coarse wavelength
+`mux-ams-02` does list, so the check has nothing to add about an unlisted one,
+and each port draws exactly one complaint.
+
+The same run says what it judged and what it did not:
+
+```text
+16 multiplexer(s) examined, 96 client port(s) judged for binding exactly one
+channel and 16 line port(s) skipped, because a line port carries every channel
+the device lights and binds none by design. 14 of the devices list no coarse
+wavelength, so their client ports are judged for the binding alone: the graph
+holds no dense equivalent of cwdm_channels to compare a dense binding against
+```
+
+**Negative result: half the question has no data behind it.** A coarse
+multiplexer lists its wavelengths on `cwdm_channels`, so its ports and that list
+are two records that can be held against each other, and the check does. A dense
+one lists nothing, so a client port on the wrong dense channel is a fault this
+check cannot see. Fourteen of the sixteen units are in that position and the
+summary says so, because a count of what was skipped is the only thing that
+keeps silence from reading as a pass.
+
+**Negative result: no other check moves on this branch.** A multiplexer port
+lights no wavelength on its own, carries no service and changes no channel
+count, so `channel_count_consistency`, `container_capacity`, `diversity`,
+`provisionable` and `carrier_termination` all read the branch exactly as they
+read the default one.
+
+## One loadable scenario for the attenuator range
+
+The third single, and the smallest question on this page: two numbers on one
+device, and the comparison between them that no schema constraint can make.
+
+```bash
+uv run invoke demo-attenuator-range
+```
+
+**`demo/12_attenuator_range.yml`, a VOA asked for more than it has.**
+`voa-mil-01` is a 20.0 dB variable attenuator on the add stage at Milan, and the
+file restates it at 24.0 dB. Every other field is the figure the dataset already
+ships, so the setting is the only difference between this record and the racked
+device.
+
+**The load succeeds**, and the split is the point. `attenuation_mdb` carries
+`min_value: 0` and `max_value: 30000`, so the schema refuses a physically
+impossible figure at write time, from an object file, the API, the UI or a hand
+edit during a demo. 24,000 is inside that. What the schema cannot say is "not
+more than this device's own maximum", because that bound is a sibling
+attribute's value and Infrahub has no cross-attribute constraint. The schema
+takes the half it can and the check takes the one comparison left over.
+
+The check **fails**, with exactly one finding:
+
+```text
+voa-mil-01 is set to 24.000 dB and can produce 20.000 dB. The device will sit at
+its stop instead, so the plant delivers 4.000 dB more power than this record
+says it does and every budget computed from it is optimistic by that much
+```
+
+The same run says what it judged:
+
+```text
+2 variable attenuator(s) judged against their own maximum, 0 of them dialled to
+exactly that maximum and passing, because the bound is inclusive. Fixed pads are
+not judged here and carry no range to judge: the absolute 0 to 30 dB limit is a
+schema constraint on both kinds and is refused at write time
+```
+
+**The bound is inclusive.** A VOA sitting exactly at its maximum is at the end
+of its travel and is still a setting the device can hold, so equality passes.
+The demo dials past the stop rather than to it, because a scenario that turned
+on an off-by-one would be about the check's arithmetic rather than about the
+network.
+
+**Negative result: the fixed pads cannot be judged at all.** The two pads at the
+ends of the CWDM tail have no `max_attenuation_mdb`, and that is the whole
+reason the attenuator is two kinds rather than one: a pad with a range is not a
+value to validate, it is a field that should not exist. The check reports that it
+did not judge them rather than counting them as passes, because a green result
+over something nobody looked at reads as evidence.
+
+**Negative result: no other check moves on this branch.** An attenuator lights
+no wavelength, carries no service, holds no channel and has no ports, so
+`osnr_margin`, `channel_count_consistency`, `container_capacity`, `diversity`,
+`provisionable`, `carrier_termination` and `mux_channel_binding` all read the
+branch exactly as they read the default one. The one figure it would move is a
+link budget, and no optical path in this dataset runs through an attenuator yet.
+
+## One loadable scenario for the transceiver placement
+
+The fourth single, and the first of two about the pluggable optics the three
+router wavelengths run on.
+
+```bash
+uv run invoke demo-transceiver-placement
+```
+
+**`demo/13_transceiver_placement.yml`, a module in a port with no cage.**
+`ZRP-BRU-01` is the OpenZR+ QSFP-DD in the Brussels router's line port. The file
+restates it into `amp-ams-bru-08 OUT`, the booster port at the Brussels end of
+the same section. That is the port an operator points at when asked where the
+wavelength leaves the site, and it is also a fixed optical interface on an EDFA
+with nothing to plug a module into.
+
+**The load succeeds**, and the reason is the same limit the multiplexer scenario
+runs into from another direction. `OtnTransceiver.port` peers the
+`OtnOpticalPort` generic, and a relationship to a generic cannot be filtered by
+the kind of its peers. So the schema can offer the field or withhold it, and it
+cannot say "any of these three kinds and none of the other five". The port kind
+is the one thing this check is left holding.
+
+The check **fails**, with exactly one finding:
+
+```text
+QDD-400G-ZRP ZRP-BRU-01 is fitted in amp-ams-bru-08 OUT, a port of kind
+OtnAmplifierPort. A pluggable optic goes in a line, a client or a router port,
+and no other port kind has a cage to take one, so either this unit is somewhere
+else or the port on its record is wrong
+```
+
+The same run says what it judged:
+
+```text
+9 transceiver(s) examined, 6 of them fitted in a port and judged, 3 on a shelf
+and not judged. An unfitted unit is a spare, an RMA or a decommissioned module,
+and holding one is why the port relationship is optional. Two modules in one
+port is not judged here: the schema refuses that write
+```
+
+**A port holding two optics has no branch, because the server refuses to build
+one.** `OtnLinePort`, `OtnClientPort` and `OtnRouterPort` each declare a
+cardinality-one `transceiver` on the same `otn_optical_port__transceiver`
+identifier `OtnTransceiver.port` uses, so both ends of the edge are cardinality
+one and the second module is rejected at write time:
+
+```text
+Node 18d19871-0d7f-6758-306b-1188b66bb9eb has 2 peers for
+otn_optical_port__transceiver, maximum of 1 allowed
+```
+
+That rule used to live in this check. `uniqueness_constraints: [["port"]]` was
+tried first and Infrahub accepts it only where the relationship is mandatory,
+and a mandatory port leaves a spare, an RMA and a decommissioned unit with
+nowhere to sit, which is three of the nine units here. The reverse edge buys the
+same refusal at no such cost, and it is declared on the three concrete kinds
+with a cage rather than on the `OtnOpticalPort` generic, which would have handed
+the field to the five kinds that hold no module.
+
+**A second check speaks on this branch and blocks nothing.** Pulling the module
+out of `rtr-bru-01 1/2/1` leaves `oc-ch003-ams-bru` with a pluggable at one end
+and integrated optics at the other, and `transceiver_mode_support` reports that
+as INFO:
+
+```text
+oc-ch003-ams-bru is terminated by a pluggable at rtr-ams-01 1/2/1 and by
+integrated optics at rtr-bru-01 1/2/1. The fitted end is judged against its own
+part and the other end carries no part number to judge, which is a mixed
+termination rather than a fault
+```
+
+**Negative result: nothing here says the cage fits.** A part carries a
+`form_factor` and a port does not, so "a QSFP-DD module in a QSFP-DD cage" is a
+comparison this model cannot make. The check refuses the port kind and says
+nothing about the cage, which is the honest half.
+
+## One loadable scenario for the transceiver mode support
+
+The fifth single, and the one where two records that match on every visible
+field are still the wrong pair.
+
+```bash
+uv run invoke demo-transceiver-mode
+```
+
+**`demo/14_transceiver_mode_support.yml`, a 400ZR on an OpenZR+ wavelength.**
+The OpenZR+ module comes out of the Amsterdam router's line port and the 400ZR
+spare off the shelf goes in. Both parts are QSFP-DD. Both are DP-16QAM. Both are
+400G. Both are tunable. What differs is forward error correction, cFEC against
+oFEC, and therefore reach: 120 km against 1000 km, on a 220 km section.
+
+**The load succeeds**, and no constraint could have refused it. `supported_modes`
+is a cardinality-many relationship on the part and the mode is a cardinality-one
+relationship on the carrier, two hops apart through a port. No attribute
+constraint reaches across two nodes and Infrahub has no cross-relationship
+constraint.
+
+The check **fails**, with exactly one finding:
+
+```text
+oc-ch003-ams-bru runs OpenZR+ 400G and rtr-ams-01 1/2/1 holds QDD-400G-ZR
+ZR-SPARE-01, which supports 400ZR. The part does not list OpenZR+ 400G, so the
+wavelength is planned on an optic that cannot produce it. Cage, constellation
+and line rate say nothing here: the part number and the mode are the whole of
+the difference
+```
+
+The same run says what it judged:
+
+```text
+43 wavelength(s) examined, 3 judged against the parts fitted at their line ports
+and 40 skipped for holding no pluggable at either end. A skipped wavelength is
+terminated on integrated optics, which carry no part number and no mode list, so
+this check's silence about them is not a verdict
+```
+
+**Negative result: forty of the forty-three cannot be judged.** A transponder
+lights its wavelength from a laser on the line card, so there is no part number
+and no mode list to compare anything against. Only the three router wavelengths
+carry a pluggable, and a run reporting no findings over forty-three skips would
+look exactly like a run that judged them all and found nothing. The split is
+printed for that reason.
+
+**Negative result: this check says nothing about whether the mode closes.**
+Whether `OpenZR+ 400G` reaches over the plant is `osnr_margin`'s question, and
+it does: +10.890 dB on `oms-ams-bru`. The 400ZR fitted here would fail on
+chromatic dispersion rather than on power, over its 2400 ps/nm tolerance by
+1340 ps/nm with 8 dB of OSNR still in hand. That is the argument for oFEC and it
+belongs on [the link budget page](./link-budget.mdx), not in this check.
+
+## One loadable scenario for the connector polish
+
+The sixth single, and the one where nothing about the object changed. What
+changed is the glass it faces.
+
+```bash
+uv run invoke demo-connector-polish
+```
+
+**`demo/15_connector_polish.yml`, a blue jumper on pumped fibre.**
+`span-vie-mil-01` is the first span of the one section this network pumps, and
+its Vienna end is the only end of that section anyone can reach: spans 2 to 9
+terminate in huts. This file re-patches that end. `roadm-vie-01 DEG-MIL` comes
+off and `xpdr-vie-02 L2` goes on, a transponder patched straight onto the line
+past the ROADM. `L2` is the one dark line port at Vienna, so nothing carrying
+traffic moved.
+
+Its endface is UPC, as every line port in the dataset is. That is the right
+endface where a coloured line port normally sits, behind an add/drop stage
+inside a building, where return loss is a specification. On the far side of the
+ROADM it is a hazard: the nine pumps on this section put half a watt into the
+fibre and a flat endface sends about 50 dB of it back down the span.
+
+**The load succeeds**, and no constraint could have refused it. `polish` is an
+attribute on the port and `raman_pumps` is a relationship on the span, two hops
+apart, and Infrahub has no cross-relationship constraint.
+
+The check **fails**, with exactly one finding:
+
+```text
+xpdr-vie-02 L2 terminates span-vie-mil-01, which is Raman-pumped, and its
+endface is UPC. A pump puts half a watt into this fibre and a UPC endface
+reflects that back down it, so this connector has to be APC before the pump is
+turned up
+```
+
+The same run says what it judged:
+
+```text
+133 span(s) examined, 9 of them Raman-pumped, 9 judged against their terminating
+ports and 0 unjudgeable for naming none. An unjudgeable span is not a passing
+one, and a run reporting no findings over a pumped section it could not reach
+has seen nothing
+```
+
+**That last zero is the figure to read.** A span reaches its ports through
+`OtnFiberSpan.terminating_ports`, and a pumped span naming none is reported as
+unjudgeable rather than clean, because an empty relationship and two correct APC
+ends look identical from inside the check. The dataset generator populates all
+133 spans so the count reads zero, and a run where it does not is a run whose
+green result means nothing.
+
+**Negative result: the relationship had to be added before the check could be
+written.** No port kind had any edge to a fibre span or to an optical multiplex
+section in either direction. The nearest reachable ports were three hops away
+through the section and its ROADMs, and a ROADM carries one degree port per
+direction whose `connected_to` is null on every one of them, so the only thing
+naming the port facing a given span was the far site's shortname inside the
+port's name string. Parsing that is a naming convention doing a relationship's
+job, and the schema carries the edge instead.
+
+**Negative result: polish is judged on pumped glass and nowhere else.** The <span data-fact="unpumped-spans">124</span>
+unpumped spans terminate on APC degree ports and the check says nothing about
+them, and it says nothing about the <span data-fact="line-ports">126</span> line ports either, because none of them
+faces pumped fibre on the default branch. A flat endface is a normal, correct
+choice almost everywhere in this network.
 
 ## The runbook
 
