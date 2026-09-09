@@ -1,0 +1,201 @@
+.hero {
+  padding: 3rem 0 2rem;
+}
+
+.heroTitle {
+  margin-bottom: 0.5rem;
+}
+
+.heroSubtitle {
+  font-size: 1.15rem;
+  max-width: 48rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.heroNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.section {
+  padding: 1.5rem 0 2.5rem;
+}
+
+.sectionIntro {
+  max-width: 48rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.track {
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  background: var(--layout-bg-color);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.trackHeader {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.trackHeading {
+  flex: 1 1 28rem;
+}
+
+.trackHeading h2 {
+  margin-bottom: 0.5rem;
+}
+
+.trackDescription {
+  color: var(--ifm-color-emphasis-800);
+  margin-bottom: 0.75rem;
+}
+
+.trackMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.trackActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.labGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background: var(--main-bg-color);
+  padding: 1.25rem;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 1px 0 16px 0 rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: var(--ifm-color-primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.cardTitle a {
+  color: inherit;
+}
+
+.cardTitle a:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.cardDescription {
+  flex-grow: 1;
+  font-size: 0.95rem;
+  color: var(--ifm-color-emphasis-800);
+  margin-bottom: 0.75rem;
+}
+
+.prerequisites {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+  margin-bottom: 0.75rem;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-800);
+  background: var(--layout-bg-color);
+}
+
+.owner {
+  border-color: var(--ifm-color-primary-lighter);
+  color: var(--ifm-color-primary-darkest);
+}
+
+html[data-theme='dark'] .owner {
+  color: var(--ifm-color-primary-lightest);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.launchButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+}
+
+.learnMore {
+  font-size: 0.9rem;
+}
+
+@media screen and (max-width: 996px) {
+  .hero {
+    padding: 2rem 0 1rem;
+  }
+
+  .track {
+    padding: 1rem;
+  }
+}

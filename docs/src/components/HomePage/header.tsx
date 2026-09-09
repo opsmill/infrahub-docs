@@ -58,7 +58,7 @@ export default function HomepageHeader() {
                     </Link>
                     <Link
                         className={clsx(styles.heroButton, "button button--secondary button--lg")}
-                        to="https://opsmill.instruqt.com/pages/labs"
+                        to="/labs"
                     >
                         {translate({
                             id: 'home.header.tutorials',
