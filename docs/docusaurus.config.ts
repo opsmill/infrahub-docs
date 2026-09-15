@@ -374,6 +374,11 @@ const config: Config = {
           label: "Infrahub Docs",
         },
         {
+          to: "/labs",
+          label: "Labs",
+          position: "left",
+        },
+        {
           type: 'dropdown',
           position: 'left',
           label: 'Tools & SDKs',
