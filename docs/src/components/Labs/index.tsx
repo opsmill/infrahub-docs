@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
 import Link from '@docusaurus/Link';
@@ -25,16 +25,183 @@ import styles from './styles.module.css';
 
 const externalLinkProps = { target: '_blank', rel: 'noopener noreferrer' } as const;
 
+/** Everything the details dialog renders, whether it came from a lab or a track. */
+type Details = {
+  /** Small line above the title: where this sits in the catalogue. */
+  kicker?: string;
+  title: string;
+  /** Short strings rendered as chips: duration, level, lab count. */
+  meta: string[];
+  owner?: Lab['owner'];
+  overview: string;
+  whatYouWillLearn: string[];
+  prerequisites?: string;
+  launchUrl: string;
+  launchLabel: string;
+};
+
+function labDetails(lab: Lab, context?: LabContext): Details {
+  const kickerParts: string[] = [];
+  if (context) {
+    kickerParts.push(context.sectionTitle);
+    if (context.step !== undefined) {
+      kickerParts.push(`Step ${context.step}`);
+    }
+  }
+  return {
+    kicker: kickerParts.join(' · ') || undefined,
+    title: lab.title,
+    meta: [formatDuration(lab.durationMinutes), lab.level],
+    owner: lab.owner,
+    overview: lab.overview,
+    whatYouWillLearn: lab.whatYouWillLearn,
+    prerequisites: lab.prerequisites,
+    launchUrl: launchUrl(lab),
+    launchLabel: 'Start lab',
+  };
+}
+
+function trackDetails(track: ResolvedTrack): Details {
+  return {
+    kicker: 'Learning track',
+    title: track.title,
+    meta: [
+      `${track.labs.length} ${track.labs.length === 1 ? 'lab' : 'labs'}`,
+      `about ${formatDuration(track.totalMinutes)}`,
+    ],
+    overview: track.overview,
+    whatYouWillLearn: track.whatYouWillLearn,
+    prerequisites: track.prerequisites,
+    launchUrl: launchUrl(track.labs[0]),
+    launchLabel: 'Start track',
+  };
+}
+
+const ShowDetailsContext = createContext<(details: Details) => void>(() => {});
+
+// --- Dialog ----------------------------------------------------------------
+
+function DetailsDialog({ details, onClose }: { details: Details | null; onClose: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) {
+      return;
+    }
+    if (details && !dialog.open) {
+      dialog.showModal();
+    } else if (!details && dialog.open) {
+      dialog.close();
+    }
+  }, [details]);
+
+  return (
+    <dialog
+      ref={ref}
+      className={styles.dialog}
+      aria-labelledby="lab-details-title"
+      // Fires for Esc as well as an explicit close(), so state stays in step.
+      onClose={onClose}
+      // The dialog element itself is only the area around the panel.
+      onClick={(event) => {
+        if (event.target === ref.current) {
+          onClose();
+        }
+      }}
+    >
+      {details && (
+        <div className={styles.dialogPanel}>
+          <button type="button" className={styles.dialogClose} onClick={onClose} aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                fill="currentColor"
+                d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+              />
+            </svg>
+          </button>
+
+          {details.kicker && <p className={styles.dialogKicker}>{details.kicker}</p>}
+          <Heading as="h2" id="lab-details-title" className={styles.dialogTitle}>
+            {details.title}
+          </Heading>
+
+          <div className={styles.cardMeta}>
+            {details.meta.map((item) => (
+              <span key={item} className={styles.chip}>
+                {item}
+              </span>
+            ))}
+            {details.owner && (
+              <span className={clsx(styles.chip, styles.owner)}>
+                {details.owner.url ? (
+                  <Link to={details.owner.url} {...externalLinkProps}>
+                    {details.owner.name}
+                  </Link>
+                ) : (
+                  details.owner.name
+                )}
+              </span>
+            )}
+          </div>
+
+          <p className={styles.dialogOverview}>{details.overview}</p>
+
+          {details.whatYouWillLearn.length > 0 && (
+            <>
+              <Heading as="h3" className={styles.dialogSubheading}>
+                What you&rsquo;ll learn
+              </Heading>
+              <ul className={styles.dialogList}>
+                {details.whatYouWillLearn.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </>
+          )}
+
+          {details.prerequisites && (
+            <p className={styles.dialogPrerequisites}>
+              <strong>Prerequisites:</strong> {details.prerequisites}
+            </p>
+          )}
+
+          <div className={styles.dialogActions}>
+            <Link
+              className={clsx(styles.launchButton, 'button button--primary')}
+              to={details.launchUrl}
+              {...externalLinkProps}
+            >
+              {details.launchLabel}
+              <ArrowRightIcon />
+            </Link>
+            <button type="button" className="button button--secondary" onClick={onClose}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </dialog>
+  );
+}
+
+// --- Cards and sections ----------------------------------------------------
+
 type LabCardProps = {
   lab: Lab;
   /** Position inside a track. Omitted for standalone labs. */
   step?: number;
-  /** Shown in the filtered view so a lab keeps its place in the catalogue. */
+  /** Where this lab sits in the catalogue. Always passed to the dialog. */
   context?: LabContext;
+  /**
+   * Print the context on the card itself. Only the filtered view needs it:
+   * elsewhere the card already sits under its own section heading.
+   */
+  showContextLine?: boolean;
 };
 
-function LabCard({ lab, step, context }: LabCardProps) {
-  const title = lab.docsUrl ? <Link to={lab.docsUrl}>{lab.title}</Link> : lab.title;
+function LabCard({ lab, step, context, showContextLine }: LabCardProps) {
+  const showDetails = useContext(ShowDetailsContext);
   // Inside a track the step number already says what comes first.
   const showPrerequisites = step === undefined && Boolean(lab.prerequisites);
 
@@ -61,7 +228,7 @@ function LabCard({ lab, step, context }: LabCardProps) {
         </div>
       )}
 
-      {context && (
+      {showContextLine && context && (
         <p className={styles.context}>
           {context.sectionTitle}
           {context.step !== undefined && ` · Step ${context.step}`}
@@ -69,7 +236,7 @@ function LabCard({ lab, step, context }: LabCardProps) {
       )}
 
       <Heading as="h3" className={styles.cardTitle}>
-        {title}
+        {lab.title}
       </Heading>
       <p className={styles.cardDescription}>{lab.description}</p>
       {showPrerequisites && (
@@ -92,17 +259,20 @@ function LabCard({ lab, step, context }: LabCardProps) {
           Start lab
           <ArrowRightIcon />
         </Link>
-        {lab.docsUrl && (
-          <Link className={styles.learnMore} to={lab.docsUrl}>
-            Learn more
-          </Link>
-        )}
+        <button
+          type="button"
+          className={styles.detailsButton}
+          onClick={() => showDetails(labDetails(lab, context))}
+        >
+          Details
+        </button>
       </div>
     </article>
   );
 }
 
 function TrackBlock({ track }: { track: ResolvedTrack }) {
+  const showDetails = useContext(ShowDetailsContext);
   const firstLab = track.labs[0];
   const labCount = track.labs.length;
 
@@ -130,11 +300,13 @@ function TrackBlock({ track }: { track: ResolvedTrack }) {
             Start track
             <ArrowRightIcon />
           </Link>
-          {track.docsUrl && (
-            <Link className="button button--secondary" to={track.docsUrl}>
-              About this track
-            </Link>
-          )}
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() => showDetails(trackDetails(track))}
+          >
+            About this track
+          </button>
         </div>
       </div>
       <div
@@ -142,7 +314,12 @@ function TrackBlock({ track }: { track: ResolvedTrack }) {
         style={{ '--track-columns': labCount } as React.CSSProperties}
       >
         {track.labs.map((lab, index) => (
-          <LabCard key={lab.id} lab={lab} step={index + 1} />
+          <LabCard
+            key={lab.id}
+            lab={lab}
+            step={index + 1}
+            context={{ sectionTitle: track.title, step: index + 1 }}
+          />
         ))}
       </div>
     </section>
@@ -158,7 +335,7 @@ function GroupBlock({ group }: { group: Extract<ResolvedSection, { kind: 'group'
       <p className={styles.sectionDescription}>{group.description}</p>
       <div className={styles.labGrid}>
         {group.labs.map((lab) => (
-          <LabCard key={lab.id} lab={lab} />
+          <LabCard key={lab.id} lab={lab} context={{ sectionTitle: group.title }} />
         ))}
       </div>
     </section>
@@ -192,10 +369,7 @@ function FilterSidebar({
       <div className={styles.sidebarPanel}>
         <div className={styles.sidebarHeader}>
           <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path
-              fill="currentColor"
-              d="M3 6h18v2H3zm4 5h10v2H7zm3 5h4v2h-4z"
-            />
+            <path fill="currentColor" d="M3 6h18v2H3zm4 5h10v2H7zm3 5h4v2h-4z" />
           </svg>
           <Heading as="h2" className={styles.sidebarTitle}>
             Narrow your search
@@ -259,6 +433,7 @@ export function LabsHero() {
 
 export function LabsBrowser() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [details, setDetails] = useState<Details | null>(null);
   const hydrated = useRef(false);
 
   const sections = useMemo(() => resolveSections(), []);
@@ -294,51 +469,55 @@ export function LabsBrowser() {
   const clear = () => setFilters(EMPTY_FILTERS);
 
   return (
-    <div className={clsx('container', styles.layout)}>
-      <FilterSidebar
-        filters={filters}
-        onToggle={(facetId, value) => setFilters((current) => toggleFilter(current, facetId, value))}
-        onClear={clear}
-      />
+    <ShowDetailsContext.Provider value={setDetails}>
+      <div className={clsx('container', styles.layout)}>
+        <FilterSidebar
+          filters={filters}
+          onToggle={(facetId, value) => setFilters((current) => toggleFilter(current, facetId, value))}
+          onClear={clear}
+        />
 
-      <div className={styles.results}>
-        <div className={styles.resultsHeader}>
-          <p className={styles.resultsCount} aria-live="polite">
-            {filtering ? `Showing ${matches.length} of ${totalLabs} labs` : `All ${totalLabs} labs`}
-          </p>
-          {filtering && (
-            <button type="button" className={styles.clearInline} onClick={clear}>
-              Clear all filters
-            </button>
+        <div className={styles.results}>
+          <div className={styles.resultsHeader}>
+            <p className={styles.resultsCount} aria-live="polite">
+              {filtering ? `Showing ${matches.length} of ${totalLabs} labs` : `All ${totalLabs} labs`}
+            </p>
+            {filtering && (
+              <button type="button" className={styles.clearInline} onClick={clear}>
+                Clear all filters
+              </button>
+            )}
+          </div>
+
+          {filtering ? (
+            matches.length > 0 ? (
+              <div className={styles.labGrid}>
+                {matches.map(({ lab, context }) => (
+                  <LabCard key={lab.id} lab={lab} context={context} showContextLine />
+                ))}
+              </div>
+            ) : (
+              <p className={styles.empty}>
+                No labs match those filters. Try removing one, or{' '}
+                <button type="button" className={styles.clearInline} onClick={clear}>
+                  clear all filters
+                </button>
+                .
+              </p>
+            )
+          ) : (
+            sections.map((section) =>
+              section.kind === 'track' ? (
+                <TrackBlock key={section.id} track={section} />
+              ) : (
+                <GroupBlock key={section.id} group={section} />
+              ),
+            )
           )}
         </div>
-
-        {filtering ? (
-          matches.length > 0 ? (
-            <div className={styles.labGrid}>
-              {matches.map(({ lab, context }) => (
-                <LabCard key={lab.id} lab={lab} context={context} />
-              ))}
-            </div>
-          ) : (
-            <p className={styles.empty}>
-              No labs match those filters. Try removing one, or{' '}
-              <button type="button" className={styles.clearInline} onClick={clear}>
-                clear all filters
-              </button>
-              .
-            </p>
-          )
-        ) : (
-          sections.map((section) =>
-            section.kind === 'track' ? (
-              <TrackBlock key={section.id} track={section} />
-            ) : (
-              <GroupBlock key={section.id} group={section} />
-            ),
-          )
-        )}
       </div>
-    </div>
+
+      <DetailsDialog details={details} onClose={() => setDetails(null)} />
+    </ShowDetailsContext.Provider>
   );
 }

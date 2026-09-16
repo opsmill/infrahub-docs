@@ -372,8 +372,117 @@ html[data-theme='dark'] .owner {
   border-radius: 9999px;
 }
 
-.learnMore {
+.detailsButton {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
   font-size: 0.9rem;
+  color: var(--ifm-color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.detailsButton:hover {
+  color: var(--ifm-color-primary-darkest);
+}
+
+html[data-theme='dark'] .detailsButton:hover {
+  color: var(--ifm-color-primary-lightest);
+}
+
+/* --- Details dialog ------------------------------------------------------ */
+
+.dialog {
+  width: min(44rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+
+.dialogPanel {
+  position: relative;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  background: var(--layout-bg-color);
+  padding: 1.75rem;
+}
+
+.dialogClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  background: var(--main-bg-color);
+  color: var(--ifm-color-emphasis-800);
+  cursor: pointer;
+}
+
+.dialogClose:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+
+.dialogKicker {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 0.35rem;
+  padding-right: 2.5rem;
+}
+
+.dialogTitle {
+  font-size: 1.6rem;
+  margin-bottom: 0.75rem;
+  padding-right: 2.5rem;
+}
+
+.dialogOverview {
+  color: var(--ifm-color-emphasis-800);
+}
+
+.dialogSubheading {
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+}
+
+.dialogList {
+  color: var(--ifm-color-emphasis-800);
+  padding-left: 1.25rem;
+}
+
+.dialogList li {
+  margin-bottom: 0.35rem;
+}
+
+.dialogPrerequisites {
+  font-size: 0.95rem;
+  color: var(--ifm-color-emphasis-700);
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.5rem;
 }
 
 /* --- Narrow viewports ---------------------------------------------------- */

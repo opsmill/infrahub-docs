@@ -68,20 +68,10 @@ const sidebars: SidebarsConfig = {
       collapsible: false,
       collapsed: false,
       items: [
-        {
-          type: 'category',
-          label: 'Infrahub Labs',
-          // No category link: /labs is the labs catalogue, and learn/labs/overview
-          // is a second index of the same labs. Routing the category header at it
-          // sent readers coming back from a lab page to the wrong place.
-          items: [
-            { type: 'link', label: 'All labs', href: '/labs' },
-            { type: 'doc', id: 'learn/labs/fundamentals-to-expert', label: 'Infrahub: Fundamentals to Expert' },
-            { type: 'doc', id: 'learn/labs/infrahub-introduction', label: 'First Tour of Infrahub' },
-            { type: 'doc', id: 'learn/labs/schema-deep-dive', label: 'Schema Deep Dive' },
-            'learn/labs/deploy-first-configuration',
-          ],
-        },
+        // The labs catalogue at /labs describes every lab in full, so there are
+        // no per-lab pages to list here. The pages that used to sit under
+        // learn/labs/ are being removed from opsmill/infrahub.
+        { type: 'link', label: 'Infrahub Labs', href: '/labs' },
         {
           type: 'category',
           label: 'Tutorials',

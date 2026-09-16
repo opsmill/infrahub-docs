@@ -19,8 +19,9 @@ type Redirect = { from: string | string[]; to: string };
 
 export const redirects_academy_to_learn: Redirect[] = [
   // "academy" section renamed to "learn"; getting-started pages folded into labs/
-  { to: '/learn/labs/deploy-first-configuration', from: '/academy/getting-started/deploy-first-configuration' },
-  { to: '/learn/labs/infrahub-introduction', from: '/academy/getting-started/infrahub-introduction' },
+  // The per-lab pages were folded into the labs catalogue at /labs.
+  { to: '/labs', from: '/academy/getting-started/deploy-first-configuration' },
+  { to: '/labs', from: '/academy/getting-started/infrahub-introduction' },
   { to: '/learn/tutorials/build-a-check', from: '/academy/tutorials/build-a-check' },
   { to: '/learn/tutorials/build-your-first-schema', from: '/academy/tutorials/build-your-first-schema' },
   { to: '/learn/tutorials/groups', from: '/academy/tutorials/groups' },
