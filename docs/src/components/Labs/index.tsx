@@ -137,7 +137,10 @@ function TrackBlock({ track }: { track: ResolvedTrack }) {
           )}
         </div>
       </div>
-      <div className={styles.labGrid}>
+      <div
+        className={clsx(styles.labGrid, styles.trackGrid)}
+        style={{ '--track-columns': labCount } as React.CSSProperties}
+      >
         {track.labs.map((lab, index) => (
           <LabCard key={lab.id} lab={lab} step={index + 1} />
         ))}

@@ -24,8 +24,8 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 16rem minmax(0, 1fr);
-  gap: 2rem;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 1.5rem;
   align-items: start;
   padding-bottom: 3rem;
 }
@@ -194,8 +194,10 @@
   border: 1px solid var(--border-color);
   border-radius: 1rem;
   background: var(--layout-bg-color);
-  padding: 1.5rem;
+  padding: 1.25rem;
   margin-bottom: 2.5rem;
+  /* Lets the step row below size itself against this box, not the viewport. */
+  container-type: inline-size;
 }
 
 .group {
@@ -240,6 +242,20 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 1rem;
+}
+
+/*
+ * A track is a sequence, so its steps read as one left-to-right row. Left to
+ * auto-fit, five 14rem cards need more width than the track box has and the
+ * last one wraps, which breaks that reading. Once the track box is wide enough
+ * to give every step a sensible width, switch to one column per step.
+ * `--track-columns` is set on the element from the lab count. Browsers without
+ * container query support keep the wrapping auto-fit grid.
+ */
+@container (min-width: 900px) {
+  .trackGrid {
+    grid-template-columns: repeat(var(--track-columns), minmax(0, 1fr));
+  }
 }
 
 .card {
