@@ -28,6 +28,6 @@ export const redirects_academy_to_learn: Redirect[] = [
   { to: '/learn/tutorials/generators/build-your-first-generator', from: '/academy/tutorials/generators/build-your-first-generator' },
   { to: '/learn/tutorials/transformations/build-a-jinja2-transformation', from: '/academy/tutorials/transformations/build-a-jinja2-transformation' },
   { to: '/learn/tutorials/transformations/build-a-python-transformation', from: '/academy/tutorials/transformations/build-a-python-transformation' },
-  // old Academy landing page, removed; closest current equivalent
-  { to: '/learn/labs/overview', from: '/academy/academy' },
+  // old Academy landing page, removed; the labs catalogue is its successor
+  { to: '/labs', from: '/academy/academy' },
 ];

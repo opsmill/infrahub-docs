@@ -377,6 +377,9 @@ const config: Config = {
           to: "/labs",
           label: "Labs",
           position: "left",
+          // The per-lab detail pages live in the Infrahub docs, so stay
+          // highlighted there: /labs is the way back to the catalogue.
+          activeBaseRegex: "^/(labs|learn/labs)",
         },
         {
           type: 'dropdown',

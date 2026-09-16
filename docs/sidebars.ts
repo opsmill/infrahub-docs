@@ -71,8 +71,11 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Infrahub Labs',
-          link: { type: 'doc', id: 'learn/labs/overview' }, // hub
+          // No category link: /labs is the labs catalogue, and learn/labs/overview
+          // is a second index of the same labs. Routing the category header at it
+          // sent readers coming back from a lab page to the wrong place.
           items: [
+            { type: 'link', label: 'All labs', href: '/labs' },
             { type: 'doc', id: 'learn/labs/fundamentals-to-expert', label: 'Infrahub: Fundamentals to Expert' },
             { type: 'doc', id: 'learn/labs/infrahub-introduction', label: 'First Tour of Infrahub' },
             { type: 'doc', id: 'learn/labs/schema-deep-dive', label: 'Schema Deep Dive' },
