@@ -1,5 +1,5 @@
 .hero {
-  padding: 3rem 0 2rem;
+  padding: 3rem 0 1.5rem;
 }
 
 .heroTitle {
@@ -20,13 +20,174 @@
   color: var(--ifm-color-emphasis-700);
 }
 
-.section {
-  padding: 1.5rem 0 2.5rem;
+/* --- Layout -------------------------------------------------------------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: 16rem minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+  padding-bottom: 3rem;
 }
 
-.sectionIntro {
-  max-width: 48rem;
+.results {
+  min-width: 0;
+}
+
+.resultsHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.resultsCount {
+  margin: 0;
+  font-weight: 600;
   color: var(--ifm-color-emphasis-800);
+}
+
+.empty {
+  color: var(--ifm-color-emphasis-800);
+}
+
+/* --- Filter sidebar ------------------------------------------------------ */
+
+.sidebar {
+  position: sticky;
+  top: 5rem;
+}
+
+.sidebarPanel {
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  background: var(--layout-bg-color);
+  padding: 1.25rem;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 2px solid var(--ifm-color-primary);
+  color: var(--ifm-color-emphasis-900);
+}
+
+.sidebarTitle {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+/*
+ * The divider is an inset box-shadow rather than border-top: a <legend> cuts a
+ * gap out of its fieldset's border, which would leave the rule running through
+ * the facet heading.
+ */
+.facet {
+  border: 0;
+  margin: 0;
+  padding: 1rem 0 0.5rem;
+  box-shadow: inset 0 1px 0 var(--border-color);
+}
+
+.facet:first-of-type {
+  box-shadow: none;
+  padding-top: 0.5rem;
+}
+
+.facetLegend {
+  display: block;
+  width: 100%;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0;
+  margin-bottom: 0.25rem;
+  color: var(--ifm-color-emphasis-900);
+}
+
+.facetOption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.facetOption input {
+  cursor: pointer;
+  accent-color: var(--ifm-color-primary);
+  margin: 0;
+}
+
+.facetLabel {
+  flex-grow: 1;
+}
+
+.facetCount {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600);
+  font-variant-numeric: tabular-nums;
+}
+
+/* An option that would return nothing stays clickable but reads as inactive. */
+.facetEmpty {
+  opacity: 0.45;
+}
+
+.clearAll,
+.clearInline {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--ifm-color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.clearAll {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.clearInline {
+  font-size: 0.9rem;
+}
+
+.filterToggle {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.toggleCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  background: var(--ifm-color-primary);
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+/* --- Sections ------------------------------------------------------------ */
+
+.sectionDescription {
+  color: var(--ifm-color-emphasis-800);
+  margin-bottom: 0.75rem;
 }
 
 .track {
@@ -34,7 +195,11 @@
   border-radius: 1rem;
   background: var(--layout-bg-color);
   padding: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.group {
+  margin-bottom: 2.5rem;
 }
 
 .trackHeader {
@@ -47,16 +212,11 @@
 }
 
 .trackHeading {
-  flex: 1 1 28rem;
+  flex: 1 1 24rem;
 }
 
 .trackHeading h2 {
   margin-bottom: 0.5rem;
-}
-
-.trackDescription {
-  color: var(--ifm-color-emphasis-800);
-  margin-bottom: 0.75rem;
 }
 
 .trackMeta {
@@ -74,9 +234,11 @@
   align-items: center;
 }
 
+/* --- Cards --------------------------------------------------------------- */
+
 .labGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 1rem;
 }
 
@@ -114,6 +276,14 @@
   color: #fff;
   font-weight: 600;
   font-size: 0.95rem;
+}
+
+.context {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 0.35rem;
 }
 
 .cardTitle {
@@ -190,9 +360,34 @@ html[data-theme='dark'] .owner {
   font-size: 0.9rem;
 }
 
+/* --- Narrow viewports ---------------------------------------------------- */
+
 @media screen and (max-width: 996px) {
   .hero {
     padding: 2rem 0 1rem;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .sidebar {
+    position: static;
+    margin-bottom: 1.5rem;
+  }
+
+  .filterToggle {
+    display: inline-flex;
+  }
+
+  /* The panel is collapsed behind the toggle until the reader opens it. */
+  .sidebarPanel {
+    display: none;
+  }
+
+  .sidebarOpen .sidebarPanel {
+    display: block;
   }
 
   .track {

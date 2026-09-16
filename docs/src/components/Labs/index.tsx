@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
 import Link from '@docusaurus/Link';
@@ -6,51 +6,73 @@ import type { Lab } from '@site/src/data/labs';
 import ArrowRightIcon from '@site/static/img/arrow-right.svg';
 import EducationIcon from '@site/static/img/education.svg';
 import {
+  allLabsWithContext,
+  countSelected,
+  EMPTY_FILTERS,
+  FACETS,
+  filtersFromQuery,
+  filtersToQuery,
   formatDuration,
+  isFiltered,
   launchUrl,
-  resolveMiscLabs,
-  resolveThirdPartyLabs,
-  resolveTracks,
+  matchesFilters,
+  optionCounts,
+  resolveSections,
+  toggleFilter,
 } from './catalogue';
-import type { ResolvedTrack } from './catalogue';
+import type { Filters, LabContext, ResolvedSection, ResolvedTrack } from './catalogue';
 import styles from './styles.module.css';
 
 const externalLinkProps = { target: '_blank', rel: 'noopener noreferrer' } as const;
 
 type LabCardProps = {
   lab: Lab;
+  /** Position inside a track. Omitted for standalone labs. */
   step?: number;
+  /** Shown in the filtered view so a lab keeps its place in the catalogue. */
+  context?: LabContext;
 };
 
-function LabCard({ lab, step }: LabCardProps) {
+function LabCard({ lab, step, context }: LabCardProps) {
   const title = lab.docsUrl ? <Link to={lab.docsUrl}>{lab.title}</Link> : lab.title;
+  // Inside a track the step number already says what comes first.
+  const showPrerequisites = step === undefined && Boolean(lab.prerequisites);
 
   return (
     <article className={styles.card} data-lab-id={lab.id}>
-      <div className={styles.cardTop}>
-        {step !== undefined && (
-          <span className={styles.step} aria-label={`Step ${step}`}>
-            {step}
-          </span>
-        )}
-        {lab.owner && (
-          <span className={clsx(styles.chip, styles.owner)}>
-            {lab.owner.url ? (
-              <Link to={lab.owner.url} {...externalLinkProps}>
-                {lab.owner.name}
-              </Link>
-            ) : (
-              lab.owner.name
-            )}
-          </span>
-        )}
-      </div>
+      {(step !== undefined || lab.owner) && (
+        <div className={styles.cardTop}>
+          {step !== undefined && (
+            <span className={styles.step} aria-label={`Step ${step}`}>
+              {step}
+            </span>
+          )}
+          {lab.owner && (
+            <span className={clsx(styles.chip, styles.owner)}>
+              {lab.owner.url ? (
+                <Link to={lab.owner.url} {...externalLinkProps}>
+                  {lab.owner.name}
+                </Link>
+              ) : (
+                lab.owner.name
+              )}
+            </span>
+          )}
+        </div>
+      )}
+
+      {context && (
+        <p className={styles.context}>
+          {context.sectionTitle}
+          {context.step !== undefined && ` · Step ${context.step}`}
+        </p>
+      )}
 
       <Heading as="h3" className={styles.cardTitle}>
         {title}
       </Heading>
       <p className={styles.cardDescription}>{lab.description}</p>
-      {!lab.docsUrl && lab.prerequisites && (
+      {showPrerequisites && (
         <p className={styles.prerequisites}>
           <strong>Prerequisites:</strong> {lab.prerequisites}
         </p>
@@ -80,28 +102,18 @@ function LabCard({ lab, step }: LabCardProps) {
   );
 }
 
-function LabGrid({ labs, numbered }: { labs: Lab[]; numbered: boolean }) {
-  return (
-    <div className={styles.labGrid}>
-      {labs.map((lab, index) => (
-        <LabCard key={lab.id} lab={lab} step={numbered ? index + 1 : undefined} />
-      ))}
-    </div>
-  );
-}
-
-function TrackSection({ track }: { track: ResolvedTrack }) {
+function TrackBlock({ track }: { track: ResolvedTrack }) {
   const firstLab = track.labs[0];
   const labCount = track.labs.length;
 
   return (
-    <section className={styles.track} data-track-id={track.id} aria-labelledby={`track-${track.id}`}>
+    <section className={styles.track} data-section-id={track.id} aria-labelledby={`section-${track.id}`}>
       <div className={styles.trackHeader}>
         <div className={styles.trackHeading}>
-          <Heading as="h2" id={`track-${track.id}`}>
+          <Heading as="h2" id={`section-${track.id}`}>
             {track.title}
           </Heading>
-          <p className={styles.trackDescription}>{track.description}</p>
+          <p className={styles.sectionDescription}>{track.description}</p>
           <div className={styles.trackMeta}>
             <span className={styles.chip}>
               {labCount} {labCount === 1 ? 'lab' : 'labs'}
@@ -125,8 +137,102 @@ function TrackSection({ track }: { track: ResolvedTrack }) {
           )}
         </div>
       </div>
-      <LabGrid labs={track.labs} numbered />
+      <div className={styles.labGrid}>
+        {track.labs.map((lab, index) => (
+          <LabCard key={lab.id} lab={lab} step={index + 1} />
+        ))}
+      </div>
     </section>
+  );
+}
+
+function GroupBlock({ group }: { group: Extract<ResolvedSection, { kind: 'group' }> }) {
+  return (
+    <section className={styles.group} data-section-id={group.id} aria-labelledby={`section-${group.id}`}>
+      <Heading as="h2" id={`section-${group.id}`}>
+        {group.title}
+      </Heading>
+      <p className={styles.sectionDescription}>{group.description}</p>
+      <div className={styles.labGrid}>
+        {group.labs.map((lab) => (
+          <LabCard key={lab.id} lab={lab} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FilterSidebar({
+  filters,
+  onToggle,
+  onClear,
+}: {
+  filters: Filters;
+  onToggle: (facetId: (typeof FACETS)[number]['id'], value: string) => void;
+  onClear: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedCount = countSelected(filters);
+
+  return (
+    <aside className={clsx(styles.sidebar, open && styles.sidebarOpen)}>
+      <button
+        type="button"
+        className={clsx(styles.filterToggle, 'button button--secondary')}
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {open ? 'Hide filters' : 'Show filters'}
+        {selectedCount > 0 && <span className={styles.toggleCount}>{selectedCount}</span>}
+      </button>
+
+      <div className={styles.sidebarPanel}>
+        <div className={styles.sidebarHeader}>
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path
+              fill="currentColor"
+              d="M3 6h18v2H3zm4 5h10v2H7zm3 5h4v2h-4z"
+            />
+          </svg>
+          <Heading as="h2" className={styles.sidebarTitle}>
+            Narrow your search
+          </Heading>
+        </div>
+
+        {FACETS.map((facet) => {
+          const counts = optionCounts(filters, facet.id);
+          return (
+            <fieldset key={facet.id} className={styles.facet}>
+              <legend className={styles.facetLegend}>{facet.legend}</legend>
+              {facet.options.map((option) => {
+                const checked = filters[facet.id].includes(option.value);
+                const count = counts[option.value] ?? 0;
+                return (
+                  <label
+                    key={option.value}
+                    className={clsx(styles.facetOption, count === 0 && !checked && styles.facetEmpty)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => onToggle(facet.id, option.value)}
+                    />
+                    <span className={styles.facetLabel}>{option.label}</span>
+                    <span className={styles.facetCount}>{count}</span>
+                  </label>
+                );
+              })}
+            </fieldset>
+          );
+        })}
+
+        {selectedCount > 0 && (
+          <button type="button" className={styles.clearAll} onClick={onClear}>
+            Clear all filters
+          </button>
+        )}
+      </div>
+    </aside>
   );
 }
 
@@ -148,63 +254,88 @@ export function LabsHero() {
   );
 }
 
-export function LearningTracks() {
-  const tracks = resolveTracks();
-  if (tracks.length === 0) {
-    return null;
-  }
+export function LabsBrowser() {
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const hydrated = useRef(false);
 
-  return (
-    <section className={clsx('container', styles.section)} aria-labelledby="learning-tracks">
-      <Heading as="h2" id="learning-tracks">
-        Learning tracks
-      </Heading>
-      <p className={styles.sectionIntro}>
-        Each track is a sequence of labs designed to be taken in order. Start with the first if you are new to
-        Infrahub, or pick the track that matches where you are.
-      </p>
-      {tracks.map((track) => (
-        <TrackSection key={track.id} track={track} />
-      ))}
-    </section>
+  const sections = useMemo(() => resolveSections(), []);
+  const withContext = useMemo(() => allLabsWithContext(), []);
+  const totalLabs = withContext.length;
+
+  // Read filters from the URL once, after mount, so the server-rendered markup
+  // and the first client render agree.
+  useEffect(() => {
+    const fromUrl = filtersFromQuery(window.location.search);
+    if (isFiltered(fromUrl)) {
+      setFilters(fromUrl);
+    }
+    hydrated.current = true;
+  }, []);
+
+  // Keep the URL shareable as filters change, without adding history entries.
+  useEffect(() => {
+    if (!hydrated.current) {
+      return;
+    }
+    const query = filtersToQuery(filters);
+    const url = query ? `${window.location.pathname}?${query}` : window.location.pathname;
+    window.history.replaceState(null, '', url);
+  }, [filters]);
+
+  const filtering = isFiltered(filters);
+  const matches = useMemo(
+    () => withContext.filter(({ lab }) => matchesFilters(lab, filters)),
+    [withContext, filters],
   );
-}
 
-export function MiscLabs() {
-  const labs = resolveMiscLabs();
-  if (labs.length === 0) {
-    return null;
-  }
+  const clear = () => setFilters(EMPTY_FILTERS);
 
   return (
-    <section className={clsx('container', styles.section)} aria-labelledby="more-labs">
-      <Heading as="h2" id="more-labs">
-        More OpsMill labs
-      </Heading>
-      <p className={styles.sectionIntro}>
-        Standalone labs from OpsMill that sit outside the learning tracks. Take them in any order.
-      </p>
-      <LabGrid labs={labs} numbered={false} />
-    </section>
-  );
-}
+    <div className={clsx('container', styles.layout)}>
+      <FilterSidebar
+        filters={filters}
+        onToggle={(facetId, value) => setFilters((current) => toggleFilter(current, facetId, value))}
+        onClear={clear}
+      />
 
-export function ThirdPartyLabs() {
-  const labs = resolveThirdPartyLabs();
-  if (labs.length === 0) {
-    return null;
-  }
+      <div className={styles.results}>
+        <div className={styles.resultsHeader}>
+          <p className={styles.resultsCount} aria-live="polite">
+            {filtering ? `Showing ${matches.length} of ${totalLabs} labs` : `All ${totalLabs} labs`}
+          </p>
+          {filtering && (
+            <button type="button" className={styles.clearInline} onClick={clear}>
+              Clear all filters
+            </button>
+          )}
+        </div>
 
-  return (
-    <section className={clsx('container', styles.section)} aria-labelledby="community-labs">
-      <Heading as="h2" id="community-labs">
-        Community and partner labs
-      </Heading>
-      <p className={styles.sectionIntro}>
-        Labs built by partners and community members that use Infrahub alongside their own tools. OpsMill hosts
-        them on Instruqt but does not author or support the content, so questions about a lab go to its owner.
-      </p>
-      <LabGrid labs={labs} numbered={false} />
-    </section>
+        {filtering ? (
+          matches.length > 0 ? (
+            <div className={styles.labGrid}>
+              {matches.map(({ lab, context }) => (
+                <LabCard key={lab.id} lab={lab} context={context} />
+              ))}
+            </div>
+          ) : (
+            <p className={styles.empty}>
+              No labs match those filters. Try removing one, or{' '}
+              <button type="button" className={styles.clearInline} onClick={clear}>
+                clear all filters
+              </button>
+              .
+            </p>
+          )
+        ) : (
+          sections.map((section) =>
+            section.kind === 'track' ? (
+              <TrackBlock key={section.id} track={section} />
+            ) : (
+              <GroupBlock key={section.id} group={section} />
+            ),
+          )
+        )}
+      </div>
+    </div>
   );
 }

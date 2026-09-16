@@ -10,18 +10,39 @@
  *      so launches from this page are attributed separately from the docs and
  *      opsmill.com. Paste it into `inviteUrl`. Until an invite exists the
  *      public `trackUrl` is used as a fallback.
- *   2. Add an entry to `labs` below.
- *   3. Reference its `id` from a track's `labIds` in order, or add the id to
- *      `miscLabIds` or `thirdPartyLabIds`.
+ *   2. Add an entry to `labs` below, including at least one topic so the lab
+ *      can be found through the topic filter.
+ *   3. Add the lab's `id` to a section in `sections`. A track lists its labs in
+ *      learning order; a group is an unordered set.
  *
- * How to retire a lab: set `status: 'retired'`. The card disappears and any
- * track that referenced it renumbers without a gap. Do not delete the entry
- * straight away, so the reason and the old links stay in history.
+ * How to retire a lab: set `status: 'retired'`. The card disappears, any track
+ * that referenced it renumbers without a gap, and it drops out of the filter
+ * counts. Do not delete the entry straight away, so the reason and the old
+ * links stay in history.
+ *
+ * Page order is the order of `sections`. Move a section to move it on the page.
  */
 
 export type LabLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 
 export type LabStatus = 'active' | 'retired';
+
+/**
+ * Topics power the topic filter. Keep this list short: a topic that matches
+ * every lab, or only ever one, is not worth filtering on. Add a new topic only
+ * when an existing one genuinely does not describe the lab.
+ */
+export const TOPICS = {
+  'getting-started': 'Getting started',
+  'schema-modeling': 'Schema and data modeling',
+  'data-quality': 'Data quality and validation',
+  automation: 'Automation and workflows',
+  'config-rendering': 'Configuration rendering',
+  testing: 'Testing',
+  observability: 'Observability',
+} as const;
+
+export type LabTopic = keyof typeof TOPICS;
 
 export type LabOwner = {
   /** Person or organisation that authored and supports the lab. */
@@ -31,7 +52,7 @@ export type LabOwner = {
 };
 
 export type Lab = {
-  /** Stable identifier referenced by tracks and sections. */
+  /** Stable identifier referenced by sections. */
   id: string;
   /** Card title. Uses the docs name where a detail page exists. */
   title: string;
@@ -40,6 +61,8 @@ export type Lab = {
   /** Approximate time to completion, in minutes. */
   durationMinutes: number;
   level: LabLevel;
+  /** At least one. Drives the topic filter. */
+  topics: LabTopic[];
   /** Public Instruqt track URL. Used when no invite has been created yet. */
   trackUrl: string;
   /** Named Instruqt invite for this page. Preferred launch target. */
@@ -47,16 +70,18 @@ export type Lab = {
   /** Detail page in the Infrahub docs, when one exists. */
   docsUrl?: string;
   /**
-   * Shown on the card only when there is no docs detail page. Labs with a
-   * detail page carry their prerequisites there instead.
+   * Shown on cards outside a track, where there is no step number to imply
+   * what comes first. Inside a track the ordering already says it.
    */
   prerequisites?: string;
-  /** Set for third-party labs only. */
+  /** Set for labs OpsMill hosts but does not author. Drives the author filter. */
   owner?: LabOwner;
   status: LabStatus;
 };
 
-export type Track = {
+/** An ordered sequence of labs meant to be taken start to finish. */
+export type TrackSection = {
+  kind: 'track';
   id: string;
   title: string;
   /** Two sentences at most: the storyline and who it is for. */
@@ -66,6 +91,18 @@ export type Track = {
   /** Track-level detail page in the Infrahub docs, when one exists. */
   docsUrl?: string;
 };
+
+/** A set of standalone labs with no prescribed order. */
+export type GroupSection = {
+  kind: 'group';
+  id: string;
+  title: string;
+  description: string;
+  /** Lab ids. Display order only, carries no learning order. */
+  labIds: string[];
+};
+
+export type Section = TrackSection | GroupSection;
 
 const INSTRUQT_TRACKS = 'https://play.instruqt.com/opsmill/tracks';
 
@@ -80,6 +117,7 @@ export const labs: Lab[] = [
       'Load a base schema, seed the OtterNet topology, and explore the data with GraphQL, infrahubctl and the Python SDK.',
     durationMinutes: 60,
     level: 'Beginner',
+    topics: ['getting-started', 'schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-orientation`,
     docsUrl: '/learn/labs/fundamentals-to-expert#1-orientation',
     status: 'active',
@@ -91,6 +129,7 @@ export const labs: Lab[] = [
       'Design a site-design hierarchy, add custom generics and nodes, and extend existing node types with new attributes and relationships.',
     durationMinutes: 60,
     level: 'Beginner',
+    topics: ['schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-schema-modeling`,
     docsUrl: '/learn/labs/fundamentals-to-expert#2-schema-modeling',
     status: 'active',
@@ -102,6 +141,7 @@ export const labs: Lab[] = [
       'See how schema constraints, branch isolation, proposed changes, Python checks and profiles keep data quality high.',
     durationMinutes: 60,
     level: 'Intermediate',
+    topics: ['data-quality'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-enforcement`,
     docsUrl: '/learn/labs/fundamentals-to-expert#3-enforcement--validation',
     status: 'active',
@@ -113,6 +153,7 @@ export const labs: Lab[] = [
       'Write and run a Generator that provisions the Munich site, allocating devices, ASNs and management IPs from the source of truth.',
     durationMinutes: 60,
     level: 'Intermediate',
+    topics: ['automation'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-generator`,
     docsUrl: '/learn/labs/fundamentals-to-expert#4-design-driven-generator',
     status: 'active',
@@ -124,12 +165,13 @@ export const labs: Lab[] = [
       'Render a deployable router configuration from a Jinja2 Transform, pulling every value from the source of truth.',
     durationMinutes: 60,
     level: 'Intermediate',
+    topics: ['config-rendering'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-transforms`,
     docsUrl: '/learn/labs/fundamentals-to-expert#5-transformations--configuration-rendering',
     status: 'active',
   },
 
-  // --- Infrahub Essentials ------------------------------------------------
+  // --- Standalone Infrahub labs -------------------------------------------
   // Card titles follow the docs. Instruqt titles differ (Infrahub getting
   // started, Infrahub schema introduction, Infrahub artifact introduction).
   // Durations follow Instruqt where it sets one.
@@ -140,8 +182,10 @@ export const labs: Lab[] = [
       'A guided overview of branching, the flexible schema and unified storage, to see what Infrahub does and whether it fits your needs.',
     durationMinutes: 60,
     level: 'Beginner',
+    topics: ['getting-started'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-getting-started`,
     docsUrl: '/learn/labs/infrahub-introduction',
+    prerequisites: 'No prior experience with Infrahub required.',
     status: 'active',
   },
   {
@@ -151,8 +195,10 @@ export const labs: Lab[] = [
       'Consume the schema library, create your own schema, and safely extend one that is already in use.',
     durationMinutes: 120,
     level: 'Intermediate',
+    topics: ['schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-schema-introduction`,
     docsUrl: '/learn/labs/schema-deep-dive',
+    prerequisites: 'Complete First Tour of Infrahub first.',
     status: 'active',
   },
   {
@@ -162,8 +208,10 @@ export const labs: Lab[] = [
       'Build a GraphQL query and a Jinja2 template, connect a Git repository, and generate a real device configuration as an artifact.',
     durationMinutes: 60,
     level: 'Intermediate',
+    topics: ['config-rendering', 'automation'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-artifact-introduction`,
     docsUrl: '/learn/labs/deploy-first-configuration',
+    prerequisites: 'Basic experience with Infrahub, Ansible, Jinja and GraphQL.',
     status: 'active',
   },
 
@@ -177,6 +225,7 @@ export const labs: Lab[] = [
       'Compare JSON Schema, GraphQL and Pydantic, then see how the same data lives in SQLite and Neo4j.',
     durationMinutes: 90,
     level: 'Intermediate',
+    topics: ['schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/workshop-b2-lab1`,
     prerequisites: 'No Infrahub experience required. Basic Python and SQL help.',
     status: 'active',
@@ -188,12 +237,13 @@ export const labs: Lab[] = [
       'Model a network in Infrahub using a strict combination of role, status and kind, and weigh the benefits and costs of that approach.',
     durationMinutes: 60,
     level: 'Intermediate',
+    topics: ['schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/workshop-b2-lab2`,
     prerequisites: 'Complete Schema Languages and Databases in Practice first.',
     status: 'active',
   },
 
-  // --- Third-party labs hosted by OpsMill ---------------------------------
+  // --- Community and partner labs hosted by OpsMill -----------------------
   // Instruqt sets no duration for these. Values are estimates.
   {
     id: 'ibm-low-code-orchestration',
@@ -202,6 +252,7 @@ export const labs: Lab[] = [
       'Build low-code workflows with IBM Rapid Infrastructure Automation that open a branch and change request in Infrahub, approve it, and deploy to Arista routers.',
     durationMinutes: 90,
     level: 'Intermediate',
+    topics: ['automation'],
     trackUrl: `${INSTRUQT_TRACKS}/workshop-d4-lab1`,
     prerequisites: 'Familiarity with network automation concepts. No IBM product experience required.',
     owner: { name: 'IBM' },
@@ -214,6 +265,7 @@ export const labs: Lab[] = [
       'Use Infrahub as the source for Network Unit Testing System tests, run them against a containerlab network, and visualise results in Grafana.',
     durationMinutes: 60,
     level: 'Intermediate',
+    topics: ['testing'],
     trackUrl: `${INSTRUQT_TRACKS}/urs-workshop-ac3`,
     prerequisites: 'Basic Infrahub knowledge. Familiarity with containerlab and Prometheus helps.',
     owner: { name: 'Urs Baumann and Steinn Bjarnarson' },
@@ -226,6 +278,7 @@ export const labs: Lab[] = [
       'Spend a day on call inside a full observability stack: learn PromQL and LogQL, find a broken BGP peer, build a dashboard and alert, and run an incident end to end.',
     durationMinutes: 180,
     level: 'Advanced',
+    topics: ['observability'],
     trackUrl: `${INSTRUQT_TRACKS}/modern-network-observability`,
     prerequisites: 'Comfortable on a Linux shell. No prior Prometheus, Loki or Grafana experience required.',
     owner: { name: 'Christian Adell', url: 'https://www.linkedin.com/in/christianadell/' },
@@ -233,9 +286,13 @@ export const labs: Lab[] = [
   },
 ];
 
-/** Tracks in the order they appear on the page. */
-export const tracks: Track[] = [
+/**
+ * Page sections, in the order they appear. A section with no active labs is
+ * hidden, so a group can sit here empty until its first lab arrives.
+ */
+export const sections: Section[] = [
   {
+    kind: 'track',
     id: 'fundamentals-to-expert',
     title: 'Infrahub: Fundamentals to Expert',
     description:
@@ -250,27 +307,27 @@ export const tracks: Track[] = [
     docsUrl: '/learn/labs/fundamentals-to-expert',
   },
   {
-    id: 'infrahub-essentials',
-    title: 'Infrahub Essentials',
+    kind: 'group',
+    id: 'standalone-infrahub-labs',
+    title: 'Standalone Infrahub labs',
     description:
-      'A shorter path through the core concepts: tour the product, shape your first schema, then turn source-of-truth data into a device configuration.',
+      'Self-contained labs on a single topic. Take them in any order, or use one to go deeper on something the track introduced.',
     labIds: ['first-tour', 'schema-deep-dive', 'deploy-first-configuration'],
   },
   {
+    kind: 'track',
     id: 'autocon3-workshop',
     title: 'AutoCon3 Workshop: Modeling Infrastructure Data',
     description:
       'The two labs behind the OpsMill workshop at AutoCon3 in May 2025. Start with schema languages and databases in general, then apply the ideas to a network model in Infrahub.',
     labIds: ['schema-languages-databases', 'network-modeling-with-infrahub'],
   },
-];
-
-/** OpsMill labs that do not belong to a track. The section hides when empty. */
-export const miscLabIds: string[] = [];
-
-/** Labs authored by partners and community members, hosted on OpsMill's Instruqt organisation. */
-export const thirdPartyLabIds: string[] = [
-  'ibm-low-code-orchestration',
-  'network-testing-nuts',
-  'modern-network-observability',
+  {
+    kind: 'group',
+    id: 'community-and-partner',
+    title: 'Community and partner labs',
+    description:
+      'Labs built by partners and community members that use Infrahub alongside their own tools. OpsMill hosts them on Instruqt but does not author or support the content, so questions about a lab go to its owner.',
+    labIds: ['ibm-low-code-orchestration', 'network-testing-nuts', 'modern-network-observability'],
+  },
 ];

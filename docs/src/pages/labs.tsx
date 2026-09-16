@@ -1,6 +1,6 @@
 import React from 'react';
 import Layout from '@theme/Layout';
-import { LabsHero, LearningTracks, MiscLabs, ThirdPartyLabs } from '@site/src/components/Labs';
+import { LabsBrowser, LabsHero } from '@site/src/components/Labs';
 
 export default function LabsPage() {
   return (
@@ -10,9 +10,7 @@ export default function LabsPage() {
     >
       <main>
         <LabsHero />
-        <LearningTracks />
-        <MiscLabs />
-        <ThirdPartyLabs />
+        <LabsBrowser />
       </main>
     </Layout>
   );
