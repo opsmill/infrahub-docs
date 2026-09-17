@@ -1,0 +1,521 @@
+.hero {
+  padding: 3rem 0 1.5rem;
+}
+
+.heroTitle {
+  margin-bottom: 0.5rem;
+}
+
+.heroSubtitle {
+  font-size: 1.15rem;
+  max-width: 48rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.heroNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+/* --- Layout -------------------------------------------------------------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+  padding-bottom: 3rem;
+}
+
+.results {
+  min-width: 0;
+}
+
+.resultsHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.resultsCount {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.empty {
+  color: var(--ifm-color-emphasis-800);
+}
+
+/* --- Filter sidebar ------------------------------------------------------ */
+
+.sidebar {
+  position: sticky;
+  top: 5rem;
+}
+
+.sidebarPanel {
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  background: var(--layout-bg-color);
+  padding: 1.25rem;
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 2px solid var(--ifm-color-primary);
+  color: var(--ifm-color-emphasis-900);
+}
+
+.sidebarTitle {
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+/*
+ * The divider is an inset box-shadow rather than border-top: a <legend> cuts a
+ * gap out of its fieldset's border, which would leave the rule running through
+ * the facet heading.
+ */
+.facet {
+  border: 0;
+  margin: 0;
+  padding: 1rem 0 0.5rem;
+  box-shadow: inset 0 1px 0 var(--border-color);
+}
+
+.facet:first-of-type {
+  box-shadow: none;
+  padding-top: 0.5rem;
+}
+
+.facetLegend {
+  display: block;
+  width: 100%;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0;
+  margin-bottom: 0.25rem;
+  color: var(--ifm-color-emphasis-900);
+}
+
+.facetOption {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.facetOption input {
+  cursor: pointer;
+  accent-color: var(--ifm-color-primary);
+  margin: 0;
+}
+
+.facetLabel {
+  flex-grow: 1;
+}
+
+.facetCount {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600);
+  font-variant-numeric: tabular-nums;
+}
+
+/* An option that would return nothing stays clickable but reads as inactive. */
+.facetEmpty {
+  opacity: 0.45;
+}
+
+.clearAll,
+.clearInline {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--ifm-color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.clearAll {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.clearInline {
+  font-size: 0.9rem;
+}
+
+.filterToggle {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.toggleCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  background: var(--ifm-color-primary);
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+/* --- Sections ------------------------------------------------------------ */
+
+.sectionDescription {
+  color: var(--ifm-color-emphasis-800);
+  margin-bottom: 0.75rem;
+}
+
+.track {
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  background: var(--layout-bg-color);
+  padding: 1.25rem;
+  margin-bottom: 2.5rem;
+  /* Lets the step row below size itself against this box, not the viewport. */
+  container-type: inline-size;
+}
+
+.group {
+  margin-bottom: 2.5rem;
+}
+
+.trackHeader {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.trackHeading {
+  flex: 1 1 24rem;
+}
+
+.trackHeading h2 {
+  margin-bottom: 0.5rem;
+}
+
+.trackMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.trackActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* --- Cards --------------------------------------------------------------- */
+
+.labGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+
+/*
+ * A track is a sequence, so its steps read as one left-to-right row. Left to
+ * auto-fit, five 14rem cards need more width than the track box has and the
+ * last one wraps, which breaks that reading. Once the track box is wide enough
+ * to give every step a sensible width, switch to one column per step.
+ * `--track-columns` is set on the element from the lab count. Browsers without
+ * container query support keep the wrapping auto-fit grid.
+ */
+@container (min-width: 900px) {
+  .trackGrid {
+    grid-template-columns: repeat(var(--track-columns), minmax(0, 1fr));
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background: var(--main-bg-color);
+  padding: 1.25rem;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 1px 0 16px 0 rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background: var(--ifm-color-primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.context {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 0.35rem;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.cardTitle a {
+  color: inherit;
+}
+
+.cardTitle a:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.cardDescription {
+  flex-grow: 1;
+  font-size: 0.95rem;
+  color: var(--ifm-color-emphasis-800);
+  margin-bottom: 0.75rem;
+}
+
+.prerequisites {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+  margin-bottom: 0.75rem;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-800);
+  background: var(--layout-bg-color);
+}
+
+.owner {
+  border-color: var(--ifm-color-primary-lighter);
+  color: var(--ifm-color-primary-darkest);
+}
+
+html[data-theme='dark'] .owner {
+  color: var(--ifm-color-primary-lightest);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.launchButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+}
+
+.detailsButton {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ifm-color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.detailsButton:hover {
+  color: var(--ifm-color-primary-darkest);
+}
+
+html[data-theme='dark'] .detailsButton:hover {
+  color: var(--ifm-color-primary-lightest);
+}
+
+/* --- Details dialog ------------------------------------------------------ */
+
+.dialog {
+  width: min(44rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 4rem);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 0.55);
+}
+
+.dialogPanel {
+  position: relative;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  background: var(--layout-bg-color);
+  padding: 1.75rem;
+}
+
+.dialogClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  background: var(--main-bg-color);
+  color: var(--ifm-color-emphasis-800);
+  cursor: pointer;
+}
+
+.dialogClose:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+
+.dialogKicker {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 0.35rem;
+  padding-right: 2.5rem;
+}
+
+.dialogTitle {
+  font-size: 1.6rem;
+  margin-bottom: 0.75rem;
+  padding-right: 2.5rem;
+}
+
+.dialogOverview {
+  color: var(--ifm-color-emphasis-800);
+}
+
+.dialogSubheading {
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+}
+
+.dialogList {
+  color: var(--ifm-color-emphasis-800);
+  padding-left: 1.25rem;
+}
+
+.dialogList li {
+  margin-bottom: 0.35rem;
+}
+
+.dialogPrerequisites {
+  font-size: 0.95rem;
+  color: var(--ifm-color-emphasis-700);
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+/* --- Narrow viewports ---------------------------------------------------- */
+
+@media screen and (max-width: 996px) {
+  .hero {
+    padding: 2rem 0 1rem;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .sidebar {
+    position: static;
+    margin-bottom: 1.5rem;
+  }
+
+  .filterToggle {
+    display: inline-flex;
+  }
+
+  /* The panel is collapsed behind the toggle until the reader opens it. */
+  .sidebarPanel {
+    display: none;
+  }
+
+  .sidebarOpen .sidebarPanel {
+    display: block;
+  }
+
+  .track {
+    padding: 1rem;
+  }
+}

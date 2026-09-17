@@ -68,17 +68,10 @@ const sidebars: SidebarsConfig = {
       collapsible: false,
       collapsed: false,
       items: [
-        {
-          type: 'category',
-          label: 'Infrahub Labs',
-          link: { type: 'doc', id: 'learn/labs/overview' }, // hub
-          items: [
-            { type: 'doc', id: 'learn/labs/fundamentals-to-expert', label: 'Infrahub: Fundamentals to Expert' },
-            { type: 'doc', id: 'learn/labs/infrahub-introduction', label: 'First Tour of Infrahub' },
-            { type: 'doc', id: 'learn/labs/schema-deep-dive', label: 'Schema Deep Dive' },
-            'learn/labs/deploy-first-configuration',
-          ],
-        },
+        // The labs catalogue at /labs describes every lab in full, so there are
+        // no per-lab pages to list here. The pages that used to sit under
+        // learn/labs/ are being removed from opsmill/infrahub.
+        { type: 'link', label: 'Infrahub Labs', href: '/labs' },
         {
           type: 'category',
           label: 'Tutorials',
