@@ -477,44 +477,38 @@ const config: Config = {
         {
           type: 'dropdown',
           position: 'left',
-          label: 'Demos & Examples',
+          label: 'Demos',
           items: [
             {
               type: "docSidebar",
               sidebarId: "DemoDcSidebar",
-              label: "demo-dc",
+              label: "Data Center",
               docsPluginId: "docs-demo-dc",
             },
             {
               type: "docSidebar",
               sidebarId: "InfrahubDemoSpSidebar",
-              label: "demo-sp",
+              label: "Service Provider",
               docsPluginId: "docs-infrahub-demo-sp",
             },
             {
               type: "docSidebar",
               sidebarId: "otnSidebar",
-              label: "demo-otn",
+              label: "Optical Transport",
               docsPluginId: "docs-demo-otn",
             },
             {
               type: "docSidebar",
               sidebarId: "servicecatalogSidebar",
-              label: "demo-service-catalog",
+              label: "Service Catalog",
               docsPluginId: "docs-service-catalog",
-            },
-            {
-              type: "docSidebar",
-              sidebarId: "schemaSidebar",
-              label: "Schema Library",
-              docsPluginId: "docs-schema-library",
             },
           ],
         },
         {
           type: 'dropdown',
           position: 'left',
-          label: 'Solutions',
+          label: 'Reference Designs',
           items: [
             {
               type: "docSidebar",
