@@ -203,3 +203,23 @@ body {
   padding-top: 0.125rem;
   padding-bottom: 0.125rem;
 }
+/*
+ * Center mermaid diagrams in the content column.
+ *
+ * @docusaurus/theme-mermaid only caps the rendered SVG's width: `.container`
+ * and `.container > svg` are both `max-width: 100%` and nothing positions it.
+ * A diagram therefore sits flush against the left edge of the content column,
+ * which next to full-width prose reads as drifting to one side rather than
+ * sitting between two blocks of text.
+ *
+ * `text-align` rather than flex centering because it adds no new formatting
+ * context. Mermaid sets `width="100%"` as an attribute on every SVG it
+ * renders, so a diagram is always capped at the container width no matter how
+ * wide its viewBox is, and the two approaches lay out identically.
+ *
+ * Mermaid centers label text inside its own nodes, via rules it writes into
+ * each SVG, so this does not change alignment within a diagram.
+ */
+.docusaurus-mermaid-container {
+  text-align: center;
+}
