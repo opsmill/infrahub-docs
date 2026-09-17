@@ -68,10 +68,10 @@ const sidebars: SidebarsConfig = {
       collapsible: false,
       collapsed: false,
       items: [
-        // The labs catalogue at /labs describes every lab in full, so there are
-        // no per-lab pages to list here. The pages that used to sit under
-        // learn/labs/ are being removed from opsmill/infrahub.
-        { type: 'link', label: 'Infrahub Labs', href: '/labs' },
+        // Every lab is described in full in the labs catalogue, which also
+        // covers labs outside this repository, so there are no per-lab pages
+        // here to list.
+        { type: 'link', label: 'Infrahub Labs', href: 'https://docs.infrahub.app/labs' },
         {
           type: 'category',
           label: 'Tutorials',
