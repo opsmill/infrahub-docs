@@ -125,6 +125,7 @@ export const labs: Lab[] = [
     level: 'Beginner',
     topics: ['getting-started', 'schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-orientation`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/ndncxvvluews',
     overview:
       'The entry point to the OtterNet series. Load a base schema, seed a two-site topology covering London and Amsterdam, and explore the result in the built-in GraphQL explorer. You also reach Infrahub programmatically with infrahubctl and the Python SDK, finishing with a fully populated instance ready for the labs that follow.',
     whatYouWillLearn: [
@@ -144,6 +145,7 @@ export const labs: Lab[] = [
     level: 'Beginner',
     topics: ['schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-schema-modeling`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/2w9mrgb2hiiy',
     overview:
       'OtterNet standardises its sites around reusable blueprints called Site Designs. A large campus always has two border routers, two distribution switches and four access switches, and encoding that blueprint in Infrahub is what unlocks the automated provisioning you build later in the series.',
     whatYouWillLearn: [
@@ -163,6 +165,7 @@ export const labs: Lab[] = [
     level: 'Intermediate',
     topics: ['data-quality'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-enforcement`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/qeaxcdqe0sz8',
     overview:
       'Infrahub enforces data quality at every layer rather than in one place. Schema constraints fire the moment data is written, branch isolation keeps every mutation off main until it has been reviewed, Python checks run against proposed changes, and Profiles keep shared values consistent by construction.',
     whatYouWillLearn: [
@@ -182,6 +185,7 @@ export const labs: Lab[] = [
     level: 'Intermediate',
     topics: ['automation'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-generator`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/ul1nwuglxhru',
     overview:
       'Generators turn a design into real objects. Here you write one that reads OtterNet campus site design and provisions every device at the new Munich site automatically, with the right names and the right resources, none of it typed by hand.',
     whatYouWillLearn: [
@@ -201,6 +205,7 @@ export const labs: Lab[] = [
     level: 'Intermediate',
     topics: ['config-rendering'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-transforms`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/eha2fxwprzok',
     overview:
       'The closing lab of the OtterNet series. Explore a Jinja2 Transform and render a complete, deployable router configuration for a Munich device, with every value pulled from the source of truth rather than typed into a template.',
     whatYouWillLearn: [
@@ -224,6 +229,7 @@ export const labs: Lab[] = [
     level: 'Beginner',
     topics: ['getting-started'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-getting-started`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/7jdp4cuqbcvb',
     overview:
       'Infrahub combines Git-like version control with a flexible graph database, across three core pillars: branching and version control, a flexible schema, and unified storage. This lab gives you a ready-to-use environment to explore all three with no setup overhead, through practical exercises against a running instance.',
     whatYouWillLearn: [
@@ -244,6 +250,7 @@ export const labs: Lab[] = [
     level: 'Intermediate',
     topics: ['schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-schema-introduction`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/tvg3faduoyuj',
     overview:
       'The Infrahub schema is flexible by design, but that flexibility raises questions the first time you meet it. Where do schemas come from, how do you write your own, and how do you safely extend one that is already in use. This lab walks through all three.',
     whatYouWillLearn: [
@@ -263,6 +270,7 @@ export const labs: Lab[] = [
     level: 'Intermediate',
     topics: ['config-rendering', 'automation'],
     trackUrl: `${INSTRUQT_TRACKS}/infrahub-artifact-introduction`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/hqia0uwvqe94',
     overview:
       'Artifact generation combines structured data, GraphQL queries and Jinja2 templates to produce deployable device configuration, so the data and the templates that consume it never drift apart. In this lab you build that pipeline yourself: define the query, write the template, and generate a real device configuration from the source of truth.',
     whatYouWillLearn: [
@@ -287,6 +295,7 @@ export const labs: Lab[] = [
     level: 'Intermediate',
     topics: ['schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/workshop-b2-lab1`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/m3xwbfyrxg1d',
     overview:
       'The lab behind the OpsMill workshop at AutoCon3 in May 2025, in two halves. The first works through three schema languages, Pydantic, JSON Schema and GraphQL, with practical examples of how each one validates data. The second looks at how that data is actually stored, comparing SQLite with Neo4j.',
     whatYouWillLearn: [
@@ -307,6 +316,7 @@ export const labs: Lab[] = [
     level: 'Intermediate',
     topics: ['schema-modeling'],
     trackUrl: `${INSTRUQT_TRACKS}/workshop-b2-lab2`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/hbqdymwlcgvj',
     overview:
       'The second lab of the AutoCon3 workshop. Model a network in Infrahub by combining role, status and kind into one strict model, then weigh what that strictness buys you against what it costs. It ends with an open Infrahub sandbox to experiment in.',
     whatYouWillLearn: [
@@ -340,7 +350,7 @@ export const labs: Lab[] = [
     ],
     prerequisites: 'Familiarity with network automation concepts. No IBM product experience required.',
     owner: { name: 'IBM' },
-    status: 'active',
+    status: 'retired',
   },
   {
     id: 'network-testing-nuts',
@@ -351,6 +361,7 @@ export const labs: Lab[] = [
     level: 'Intermediate',
     topics: ['testing'],
     trackUrl: `${INSTRUQT_TRACKS}/urs-workshop-ac3`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/yn4xm8akfgns',
     overview:
       'An AutoCon3 workshop on the INPG stack: Infrahub, NUTS, Prometheus and Grafana. Infrahub supplies the intent, the Network Unit Testing System turns it into tests for every device, and the results are visualised rather than read off a terminal. The aim is continuous network testing instead of the manual testing still common in practice.',
     whatYouWillLearn: [
@@ -371,6 +382,7 @@ export const labs: Lab[] = [
     level: 'Advanced',
     topics: ['observability'],
     trackUrl: `${INSTRUQT_TRACKS}/modern-network-observability`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/exuwohikyyca',
     overview:
       'The AutoCon5 Modern Network Observability workshop, delivered as a lab. A complete, self-contained stack runs in the lab VM, with Prometheus, Loki, Grafana, Alertmanager, Telegraf, Vector, Prefect and Infrahub as the source of truth, fed by a synthetic telemetry generator standing in for a small network. No real network gear is required. You play an engineer on their first deep day of the on-call rotation.',
     whatYouWillLearn: [
