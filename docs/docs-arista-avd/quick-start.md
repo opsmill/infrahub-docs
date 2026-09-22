@@ -27,7 +27,25 @@ uv sync --all-packages
 
 This creates a virtualenv under `.venv/` and installs the project and its dependencies, including `pyavd` and the Infrahub SDK.
 
-## 2. Build the custom Infrahub image
+## 2. Initialize local credentials
+
+Generate the credentials required by the Compose stack:
+
+```bash
+uv run invoke init-secrets
+```
+
+The command adds only missing assignments to the ignored `.env` file, preserves existing values,
+sets mode `0600`, and does not print credential values. The `.env.example` file keeps credential
+fields empty and lists every required variable.
+
+Docker Compose reads `.env` automatically. Values exported in the shell take precedence. The single
+`INFRAHUB_API_TOKEN` value is passed to Infrahub as the initial administrator token and to the service
+portal, task worker, and Semaphore for API authentication.
+
+Re-run `uv run invoke init-secrets` after deleting a value to generate only that missing assignment.
+
+## 3. Build the custom Infrahub image
 
 The project extends the base Infrahub image with `pyavd` and project code. Build the image once:
 
@@ -46,7 +64,7 @@ uv run invoke build
 Re-run this only after changes to `Dockerfile` or the Python dependencies. `invoke build --no-cache`
 forces a clean rebuild.
 
-## 3. Start the stack
+## 4. Start the stack
 
 ```bash
 uv run invoke start
@@ -73,7 +91,7 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml ps
 
 All services should show `healthy` or `running`. Infrahub is ready once `http://localhost:8000` responds.
 
-## 4. Load schemas, menus, objects, and repository
+## 5. Load schemas, menus, objects, and repository
 
 Once Infrahub is healthy, load everything in one command:
 
@@ -95,7 +113,7 @@ Seed data loads in filename order, and the numeric prefixes encode that order: s
 (`00`–`06` — groups, manufacturers, device types, IPAM, management, profiles, device templates),
 then the example fabrics (`10`–`15`), each with its own fabric, rack, service, and server files.
 
-## 5. Confirm everything loaded
+## 6. Confirm everything loaded
 
 Open the Infrahub UI at **`http://localhost:8000`** and log in. You should see:
 
@@ -114,6 +132,7 @@ The stack is up but no devices exist yet — fabrics, pods, and racks are define
 
 | Command | What it does |
 |---------|--------------|
+| `uv run invoke init-secrets` | Generate missing local credentials in `.env` |
 | `uv run invoke start` | Start all services |
 | `uv run invoke stop` | Stop containers, keep volumes |
 | `uv run invoke destroy` | Stop and **remove** containers, networks, and volumes (wipes data) |
