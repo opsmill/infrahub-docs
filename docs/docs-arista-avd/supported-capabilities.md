@@ -78,14 +78,15 @@ Services are modeled **schema-first**: L2 VLANs (L2LS), anycast SVIs on the camp
 | Fabric and per-device documentation (Markdown) | ✅ | Generated from the same source of truth as the config. |
 | Cabling plan (CSV) | ✅ | One row per connection for the field/cabling team. |
 | Computed interface descriptions | ✅ | Consistent, auto-maintained interface descriptions. |
-| ANTA test catalog (per device, YAML) | ✅ | Catalog **generation** is included (gated by the fabric `anta_enabled` flag). Execution is not yet included — see below. |
+| ANTA test catalog (per device, YAML) | ✅ | Catalog generation is included and gated by the fabric `anta_enabled` flag. |
 
 ## Validation (ANTA)
 
 | Capability | Status | Notes |
 |------------|:------:|-------|
-| ANTA test-catalog generation | ✅ | The `avd_anta_catalog` transform, gated by `anta_enabled`. |
-| ANTA execution / block-merge-on-failure | ⬜ | Running the tests and blocking merges on failure is on the roadmap. |
+| ANTA test-catalog generation | ✅ | The `avd_anta_catalog` transform is gated by `anta_enabled`; fabric-level `avd_catalogs_filters` can exclude named tests. |
+| On-demand ANTA execution | ✅ | After deployment, the **Validate with ANTA** Semaphore task scopes the Infrahub `main` inventory to one fabric, fetches each device catalog, and writes JSON, Markdown, and CSV reports. See [Run ANTA after deployment](./how-to/run-anta-after-deployment.md). |
+| Proposed-change ANTA validation / block-merge-on-failure | ⬜ | Automatically running ANTA before merge and blocking a proposed change remains on the roadmap. |
 
 ## Validation (CloudVision)
 

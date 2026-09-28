@@ -76,7 +76,7 @@ This brings up, in the background:
 |---------|-----|---------|
 | Infrahub UI | `http://localhost:8000` | Main web interface |
 | Service Portal | `http://localhost:8501` | Streamlit self-service portal |
-| Semaphore | `http://localhost:3000` | Ansible automation runner |
+| Semaphore | `http://localhost:3000` | Ansible deployment and ANTA validation runner |
 | Neo4j Browser | `http://localhost:7474` | Graph database browser |
 | Prefect | `http://localhost:4200` | Task-manager UI — where generator, transform, and check runs show up |
 
@@ -141,9 +141,13 @@ The stack is up but no devices exist yet — fabrics, pods, and racks are define
 | `uv run invoke load` | Re-run the full load sequence |
 | `uv run invoke load-schema` | Reload schemas only |
 | `uv run invoke load-menu` | Reload UI menus only |
-| `uv run invoke init-semaphore` | Re-register the Semaphore project and templates (idempotent) |
+| `uv run invoke init-semaphore` | Re-register the Semaphore project, deployment templates, and ANTA task (idempotent) |
 | `uv run invoke test` | Run the test suite, then Ruff and mypy |
 | `uv run invoke lint` | Ruff, yamllint, and mypy |
 | `uv run invoke format` | Apply Ruff formatting |
 
 `uv run invoke --list` shows the full set.
+
+After a generated configuration has been merged and deployed, follow
+[Run ANTA after deployment](./how-to/run-anta-after-deployment.md) to validate one fabric from
+Semaphore.

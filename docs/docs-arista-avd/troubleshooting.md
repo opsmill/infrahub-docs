@@ -157,8 +157,10 @@ empty.
 
 ### Fix
 
-Set `anta_enabled` on the fabric — on a branch, as with any data change — and regenerate. Two other
-markers point elsewhere:
+Set `anta_enabled` on the fabric — on a branch, as with any data change — and open or rerun the
+proposed change. The proposed-change pipeline refreshes the fabric's device catalogs. Use
+the artifact panel's **Regenerate** action only when you need an immediate per-device spot-check.
+Two other markers point elsewhere:
 
 | Marker | Meaning |
 |--------|---------|

@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
         'how-to/add-server',
         'how-to/create-tenant',
         'how-to/regenerate-fabric',
+        'how-to/run-anta-after-deployment',
         'how-to/upgrade-avd-version',
       ],
     },

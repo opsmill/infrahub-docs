@@ -18,7 +18,11 @@ Once generators have run on a branch and you've opened a proposed change (see [P
 | **Cabling Plan** | Each `NetworkFabric` | `text/csv` | One row per connection for the field and cabling teams. |
 | **AVD ANTA Catalog** | Each `DcimDevice` | `application/yaml` | The device's [ANTA](https://anta.arista.com) test catalog. Rendered only when the fabric has `anta_enabled` set; otherwise the artifact holds a one-line comment saying so. |
 
-Per-device artifacts (`AVD EOS Configuration`, `AVD Device Documentation`) are rendered as part of the proposed-change CI. If you want to view them outside a proposed change, open them on a device's **Artifacts** tab and click **Regenerate**.
+Per-device artifacts (`AVD EOS Configuration`, `AVD Device Documentation`, and `AVD ANTA Catalog`)
+are rendered as part of the proposed-change CI. Fabric-level changes to `anta_enabled` or
+`avd_catalogs_filters` refresh the affected ANTA catalogs through the transform's explicit fabric
+dependencies. If you want to view an artifact outside a proposed change, open it on a device's
+**Artifacts** tab and click **Regenerate**.
 
 ## Finding a device artifact
 
@@ -102,7 +106,8 @@ This means the structured-config generator hasn't run for the fabric yet. See th
 
 The artifacts are also accessible via the Infrahub API and through Ansible playbooks orchestrated by Semaphore at `http://localhost:3000`. Two playbook trees exist, and they consume different artifacts:
 
-- `ansible/` at the repository root — the tree Semaphore runs. `inventory.yml` builds the inventory from Infrahub and `deploy.yml` fetches each device's **AVD EOS Configuration** with `opsmill.infrahub.artifact_fetch`. `deploy_clab.yml` fetches the **ContainerLab Topology** artifact plus every device's EOS config, stages them on a ContainerLab host, and deploys the lab; see the [ContainerLab page](./containerlab.md).
+- `ansible/` at the repository root — the tree Semaphore runs. `inventory.yml` builds the inventory from Infrahub and `deploy.yml` fetches each device's **AVD EOS Configuration** with `opsmill.infrahub.artifact_fetch`. `test.yml` scopes that inventory to one fabric, fetches its merged **AVD ANTA Catalog** artifacts from `main`, and runs `arista.avd.anta_runner`; see [Run ANTA after deployment](./how-to/run-anta-after-deployment.md). `deploy_clab.yml` fetches the **ContainerLab Topology** artifact plus every device's EOS config, stages them on a ContainerLab host, and deploys the lab; see the [ContainerLab page](./containerlab.md).
 - `lab/playbooks/` — the AVD-toolchain playbooks for the committed lab (`build.yml`, `deploy.yml`, `deploy-eapi.yml`, `test.yml`), driven from `lab/Makefile`.
 
-Both need the `opsmill.infrahub` collection: `ansible-galaxy collection install -r ansible/galaxy-requirements.yml`.
+Install the required Infrahub and AVD collections with
+`ansible-galaxy collection install -r ansible/galaxy-requirements.yml`.
