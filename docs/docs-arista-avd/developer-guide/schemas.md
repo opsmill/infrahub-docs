@@ -106,8 +106,12 @@ Adding a new device design for a supported role is data, not a schema change. De
 
 ### `NetworkLink` — `Network.Link`
 
-A cabled connection between interfaces. Inherits `Dcim.Connector`, so it has `name` and `medium` (`mmf`, `smf`, `copper`) and relates to `connected_endpoints` → `DcimEndpoint`. A DCI connection is a normal `NetworkLink` with `role=dci`, not a separate schema node.
+A cabled connection between interfaces. Inherits `Dcim.Connector`, so it has `name`, an optional `medium` (`mmf`, `smf`, `copper`), and relates to `connected_endpoints` → `DcimEndpoint`.
 
+- **Roles**: generated inter-switch links use `role=uplink`; DCI connections use `role=dci` rather than a separate schema node. Server links keep an unset role.
+- **Generated uplinks**: named `Uplink <lower-device>__<upper-device>`. Parallel links add a stable, naturally ordered numeric suffix (`... 1`, `... 2`). Existing manual or conflicting connectors are preserved rather than reassigned.
+- **Generated link medium**: left unset for uplinks and server links. Set it manually after generation or customize the generator for the required medium.
+- **Generated server links**: retain interface-based names and an unset role.
 - **DCI attributes**: `role` (`dci`) and `include_in_underlay_protocol` (Boolean, default `true`). BGP ASNs are taken from each endpoint device's own `asn`, not stored on the link.
 - **Relationships**: inherited `connected_endpoints`; no DCI-specific endpoint, pool, subnet, endpoint IP, speed, BFD, MTU, external-network, or EVPN Gateway fields are added.
 - **Addressing source**: the hostvars generator allocates one `/31` per valid DCI-role link from `NetworkFabric.fabric_ip_pools` role `dci`, then the legacy `NetworkFabric.dci_pool` fallback, then a deterministic Fabric Supernet-derived fallback when the required DCI prefix-pool role is missing.
@@ -268,6 +272,8 @@ Mixed into kinds that can be generator targets (`NetworkPod`, `LocationRack`, `C
 **Prefix role** (`IpamPrefix.role`): `fabric_supernet`, `fabric_point_to_point`, `dci`, `mlag`, `mlag_peering`, `supernet`, `pod_super_spine_spine`, `pod_leaf_spine`, `loopback`, `loopback-vtep`, `technical`, `management`, `backfill`.
 
 **Prefix status** (`IpamPrefix.status`): `active`, `deprecated`, `reserved`.
+
+**Network link role** (`NetworkLink.role`): `uplink`, `dci`.
 
 ## Role-driven pool collections
 
