@@ -2,7 +2,7 @@
 
 This page covers the SP-demo-specific schema nodes defined in `schemas/sp/`.
 Base and extension schemas (devices, interfaces, IPAM, routing) come from
-the Infrahub schema-library and are not repeated here.
+the Infrahub Marketplace and are not repeated here.
 
 For the overall schema loading order and layering, see [architecture](./architecture.mdx).
 
@@ -235,7 +235,7 @@ overlay process carrying VPNv4 / VPNv6 address families.
 **Namespace:** `Location` · **File:** `schemas/sp/location_concrete.yml`
 
 Concrete location kinds for this demo. `LocationRegion` inherits from
-`LocationGeneric` (the schema-library generic), and `LocationSite` adds
+`LocationGeneric` (the Marketplace generic), and `LocationSite` adds
 hosting capability via `LocationHosting`. Both render under
 `LocationGeneric` in the sidebar menu. The bootstrap data uses
 `LocationRegion` for `emea` and `LocationSite` for the four PoPs
