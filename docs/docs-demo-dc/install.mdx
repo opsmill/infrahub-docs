@@ -249,7 +249,7 @@ After running the bootstrap process (Step 7), additional user accounts are creat
 - Test advanced configurations with full object permissions
 
 :::info
-These demo accounts are created automatically when you run `uv run invoke bootstrap` (Step 7). The account creation script is located at `scripts/create_users_roles.py`.
+These demo accounts are created automatically when you run `uv run invoke bootstrap` (Step 7). The accounts, groups, roles and permissions are defined in the object file `objects/rbac/users_roles.yml`. To load them again on their own, run `uv run infrahubctl object load objects/rbac/`.
 :::
 
 :::warning Security notice
