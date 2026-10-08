@@ -88,7 +88,7 @@ flowchart LR
   - EOS device configurations
   - Per-device and fabric-level Markdown documentation
   - Cabling plan CSV
-  - ANTA test catalogs (generation is included; test execution on the roadmap)
+  - ANTA test catalogs, which the **Validate with ANTA** Semaphore task runs after deployment
   - Computed interface descriptions
 - **Seed data** — a ready-to-run starting point. `invoke load` populates Infrahub immediately with manufacturers, device types, device profiles and templates, addressing and number pools, and two example fabrics with pods, racks, and seed VLANs.
 - **Service portal** — a Streamlit application for self-service day-2 operations. Every operation creates a branch and opens a proposed change for review.

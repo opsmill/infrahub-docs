@@ -3,13 +3,24 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
   aristaAvdSidebar: [
     'home',
-    'quick-start',
-    'provision-first-fabric',
-    'viewing-artifacts',
-    'cloudvision',
-    'containerlab',
-    'troubleshooting',
-    'supported-capabilities',
+    {
+      type: 'category',
+      label: 'Getting Started',
+      collapsed: false,
+      items: ['quick-start', 'provision-first-fabric', 'viewing-artifacts'],
+    },
+    {
+      type: 'category',
+      label: 'Validation and Lab',
+      collapsed: false,
+      items: ['cloudvision', 'containerlab'],
+    },
+    {
+      type: 'category',
+      label: 'Reference',
+      collapsed: false,
+      items: ['supported-capabilities', 'troubleshooting'],
+    },
     {
       type: 'category',
       label: 'How-to Guides',

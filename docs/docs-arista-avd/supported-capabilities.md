@@ -1,54 +1,44 @@
 ---
 title: Supported capabilities
-description: What this Arista AVD reference design supports today, what is partial, and what is not yet covered.
+description: The AVD scenarios, services, artifacts, and workflows this Arista AVD reference design supports today.
 ---
 
 # Supported capabilities
 
-This is a **reference design** that covers a defined set of AVD capabilities on Infrahub — it is not a full replacement for every AVD feature. Uncommon or highly customized AVD options may not be modeled. Use the matrix below to check the status of a capability before planning a deployment.
+This is a **reference design** that covers a defined set of AVD capabilities on Infrahub. This page lists what it supports today; use it to check a capability before planning a deployment. PyAVD inputs that are not listed here can be passed through the `avd_custom_hostvars` attribute, described in the [developer guide](./developer-guide/avd/extending.md).
 
-**Status key:** ✅ Supported today · 🟡 Partial / confirm scope · ⬜ Not yet
+## AVD example scenarios
 
-:::note
-Some boundaries below are marked *confirm scope* and are being finalized with the maintainers. Where a row says `confirm`, treat the exact edge as undecided rather than guaranteed.
-:::
+The reference design ships a loadable fabric for each of these official [AVD example designs](https://avd.arista.com/6.2/ansible_collections/arista/avd/examples/index.html). Every device in these fabrics renders a valid PyAVD EOS configuration on a fresh instance.
 
-## AVD example scenario coverage
+| AVD example scenario | Fabric | Design |
+|----------------------|--------|--------|
+| Single-DC L3LS | `Fabric-L3LS` | eBGP underlay, EVPN/VXLAN L3LS. |
+| Single-DC Multi-Pod L3LS (5-stage Clos) | `Fabric-L3LS-MultiPod-A` | 6 super-spines + 3 pods; super-spines as EVPN route servers; tenants as VLAN-aware bundles (`evpn_vlan_aware_bundles`). |
+| Dual-DC L3LS | `Fabric-L3LS-Multi-Domain` | EVPN DC Gateway (next-hop-self) + DCI `l3_edge` p2p links, via `avd_custom_hostvars`. |
+| L2LS fabric (standalone) | `Fabric-L2LS` | Underlay `none` → `l2spine` + `l2leaf`, pure Layer-2 (no VNI/VXLAN/EVPN), MLAG on both tiers, two MLAG rack pairs. Tag-scoped VLANs `BLUE-NET`/`GREEN-NET`/`ORANGE-NET` and per-tier MSTP priorities (l2spine 4096 / l2leaf 16384). Host endpoints sit on leaf access ports through per-color access profiles (one untagged VLAN each, PortFast `edge`). |
+| Campus fabric | `Fabric-Campus` | Underlay `ospf` → `l3spine` core with anycast SVIs (`Evpn.Svi`) + `l2leaf` access; dot1x/PoE via `avd_custom_hostvars`. |
+| ISIS-LDP IPVPN | `Fabric-ISIS-LDP` | Underlay `isis-ldp` → `p` core + `pe` edge; per-customer L3VPN VRFs (`Evpn.Tenant`/`Ipam.VRF`). |
 
-Status of the official [AVD example designs](https://avd.arista.com/6.2/ansible_collections/arista/avd/examples/index.html) this reference design covers. Gaps are closed with **native schema** where a capability is reusable and first-class, and with the **`avd_custom_hostvars` escape hatch** where a full native model would be disproportionate (niche, single-scenario, pass-through).
+The fabric `underlay_routing_protocol` attribute selects the design, and the pod and rack generators map it to the matching device roles.
 
-Each scenario has its own loadable fabric design; every device renders valid PyAVD EOS configuration (0 validation violations) on a fresh instance.
-
-| AVD example scenario | Status | Fabric | Design |
-|----------------------|:------:|--------|--------|
-| Single-DC L3LS | ✅ | `Fabric-L3LS` | eBGP underlay, EVPN/VXLAN L3LS. |
-| Single-DC Multi-Pod L3LS (5-stage Clos) | ✅ | `Fabric-L3LS-MultiPod-A` | 6 super-spines + 3 pods; super-spines as EVPN route servers; tenants as vlan-aware bundles (`evpn_vlan_aware_bundles`). |
-| Dual-DC L3LS | ✅ | `Fabric-L3LS-Multi-Domain` | EVPN DC Gateway (next-hop-self) + DCI `l3_edge` p2p links, via `avd_custom_hostvars`. |
-| L2LS fabric (standalone) | ✅ | `Fabric-L2LS` | underlay `none` → `l2spine` + `l2leaf`, pure Layer-2 (no VNI/VXLAN/EVPN), MLAG both tiers, two MLAG rack pairs; overlay-free `Evpn.Tenant` (`MY_FABRIC`) with tag-scoped VLANs `BLUE-NET`/`GREEN-NET`/`ORANGE-NET` and per-tier MSTP priorities (l2spine 4096 / l2leaf 16384), mirroring the AVD `l2ls-fabric` example. Host endpoints sit on leaf access ports via per-color access profiles (one untagged VLAN each, PortFast `edge`). The example's dual-homed `FIREWALL` (trunk Port-Channel to both spines) is **not modeled** — deliberately deferred, see below. |
-| Campus fabric | ✅ | `Fabric-Campus` | underlay `ospf` → `l3spine` core with anycast SVIs (`Evpn.Svi`) + `l2leaf` access; dot1x/PoE via escape hatch. |
-| ISIS-LDP IPVPN | ✅ | `Fabric-ISIS-LDP` | underlay `isis-ldp` → `p` core + `pe` edge; per-customer L3VPN VRFs (`Evpn.Tenant`/`Ipam.VRF`). |
-
-The non-L3LS designs are driven by the fabric `underlay_routing_protocol`, which the pod/rack generators map to the correct device roles (gated so eBGP L3LS fabrics are unaffected).
-
-**Deferred — L2LS spine-attached firewall.** The upstream `l2ls-fabric` example dual-homes a firewall to both `l2spine` switches as a trunk Port-Channel. Modeling it needs a connected endpoint attachable to spine-tier devices, which the current endpoint/cabling path does not cover (it cables endpoints to a rack's leaves). It was scoped out rather than forced through `avd_custom_hostvars`, so the L2LS example is feature-complete for the fabric, services and host endpoints but includes no firewall. Everything else in that design is modeled natively.
-
-Services are modeled **schema-first**: L2 VLANs (L2LS), anycast SVIs on the campus l3spine core, and per-customer L3VPN VRFs on the ISIS-LDP PE are all `Ipam.VLAN` / `Evpn.Tenant` / `Ipam.VRF` / `Evpn.Svi` **objects** rendered by the generator — the same service model as the L3LS fabrics. The `avd_custom_hostvars` escape hatch is reserved for capabilities the schema does not yet model — EVPN DC Gateway remote-peers and campus dot1x/PoE — a deliberate, documented niche exception (native modeling of those is future schema work). Native-vs-escape-hatch guidance is in the [developer guide](./developer-guide/avd/extending.md).
+Services in every design use the same objects: `Ipam.VLAN`, `Evpn.Tenant`, `Ipam.VRF`, and `Evpn.Svi`. The EVPN DC Gateway remote peers and campus dot1x/PoE settings are passed through `avd_custom_hostvars`.
 
 ## Fabric generation
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| Generate a full fabric (Fabric → Pod → Rack → Device) from a design | ✅ | Super-spines, spines, and leaves are created from device templates — no per-device host_vars authored manually. |
-| Cable devices together automatically | ✅ | Uplinks and device-to-device links created by the generators. |
-| Regenerate idempotently | ✅ | Checksum-based change detection skips work when nothing changed; re-running is safe. |
+| Capability | Notes |
+|------------|-------|
+| Generate a full fabric (Fabric → Pod → Rack → Device) from a design | Super-spines, spines, and leaves are created from device templates, with no per-device host_vars written by hand. |
+| Cable devices together automatically | The generators create uplinks and device-to-device links. |
+| Regenerate idempotently | Checksum-based change detection skips work when nothing changed, so re-running is safe. |
 
 ## Addressing & numbering
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| Allocate loopback, interconnect, and management prefixes/IPs from pools | ✅ | Drawn from branch-aware pools so parallel work does not collide. |
-| Allocate DCI point-to-point /31 prefixes from fabric DCI pool roles | ✅ | Generated DCI `l3_edge` addressing resolves from `NetworkFabric.fabric_ip_pools` role `dci` first, legacy `NetworkFabric.dci_pool` second, and deterministic Fabric Supernet fallback when the required DCI prefix-pool role is missing. |
-| Allocate BGP ASNs and node IDs from pools | ✅ | Assigned automatically during generation. |
+| Capability | Notes |
+|------------|-------|
+| Allocate loopback, interconnect, and management prefixes/IPs from pools | Drawn from branch-aware pools so parallel work does not collide. |
+| Allocate DCI point-to-point /31 prefixes from fabric DCI pool roles | Generated DCI `l3_edge` addressing resolves from `NetworkFabric.fabric_ip_pools` role `dci` first, legacy `NetworkFabric.dci_pool` second, and a deterministic Fabric Supernet fallback when the DCI prefix-pool role is missing. |
+| Allocate BGP ASNs and node IDs from pools | Assigned automatically during generation. |
 
 <!-- vale Google.Headings = NO -->
 <!-- Every word here is an accepted acronym, but Vale still reads the heading as
@@ -57,80 +47,70 @@ Services are modeled **schema-first**: L2 VLANs (L2LS), anycast SVIs on the camp
 ## Services (VLAN / EVPN / VRF / MLAG / LAG / routing)
 <!-- vale Google.Headings = YES -->
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| Model VLANs and L2 domains | ✅ | Defined in the source of truth and rendered into config. |
-| Fabric-level EVPN settings | ✅ | Fabric EVPN overlay configuration. Exact EVPN depth is being confirmed. |
-| EVPN Multi-Domain Gateway on Border Leafs | 🟡 | Models Fabric-owned `EvpnDomain` objects with domain-owned local `EvpnGatewayGroup` children for `border_leaf` devices, then emits PyAVD EVPN Gateway hostvars for All-Active Multihoming only. Pods remain selected context and must point at the group's local domain. MLAG, Anycast IP, route-server, and route-reflector gateway models are not included. |
-| EVPN L3 VRFs | 🟡 | Wired into the PyAVD hostvar generator and produce config. The maintainers flagged `we don't do VRF and route targets` — **confirm** whether the exclusion is VRF-lite, route-leaking, or explicit route targets. |
-| MLAG (domain + peer) | 🟡 | Modeled and wired into hostvars; **confirm** supported scope. |
-| Server LAG | 🟡 | Modeled and wired into hostvars; **confirm** supported scope. |
-| BGP peer groups | 🟡 | Wired into hostvars and produce config; **confirm** supported scope. |
-| DCI links between Border Leafs | ✅ | `NetworkLink` objects with `role=dci` reuse shared physical endpoints and generate PyAVD `l3_edge.p2p_links`; external networks and EVPN Gateway are out of scope for this phase. |
-| Route targets | 🟡 | Modeled but AVD-derived (not fed as input). |
-| Prefix lists, route maps, static routes | 🟡 | Reconciled *from* AVD output via the backfill generator, not authored as inputs. |
+| Capability | Notes |
+|------------|-------|
+| VLANs and L2 domains | Defined in Infrahub and rendered into the configuration. |
+| Fabric-level EVPN settings | The fabric sets the underlay protocol (eBGP, OSPF, ISIS-LDP, or none), the overlay protocol (eBGP or iBGP), VLAN-aware bundles, the virtual router MAC address, the uplink MTU, and the spanning-tree mode. Super-spines act as EVPN route servers. |
+| EVPN L3 VRFs | Each tenant VRF renders with its VRF VNI, anycast SVIs, and VTEP diagnostic loopback. |
+| Route distinguishers and route targets | AVD derives them automatically for each VRF. |
+| EVPN Multi-Domain Gateway on border leafs | Fabric-owned `EvpnDomain` objects hold local `EvpnGatewayGroup` children for `border_leaf` devices, which render as PyAVD EVPN Gateway settings for All-Active Multihoming. Each pod points at its group's local domain. |
+| DCI links between border leafs | `NetworkLink` objects with `role=dci` reuse shared physical endpoints and render as PyAVD `l3_edge.p2p_links`. |
+| MLAG | An MLAG domain sets the domain ID, the two peers, the shared BGP ASN, and an optional virtual router MAC address. Peer-link interfaces come from interfaces with the `mlag_peer` role, and peer addressing comes from the pod MLAG pools. Applies to leaf and border leaf, and to l2leaf, l2spine, and l3spine in L2LS, campus, and ISIS-LDP fabrics. |
+| Server LAG | Server port-channels render with the LACP mode (active, passive, or static), the channel ID, and trunk or access VLANs. A LAG that spans two non-MLAG switches can use EVPN all-active multihoming with an automatically derived ESI. |
+| BGP peer groups | AVD creates the underlay, overlay, and MLAG peer groups. The fabric sets a password for each of the three. |
+| Prefix lists, route maps, static routes | The backfill generator records the prefix lists, route maps, and static routes from the AVD output in Infrahub. |
 
 ## Rendering & artifacts
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| Render Arista EOS device configurations (PyAVD) | ✅ | Deploy-ready per-device EOS CLI, as downloadable artifacts. |
-| Fabric and per-device documentation (Markdown) | ✅ | Generated from the same source of truth as the config. |
-| Cabling plan (CSV) | ✅ | One row per connection for the field/cabling team. |
-| Computed interface descriptions | ✅ | Consistent, auto-maintained interface descriptions. |
-| ANTA test catalog (per device, YAML) | ✅ | Catalog generation is included and gated by the fabric `anta_enabled` flag. |
+| Capability | Notes |
+|------------|-------|
+| Render Arista EOS device configurations (PyAVD) | Deploy-ready per-device EOS CLI, as downloadable artifacts. |
+| Fabric and per-device documentation (Markdown) | Generated from the same data as the configuration. |
+| Cabling plan (CSV) | One row per connection for the field/cabling team. |
+| Computed interface descriptions | Consistent interface descriptions, updated automatically. |
+| ANTA test catalog (per device, YAML) | Generated when the fabric `anta_enabled` flag is set. |
 
 ## Validation (ANTA)
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| ANTA test-catalog generation | ✅ | The `avd_anta_catalog` transform is gated by `anta_enabled`; fabric-level `avd_catalogs_filters` can exclude named tests. |
-| On-demand ANTA execution | ✅ | After deployment, the **Validate with ANTA** Semaphore task scopes the Infrahub `main` inventory to one fabric, fetches each device catalog, and writes JSON, Markdown, and CSV reports. See [Run ANTA after deployment](./how-to/run-anta-after-deployment.md). |
-| Proposed-change ANTA validation / block-merge-on-failure | ⬜ | Automatically running ANTA before merge and blocking a proposed change remains on the roadmap. |
+| Capability | Notes |
+|------------|-------|
+| ANTA test-catalog generation | The `avd_anta_catalog` transform runs when `anta_enabled` is set; fabric-level `avd_catalogs_filters` can exclude named tests. |
+| On-demand ANTA execution | After deployment, the **Validate with ANTA** Semaphore task scopes the Infrahub `main` inventory to one fabric, fetches each device catalog, and writes JSON, Markdown, and CSV reports. See [Run ANTA after deployment](./how-to/run-anta-after-deployment.md). |
 
 ## Validation (CloudVision)
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| CloudVision config validation in a proposed change | ✅ | The `cv-config-validation` check deploys the rendered configs to a CloudVision workspace and blocks the proposed change on a failed build. Opt in per fabric with `cloudvision_managed`. See [CloudVision Validation](./cloudvision.md). |
-| Workspace tracking and review link | ✅ | Each workspace is recorded as a `CloudvisionWorkspace` object and its URL posted to the proposed change. |
-| Workspace submission | 🟡 | Submission runs from a `CoreCustomWebhook` on proposed-change merge, or manually via `invoke submit-cv-workspace`. The shipped webhook target is a placeholder URL, not a production receiver. |
-| CloudVision change-control management | ⬜ | Out of scope for this phase. |
+| Capability | Notes |
+|------------|-------|
+| CloudVision config validation in a proposed change | The `cv-config-validation` check deploys the rendered configs to a CloudVision workspace and blocks the proposed change on a failed build. Opt in per fabric with `cloudvision_managed`. See [CloudVision Validation](./cloudvision.md). |
+| Workspace tracking and review link | Each workspace is recorded as a `CloudvisionWorkspace` object and its URL posted to the proposed change. |
+| Workspace submission | A `CoreCustomWebhook` sends the submission when the proposed change merges, or you run `invoke submit-cv-workspace`. Point the webhook at your own automation endpoint. |
 
 ## Lab
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| ContainerLab topology per fabric | ✅ | The `containerlab_topology` artifact renders every device and link the fabric owns; kinds, images, and interface mappings come from schema attributes. See [ContainerLab](./containerlab.md). |
-| Deploying the generated topology | ✅ | `ansible/deploy_clab.yml` stages the topology, EOS configs, and bind sources on a ContainerLab host and deploys them. The Semaphore template fetches and stages only — it does not deploy. |
-| ISIS-LDP devices in the generated topology | ⬜ | The `p`, `pe`, and `rr` roles are excluded; their interface naming is not validated against ContainerLab. |
+| Capability | Notes |
+|------------|-------|
+| ContainerLab topology per fabric | The `containerlab_topology` artifact renders the devices and links of L3LS, L2LS, and campus fabrics; kinds, images, and interface mappings come from schema attributes. See [ContainerLab](./containerlab.md). |
+| Deploying the generated topology | `ansible/deploy_clab.yml` stages the topology, EOS configs, and bind sources on a ContainerLab host and deploys them. The Semaphore template fetches and stages the files. |
 
 ## Deployment
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| Deploy configurations to devices | ✅ | Through the bundled Ansible runner or CloudVision (CVP/CVaaS). |
+| Capability | Notes |
+|------------|-------|
+| Deploy configurations to devices | Through the bundled Ansible runner or CloudVision (CVP/CVaaS). |
 
 ## Interfaces & change management
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| Self-service portal (Streamlit) for guided provisioning | ✅ | Alongside the Infrahub Web UI, GraphQL API, and MCP. |
-| Branches, proposed changes, approvals, full lineage | ✅ | Standard Infrahub platform change management. |
-| Approval rules that vary by service type | ⬜ | You can require approvals, but per-service approval rules are on the roadmap. |
-
-## Brownfield & coverage
-
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| Self-serve brownfield import | 🟡 | Modeling an existing fabric and importing configs via Infrahub Sync is done today in a **guided engagement**, not as a download-and-try path. |
-| Every AVD feature | ⬜ | This reference design covers a defined set of AVD inputs and scenarios, implemented per customer; uncommon or highly custom options may not be modeled. |
+| Capability | Notes |
+|------------|-------|
+| Self-service portal (Streamlit) for guided provisioning | Alongside the Infrahub Web UI, GraphQL API, and MCP. |
+| Branches, proposed changes, approvals, full lineage | Standard Infrahub change management. |
+| Brownfield import | Modeling an existing fabric and importing configs through Infrahub Sync is available as a guided engagement. |
 
 ## Fabric pool management
 
-| Capability | Status | Notes |
-|------------|:------:|-------|
-| Role-driven fabric pool collection | ✅ | `NetworkFabric.fabric_ip_pools` covers Management, Loopback, Loopback VTEP, Fabric Point-to-Point, DCI, and Fabric Supernet roles. |
-| Pod-scoped pool collection and containment validation | ✅ | `NetworkPod.pod_ip_pools` supports pod Loopback, VTEP, Fabric Point-to-Point, MLAG, and MLAG Peering roles with parent-fabric containment checks. |
-| Legacy pool migration compatibility | ✅ | Legacy fabric and pod pool relationships remain optional and seed data is dual-populated during migration. |
-| Deterministic fallback/default pools | ✅ | Fabric Supernet fallback creates stable prefix pools; MLAG defaults use stable `/31` pool objects. |
+| Capability | Notes |
+|------------|-------|
+| Role-driven fabric pool collection | `NetworkFabric.fabric_ip_pools` covers Management, Loopback, Loopback VTEP, Fabric Point-to-Point, DCI, and Fabric Supernet roles. |
+| Pod-scoped pool collection and containment validation | `NetworkPod.pod_ip_pools` supports pod Loopback, VTEP, Fabric Point-to-Point, MLAG, and MLAG Peering roles with parent-fabric containment checks. |
+| Legacy pool migration compatibility | Legacy fabric and pod pool relationships remain optional, and the seed data populates both the legacy and the new relationships. |
+| Deterministic fallback/default pools | The Fabric Supernet fallback creates stable prefix pools; MLAG defaults use stable `/31` pool objects. |

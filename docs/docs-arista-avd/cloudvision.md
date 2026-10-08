@@ -111,7 +111,7 @@ explicitly non-production URL:
 https://placeholder.invalid/cloudvision-workspace-submission
 ```
 
-The placeholder is a repository-loadable handoff marker for this phase. No real external automation receiver is required, and the placeholder URL is not a production deployment endpoint.
+The URL does not point to a working receiver. To act on submitted workspaces, point the webhook at your own automation endpoint.
 
 The CustomWebhook processing entry point is
 `submit_linked_workspace_for_custom_webhook()` in
@@ -161,7 +161,7 @@ The validation check builds workspaces for review only. CloudVision submission
 is handled by CustomWebhook processing or the manual retry task, not
 by the pre-merge validation check.
 
-CloudVision change-control management and Semaphore Ansible playbooks are out of scope for this phase. The CustomWebhook is only the handoff point for future deployment automation after linked workspace submission.
+CloudVision change-control management is not supported. The CustomWebhook is where you connect your own deployment automation after a linked workspace is submitted.
 
 ## Related
 
