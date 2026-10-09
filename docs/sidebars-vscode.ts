@@ -42,6 +42,11 @@ const sidebars: SidebarsConfig = {
         'reference/commands-settings',
       ],
     },
+    {
+      type: 'category',
+      label: 'Release notes',
+      items: ['release-notes/index'],
+    },
   ]
 };
 
