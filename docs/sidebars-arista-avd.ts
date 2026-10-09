@@ -23,6 +23,11 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Release Notes',
+      items: ['release-notes/index'],
+    },
+    {
+      type: 'category',
       label: 'How-to Guides',
       collapsed: false,
       items: [
