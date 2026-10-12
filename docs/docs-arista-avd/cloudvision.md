@@ -55,6 +55,12 @@ device-specific error. CloudVision connection, deployment, or workspace build
 failures also block the proposed change and include the fabric and workspace
 context when available.
 
+Validation succeeds only when finalization reaches `built` without requiring
+synchronization. A synchronization request or an incomplete finalization is a
+validation error, and the tracking record is marked `abandoned`. Review and
+synchronize the workspace in CloudVision before retrying validation. The check
+does not automatically rebase or submit it.
+
 ## Workspace tracking
 
 Successful validation creates or updates a deterministic CloudVision workspace

@@ -21,7 +21,9 @@ uv run invoke start
 uv run invoke init-semaphore
 ```
 
-The Semaphore image contains `arista.avd` and matching PyAVD requirements at version `6.3.0`.
+The Semaphore image contains `arista.avd` and matching PyAVD requirements at version `6.4.0`.
+It retains the runner's Python environment and pins `ansible-core==2.19.13`;
+the solution's Python 3.14 requirement does not change the runner interpreter.
 `init-semaphore` creates the **Validate with ANTA** task, attaches the Infrahub dynamic inventory,
 and configures `/opt/semaphore/anta` as the report workspace. On the Docker host, the same files are
 under `anta/` at the repository root. It also detaches task templates from the obsolete **Empty**

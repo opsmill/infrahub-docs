@@ -16,7 +16,7 @@ The Arista Validated Design (AVD) pipeline transforms Infrahub's network data mo
 ## PyAVD version
 
 :::warning Version-sensitive
-The integration targets **pyavd >= 6.3.0, < 6.4.0** (pinned in [`pyproject.toml`](https://github.com/opsmill/infrahub-arista-avd/blob/main/pyproject.toml)).
+The integration targets **pyavd >= 6.4.0, < 6.5.0** (pinned in [`pyproject.toml`](https://github.com/opsmill/infrahub-arista-avd/blob/main/pyproject.toml)).
 
 The following sections are version-sensitive — review them when upgrading PyAVD:
 

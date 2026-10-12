@@ -13,7 +13,7 @@ The steps below take you from a fresh clone to a running Infrahub instance with 
 
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose.
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/) — the Python package manager this project uses.
-- Python 3.11 or newer.
+- Python 3.14 (`>=3.14,<3.15`); the default patch version is 3.14.7.
 
 Everything else is installed by `uv sync` inside the project.
 

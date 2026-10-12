@@ -108,7 +108,7 @@ flowchart LR
 
 ## Get started
 
-**Prerequisites:** Docker and Docker Compose · uv · Python 3.11+
+**Prerequisites:** Docker and Docker Compose · uv · Python 3.14 (3.14.7 by default)
 
 1. Clone the repository and run `uv sync --all-packages` to install dependencies.
 2. Build the custom Infrahub image: `uv run invoke build` (one-time).
