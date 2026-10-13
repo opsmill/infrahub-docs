@@ -117,7 +117,7 @@ file at deploy time. Note the filenames intentionally differ from the device typ
 (`DCS-7050CX3-32S.json` for part number `DCS-7050CX3-32C`) — the attribute exists precisely so the
 mapping filename does not have to be derived from anything else.
 
-Seed values live in `objects/03_device_type.yml`.
+Seed values live in `objects/common/03_device_type.yml`.
 
 ## Interface names and why the mapping bind matters
 
@@ -269,11 +269,13 @@ ContainerLab host reachable over SSH and clear the template's `--skip-tags deplo
 
 ## Pinning the lab's data with `manual_objects/`
 
-`invoke load` loads `objects/` only. A second, opt-in set in `manual_objects/` is loaded manually:
+`invoke load` loads Common and the selected fabric directories under `objects/`. A second, opt-in set in `manual_objects/` is loaded manually:
 
 ```bash
 uv run infrahubctl object load manual_objects/ --branch <branch-name>
 ```
+
+Load `l3ls-multi-domain` (or `all`) first: these manual objects reference that fabric's pools, services, and server templates.
 
 It exists to make the multi-domain fabric line up with the committed lab rather than with whatever
 the pools happen to allocate:

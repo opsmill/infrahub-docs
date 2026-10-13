@@ -7,7 +7,7 @@ sidebar_position: 2
 
 # Provision your first fabric
 
-Prerequisites: [Quick Start](./quick-start.md) complete — Infrahub is running at `http://localhost:8000`, and seed data (fabrics, pods, racks, device types, IP pools) is loaded.
+Prerequisites: [Quick Start](./quick-start.md) complete with `INFRAHUB_SEED_FABRICS=l3ls-multipod-a` or `all` — Infrahub is running at `http://localhost:8000`, and seed data (fabrics, pods, racks, device types, IP pools) is loaded.
 
 At this point you have fabrics defined but **no devices**. The steps below generate the devices, cabling, hostvars, and configurations for `Fabric-L3LS-MultiPod-A`.
 

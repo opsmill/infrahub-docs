@@ -9,20 +9,21 @@ This is a **reference design** that covers a defined set of AVD capabilities on 
 
 ## AVD example scenarios
 
-The reference design ships a loadable fabric for each of these official [AVD example designs](https://avd.arista.com/6.2/ansible_collections/arista/avd/examples/index.html). Every device in these fabrics renders a valid PyAVD EOS configuration on a fresh instance.
+The reference design includes the official [AVD 6.4 example designs](https://avd.arista.com/6.4/ansible_collections/arista/avd/examples/index.html), an additional Multi-Pod fabric, and an ISIS-LDP repository example. Select one or more with `INFRAHUB_SEED_FABRICS`; see [the seed catalog](./quick-start.md#choose-the-seed-fabrics). Each example loads with Common alone. The catalog names do not change the pinned PyAVD version.
 
 | AVD example scenario | Fabric | Design |
 |----------------------|--------|--------|
-| Single-DC L3LS | `Fabric-L3LS` | eBGP underlay, EVPN/VXLAN L3LS. |
-| Single-DC Multi-Pod L3LS (5-stage Clos) | `Fabric-L3LS-MultiPod-A` | 6 super-spines + 3 pods; super-spines as EVPN route servers; tenants as VLAN-aware bundles (`evpn_vlan_aware_bundles`). |
-| Dual-DC L3LS | `Fabric-L3LS-Multi-Domain` | EVPN DC Gateway (next-hop-self) + DCI `l3_edge` p2p links, via `avd_custom_hostvars`. |
-| L2LS fabric (standalone) | `Fabric-L2LS` | Underlay `none` → `l2spine` + `l2leaf`, pure Layer-2 (no VNI/VXLAN/EVPN), MLAG on both tiers, two MLAG rack pairs. Tag-scoped VLANs `BLUE-NET`/`GREEN-NET`/`ORANGE-NET` and per-tier MSTP priorities (l2spine 4096 / l2leaf 16384). Host endpoints sit on leaf access ports through per-color access profiles (one untagged VLAN each, PortFast `edge`). |
-| Campus fabric | `Fabric-Campus` | Underlay `ospf` → `l3spine` core with anycast SVIs (`Evpn.Svi`) + `l2leaf` access; dot1x/PoE via `avd_custom_hostvars`. |
-| ISIS-LDP IPVPN | `Fabric-ISIS-LDP` | Underlay `isis-ldp` → `p` core + `pe` edge; per-customer L3VPN VRFs (`Evpn.Tenant`/`Ipam.VRF`). |
+| Single DC L3LS | `Fabric-L3LS` | eBGP underlay, EVPN/VXLAN L3LS. |
+| Single DC Multi-Pod L3LS (5-Stage Clos) | `Fabric-L3LS-MultiPod-A` | 6 super-spines + 3 pods; super-spines as EVPN route servers; tenants as VLAN-aware bundles (`evpn_vlan_aware_bundles`). |
+| Additional Multi-Pod fabric | `Fabric-L3LS-MultiPod-B` | 4 super-spines + 3 pods; dedicated Servers/Storage VLANs 300/400. No EVPN tenant or VRF is added. |
+| Dual DC L3LS | `Fabric-L3LS-Multi-Domain` | EVPN DC Gateway (next-hop-self) + DCI `l3_edge` p2p links, via `avd_custom_hostvars`. |
+| L2LS Fabric | `Fabric-L2LS` | Underlay `none` → `l2spine` + `l2leaf`, pure Layer-2 (no VNI/VXLAN/EVPN), MLAG on both tiers, two MLAG rack pairs. Tag-scoped VLANs `BLUE-NET`/`GREEN-NET`/`ORANGE-NET` and per-tier MSTP priorities (l2spine 4096 / l2leaf 16384). Host endpoints sit on leaf access ports through per-color access profiles (one untagged VLAN each, PortFast `edge`). |
+| Campus Fabric | `Fabric-Campus` | Underlay `ospf` → `l3spine` core with anycast SVIs (`Evpn.Svi`) + `l2leaf` access; dot1x/PoE via `avd_custom_hostvars`. |
+| ISIS-LDP IPVPN (additional repository example) | `Fabric-ISIS-LDP` | Underlay `isis-ldp` → `p` core + `pe` edge; per-customer L3VPN VRFs (`Evpn.Tenant`/`Ipam.VRF`). |
 
 The fabric `underlay_routing_protocol` attribute selects the design, and the pod and rack generators map it to the matching device roles.
 
-Services in every design use the same objects: `Ipam.VLAN`, `Evpn.Tenant`, `Ipam.VRF`, and `Evpn.Svi`. The EVPN DC Gateway remote peers and campus dot1x/PoE settings are passed through `avd_custom_hostvars`.
+Services use the same object types where applicable: `Ipam.VLAN`, `Evpn.Tenant`, `Ipam.VRF`, and `Evpn.Svi`. The EVPN DC Gateway remote peers and campus dot1x/PoE settings are passed through `avd_custom_hostvars`.
 
 ## Fabric generation
 

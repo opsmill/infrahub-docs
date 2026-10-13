@@ -50,9 +50,11 @@ Before deployment:
 `anta_enable`, which tells ANTA to use EOS privileged mode. When `anta_enabled` is false, the skip-test
 list remains stored on the fabric but is not rendered into AVD hostvars or catalog settings.
 
-The bundled cEOS example skips `VerifyInterfaceDiscards` because Management1 can report startup
-discards, and `VerifyLoggingErrors` because cEOSLab has no physical platform identity. These are
-lab-specific exclusions; do not copy them to physical fabrics without validating the reason.
+The bundled `Fabric-L3LS-Multi-Domain` cEOS example skips `VerifyInterfaceDiscards` because
+Management1 can report startup discards, and `VerifyLoggingErrors` because cEOSLab has no physical
+platform identity. It also skips `VerifyRunningConfigDiffs` because ZTP and runtime provisioning
+can leave expected differences between startup and running configuration in this example. These
+exclusions belong to this example; validate their reasons before copying them to physical fabrics.
 
 The Semaphore task intentionally reads only `main`. It cannot validate branch artifacts before merge.
 

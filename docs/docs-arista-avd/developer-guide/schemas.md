@@ -79,7 +79,7 @@ Normalized description of the devices a container should produce, defined in `de
 - **Identity**: a design is unique per `(container, role)`; `human_friendly_id` is `"<container-name>__<role>"`. "None of a role" is the **absence** of a design (replacing `amount_of_*: 0`).
 
 In seed data, designs are nested under their container. A rack with an MLAG leaf
-pair and a single L2 leaf looks like this (from `objects/10a_l3ls_multipod_rack.yml`):
+pair and a single L2 leaf looks like this (from `objects/l3ls-multipod-a/20_locations.yml`):
 
 ```yaml
 - name: "Rack-A2-1"
@@ -91,10 +91,10 @@ pair and a single L2 leaf looks like this (from `objects/10a_l3ls_multipod_rack.
     data:
       - role: leaf
         device_quantity: 2
-        device_template: leaf-switch-compute
+        device_template: arista-7050sx3-48yc8c-leaf-switch
       - role: l2leaf
         device_quantity: 1
-        device_template: l2leaf-switch
+        device_template: arista-7050sx3-48yc8c-l2leaf-switch
   member_of_groups: ["racks"]
 ```
 

@@ -95,7 +95,7 @@ All services should show `healthy` or `running`. Infrahub is ready once `http://
 
 ## 5. Load schemas, menus, objects, and repository
 
-Once Infrahub is healthy, load everything in one command:
+Once Infrahub is healthy, load schemas, shared data, the selected fabrics, and repository settings:
 
 ```bash
 uv run invoke load
@@ -103,24 +103,81 @@ uv run invoke load
 
 This runs, in order:
 
-1. Initialise Semaphore (idempotent — safe to re-run).
+1. Validate the entire seed selection, then initialise Semaphore (idempotent — safe to re-run).
 2. Load schemas from `schemas/`.
 3. Load the UI menu from `menus/`.
-4. Load seed data from `objects/` — manufacturers, device types, IP pools, profiles, device templates, fabrics, racks, VLANs.
+4. Load `objects/common/`, then each selected fabric directory in alphabetical order.
 5. Register this repository with Infrahub and wait for it to reach `in-sync`.
 6. Load the check queries from `repository_checks.yml`, which depend on the repository being synced.
 7. Load event triggers and rules from `triggers.yml`.
 
-Seed data loads in filename order, and the numeric prefixes encode that order: shared data first
-(`00`–`06` — groups, manufacturers, device types, IPAM, management, profiles, device templates),
-then the example fabrics (`10`–`15`), each with its own fabric, rack, service, and server files.
+### Choose the seed fabrics
+
+`INFRAHUB_SEED_FABRICS` can be set in `.env` or exported in the shell. Exported values take
+precedence over `.env`. An absent or empty value loads `all`, preserving the default of seven fabrics.
+The selection applies to `invoke load`; keep the `invoke start` then `invoke load` sequence.
+
+```bash
+# All seven fabrics (default)
+INFRAHUB_SEED_FABRICS=all uv run invoke load
+
+# One fabric
+INFRAHUB_SEED_FABRICS=l3ls-multi-domain uv run invoke load
+
+# Multiple fabrics
+INFRAHUB_SEED_FABRICS=l2ls,campus uv run invoke load
+
+# Shared objects only
+INFRAHUB_SEED_FABRICS=none uv run invoke load
+```
+
+| Directory identifier | Infrahub fabric | Example |
+|---|---|---|
+| `l3ls-multipod-a` | `Fabric-L3LS-MultiPod-A` | Single DC Multi-Pod L3LS (5-Stage Clos) |
+| `l3ls-multipod-b` | `Fabric-L3LS-MultiPod-B` | Additional Multi-Pod fabric |
+| `l3ls-multi-domain` | `Fabric-L3LS-Multi-Domain` | Dual DC L3LS |
+| `l2ls` | `Fabric-L2LS` | L2LS Fabric |
+| `campus` | `Fabric-Campus` | Campus Fabric |
+| `single-dc-l3ls` | `Fabric-L3LS` | Single DC L3LS |
+| `isis-ldp` | `Fabric-ISIS-LDP` | Additional repository example: ISIS-LDP IPVPN |
+
+The scenario names follow the official [AVD 6.4 examples](https://avd.arista.com/6.4/ansible_collections/arista/avd/examples/index.html).
+This catalog does not change the repository's PyAVD version. See [supported capabilities](./supported-capabilities.md)
+for the topology and services of each example.
+
+Identifiers are case-sensitive. Surrounding spaces are trimmed and duplicates are removed. Unknown
+identifiers, empty elements such as `l2ls,`, and combinations of `all` or `none` with another value
+fail before Semaphore, schemas, or menus are loaded. The error lists the available values.
+`all` discovers every non-hidden fabric subdirectory containing YAML seed files.
+
+Common contains groups, Arista models and platforms, reusable interface profiles, Arista switch
+templates, shared DNS/NTP and users, the fabric supernet, and `Hall-A1` shared by MultiPod A/B.
+Each fabric owns its pools, fabric/pods, locations, services, server profiles/templates, and endpoints.
+Numeric prefixes order dependencies within each directory. Common is loaded in a separate command
+before any fabric, and every fabric can be loaded with Common alone.
+
+### Load only objects on an existing instance
+
+Once the schemas are loaded, select seeds without running the rest of bootstrap:
+
+```bash
+uv run invoke load-objects --fabrics=l2ls,campus --branch=seed-review
+```
+
+Create the Infrahub branch first. `--fabrics` overrides the environment variable; `--branch` targets
+an Infrahub branch, and omission uses the instance's default branch. Use the default branch only
+for a disposable instance during initial bootstrap.
+
+Both commands display the effective selection and current directory, and stop at the first failure.
+A new selection adds or updates objects. Previously loaded fabrics remain present; changing the
+selection does not remove data.
 
 ## 6. Confirm everything loaded
 
 Open the Infrahub UI at **`http://localhost:8000`** and log in. You should see:
 
-- **Devices → Types & Models → Manufacturers**: Arista, Dell, and other manufacturers.
-- **Fabric Design → Fabrics**: `Fabric-L3LS-MultiPod-A` and `Fabric-L3LS-MultiPod-B` with their pods.
+- **Devices → Types & Models → Manufacturers**: Arista.
+- **Fabric Design → Fabrics**: the selected fabrics with their pods (all seven by default).
 - **Locations → Racks**: pre-defined racks per pod.
 - **IPAM → Prefixes**: the fabric supernet and per-fabric prefix pools.
 
@@ -140,7 +197,8 @@ The stack is up but no devices exist yet — fabrics, pods, and racks are define
 | `uv run invoke destroy` | Stop and **remove** containers, networks, and volumes (wipes data) |
 | `uv run invoke restart` | Restart all services |
 | `uv run invoke restart --component=infrahub-server` | Restart a specific service |
-| `uv run invoke load` | Re-run the full load sequence |
+| `uv run invoke load` | Re-run bootstrap with the selected fabrics |
+| `uv run invoke load-objects --fabrics=l2ls --branch=seed-review` | Load Common and selected seeds on a branch |
 | `uv run invoke load-schema` | Reload schemas only |
 | `uv run invoke load-menu` | Reload UI menus only |
 | `uv run invoke init-semaphore` | Re-register the Semaphore project, deployment templates, and ANTA task (idempotent) |

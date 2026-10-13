@@ -97,12 +97,13 @@ Open the Infrahub UI and check each of these lists is populated:
 
 | Menu | Expected |
 |------|----------|
-| Devices → Types & Models → Manufacturers | Arista, Dell, and others |
+| Devices → Types & Models → Manufacturers | Arista |
 | Devices → Types & Models → Device Types | Arista models (7050-CX3, etc.) |
-| Fabric Design → Fabrics | `Fabric-L3LS-MultiPod-A` and `Fabric-L3LS-MultiPod-B` |
+| Fabric Design → Fabrics | The fabrics selected with `INFRAHUB_SEED_FABRICS` |
 | IPAM → Prefixes | supernet and per-fabric pools |
 
-If any are empty, seed data did not load.
+With `INFRAHUB_SEED_FABRICS=none`, Common loads without fabrics. Otherwise, missing selected fabrics
+can indicate a failed seed load; check [the selection](./quick-start.md#choose-the-seed-fabrics).
 
 ### Fix
 

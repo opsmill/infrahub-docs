@@ -90,7 +90,7 @@ flowchart LR
   - Cabling plan CSV
   - ANTA test catalogs, which the **Validate with ANTA** Semaphore task runs after deployment
   - Computed interface descriptions
-- **Seed data** — a ready-to-run starting point. `invoke load` populates Infrahub immediately with manufacturers, device types, device profiles and templates, addressing and number pools, and two example fabrics with pods, racks, and seed VLANs.
+- **Seed data** — a ready-to-run starting point. `invoke load` populates Infrahub immediately with manufacturers, device types, device profiles and templates, addressing and number pools, and seven independently selectable fabrics with pods, racks, and seed VLANs. Set `INFRAHUB_SEED_FABRICS` to choose examples; the default is `all`. See [seed selection](./quick-start.md#choose-the-seed-fabrics).
 - **Service portal** — a Streamlit application for self-service day-2 operations. Every operation creates a branch and opens a proposed change for review.
   - Add a network segment (VRF, VLAN, SVI)
   - Provision a server into a rack

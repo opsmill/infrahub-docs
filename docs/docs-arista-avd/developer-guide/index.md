@@ -89,3 +89,28 @@ The AVD pipeline is the technically distinguishing piece of this solution and ha
 ## Looking for the operator guides?
 
 If you want to *use* the system to provision fabrics and view configurations without modifying code, start with [Quick Start](../quick-start.md) and the [how-to guides](../how-to/add-network-segment.md).
+
+## Add a seed example
+
+Put shared dependencies under `objects/common/`. Create a fabric directory under `objects/` with
+YAML files ordered by numeric prefix: pools (`00`), fabric/pods (`10`), locations (`20`), services
+(`30`), server profiles (`40`), server templates (`50`), and endpoints (`60`). Any extra dependency,
+such as a fabric-specific user, must load before its first reference.
+
+A directory name is its selection identifier. `all` discovers new directories automatically. Keep
+object names unique across directories, and resolve every reference using Common and that example
+alone. Shared `Hall-A1` supports MultiPod A/B; fabric-specific server profiles must refer to local
+VLANs. See [the seed catalog](../quick-start.md#choose-the-seed-fabrics).
+
+The unit suite checks selection, load order, standalone references, combined identities, addressing
+pools, virtual Loopback0 interfaces, and template port capacity:
+
+```bash
+uv run pytest tests/unit
+```
+
+An optional container-based matrix is prepared in `tests/integration/test_seed_selection.py`:
+Common only, each of the seven fabrics, MultiPod A+B, L2LS+Campus, and `all`. Every case starts a
+fresh isolated instance, loads schemas, then uses `invoke load-objects` with an explicit selection.
+It registers no repository or triggers. Run it only when integration validation is explicitly
+requested, following the repository integration-test workflow.
