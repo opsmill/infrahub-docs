@@ -34,6 +34,7 @@ const sidebars: SidebarsConfig = {
         'how-to/add-network-segment',
         'how-to/add-server',
         'how-to/create-tenant',
+        'how-to/migrate-semaphore-storage',
         'how-to/regenerate-fabric',
         'how-to/run-anta-after-deployment',
         'how-to/upgrade-avd-version',

@@ -80,8 +80,10 @@ This brings up, in the background:
 | Neo4j Browser | `http://localhost:7474` | Graph database browser |
 | Prefect | `http://localhost:4200` | Task-manager UI — where generator, transform, and check runs show up |
 
-`invoke start` also creates `lab/clab-staging/` before compose runs, so the Semaphore container has a
-writable bind-mount source for [ContainerLab](./containerlab.md) files.
+`invoke start` also creates `lab/clab-staging/` and `anta/` before Compose runs. Semaphore uses the
+current host user's UID/GID for bind-mounted files; `SEMAPHORE_UID` and `SEMAPHORE_GID` in the shell
+or ignored `.env` can override the detected values. The ANTA reports remain in `anta/`, while
+Semaphore's SQLite database and configuration persist in Docker volumes.
 
 Wait for services to become healthy. You can check with:
 
@@ -147,6 +149,11 @@ The stack is up but no devices exist yet — fabrics, pods, and racks are define
 | `uv run invoke format` | Apply Ruff formatting |
 
 `uv run invoke --list` shows the full set.
+
+`invoke destroy` also removes Semaphore's database and configuration volumes. For an existing
+Semaphore container, follow [Migrate Semaphore storage](./how-to/migrate-semaphore-storage.md) before
+stopping or starting the new image so its SQLite database, encryption settings, projects, and task
+history survive.
 
 After a generated configuration has been merged and deployed, follow
 [Run ANTA after deployment](./how-to/run-anta-after-deployment.md) to validate one fabric from

@@ -29,6 +29,9 @@ and configures `/opt/semaphore/anta` as the report workspace. On the Docker host
 under `anta/` at the repository root. It also detaches task templates from the obsolete **Empty**
 environment and removes that environment.
 
+Reports are owned by the host user that starts Semaphore. To move an existing installation to the
+current UID/GID-aware image and persistent volumes, follow [Migrate Semaphore storage](./migrate-semaphore-storage.md).
+
 ## 1. Prepare and merge the artifacts
 
 Before deployment:
