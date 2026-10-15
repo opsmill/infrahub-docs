@@ -615,8 +615,9 @@ Modules are marked `core` or `extended`:
   to `full`. `.github/workflows/ci.yml` selects the tier.
 
 Dispatch the tier for a change to a generator or a transform, so those workflows are exercised
-before it merges. It does not block a merge, because an upstream Infrahub fault currently stops it
-passing reliably: Infrahub intermittently fails to resolve
+before it merges. On a pull request that bumps the Infrahub version, a failure in this tier blocks the
+merge. On a manual run it does not, because an upstream Infrahub fault currently stops it passing
+reliably: Infrahub intermittently fails to resolve
 a member of its own internal generator group, which fails whichever generator is running at the time.
 Read a failure in that tier against this known fault before concluding the demo is broken.
 
