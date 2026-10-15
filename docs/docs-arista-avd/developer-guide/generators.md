@@ -161,6 +161,21 @@ query PodGenerator($pod_id: String!) {
 
 **Query**: `generate_rack.gql`
 
+Hostvar readiness uses a paginated, typed read of devices and their stored
+hostvar-file references. The rack generator selects every device in the fabric
+when any file is missing during bootstrap. Inherited files on a fresh branch
+also require full initialization: generator instances are local to that branch.
+Once every target has an instance, the fabric refreshes only the rack devices
+and their pod spines. Rack-completion checks group all non-fabric pods into one
+read with only the required attributes. The hostvar generator uses the same grouped
+read before setting the fabric ready for structured configuration. Both pod
+and rack membership are included, and devices from other fabrics are excluded.
+
+Template reconciliation retains physical ports already owned by the target's
+tracking group on an unchanged run. Existing manual ports stay outside that
+group. Cabling updates connectors without claiming either endpoint, so a rack
+rerun cannot delete a spine port through its own cleanup.
+
 ```graphql
 query RackGenerator($rack_id: String!) {
   LocationRack(ids: [$rack_id]) {
@@ -195,6 +210,13 @@ query RackGenerator($rack_id: String!) {
 7. Upload hostvars JSON to object store
 8. Create/update AvdArtifact with checksum
 
+EVPN tenant services use one paginated, typed read per child kind (VRFs, SVIs,
+and L2 VLANs), including their parent relations and rack/AVD tags. These reads
+belong to one hostvar build, so a subsequent run observes updated service intent.
+Role-based pool prefixes are read from the typed query's resource list in its
+existing order. Legacy references containing only an ID still load the pool,
+reusing the included resource peers when the SDK has hydrated them.
+
 **Query**: `avd_device_hostvar.gql`
 
 For EVPN Multi-Domain Gateway hostvars, the query fetches `EvpnGatewayGroup.local_domain`, the selected `pod` and its `evpn_domain`, `remote_domain`, members, and peer candidate groups from `remote_domain.remote_gateway_groups`. The generator emits `l3leaf.nodes[].evpn_gateway` only for valid grouped `border_leaf` devices, rejects Pod/local-domain mismatches and same local/remote domain intent, validates the final payload with `pyavd.validate_inputs()`, and derives hostname-only remote peers from valid groups that share the selected remote domain.
@@ -218,6 +240,18 @@ For EVPN Multi-Domain Gateway hostvars, the query fetches `EvpnGatewayGroup.loca
 7. Update AvdArtifact with config identifier
 
 **Query**: `generate_avd.gql`
+
+Unchanged hostvar files keep the fabric ready. A device rerun marks the fabric
+pending only before writing changed or missing hostvars, avoiding redundant
+structured-config cascades on unchanged input. Rack reconciliations can still
+mark the fabric pending and its final readiness check restores the flag.
+The readiness helper emits `True` only when the fabric was not already ready,
+so repeated checks preserve the trigger's transition without scheduling another
+whole-fabric structured configuration run.
+
+Hostvar and structured-config writes compare the new content with Infrahub's
+SHA-1 file checksum metadata. Files without valid checksum metadata are read
+before comparison; unchanged files retain their IDs and storage objects.
 
 ### ServerCablingGenerator
 
@@ -247,6 +281,10 @@ creation path: re-running it after a VLAN or LAG change updates an already-cable
 producing duplicate links. The operator-facing walkthrough is
 [Add a Server](../how-to/add-server.md).
 
+The server generator tracks its links and LAGs. Updates to existing physical
+ports and their VLAN relationships use `update_group_context=False`, preserving
+the ownership of the device/template generator.
+
 ### BackfillStructuredConfigGenerator
 
 **File**: `generators/backfill_structured_config.py`
@@ -260,6 +298,12 @@ producing duplicate links. The operator-facing walkthrough is
 prefix lists, route maps, and static routes.
 
 **Query**: `backfill_structured_config.gql`
+
+IP candidates and their primary interface assignments are read together for
+each calculation. Conflict checks cover both `DcimInterface.ip_address` and
+the separate `InterfaceLayer3.ip_addresses` inverse relation, and unchanged
+primary assignments require no interface write. These reads are refreshed on
+every generator run.
 
 This generator runs in the opposite direction to the rest of the chain: everything else turns intent
 into AVD inputs, while the backfill turns AVD's derived output into queryable objects. Those objects

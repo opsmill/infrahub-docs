@@ -147,6 +147,10 @@ Unlike EOS config rendering, catalog generation needs fabric-wide data, so the t
 every sibling device's structured config in the same fabric into one `AVDFabricData` before calling
 `pyavd.get_device_test_catalog()`.
 
+File metadata is read in one collection per catalog to avoid repeated graph requests
+exceeding the task timeout. Complete configs are then downloaded and validated
+sequentially, with fresh metadata and contents on every execution.
+
 It is gated by the fabric's `anta_enabled` flag. When ANTA is disabled — or the device has no
 fabric, or no structured config — the transform returns a marker comment instead of a catalog, so
 the artifact renders successfully and says why it is empty:

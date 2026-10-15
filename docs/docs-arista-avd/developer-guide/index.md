@@ -110,7 +110,9 @@ uv run pytest tests/unit
 ```
 
 An optional container-based matrix is prepared in `tests/integration/test_seed_selection.py`:
-Common only, each of the seven fabrics, MultiPod A+B, L2LS+Campus, and `all`. Every case starts a
-fresh isolated instance, loads schemas, then uses `invoke load-objects` with an explicit selection.
+Common only, each of the seven fabrics, MultiPod A+B, L2LS+Campus, and `all`. The matrix shares one
+isolated stack and one schema load. Each case creates a branch from the schema-only default branch
+and uses `invoke load-objects` with an explicit selection. Non-branched objects are discovered
+from the schema API and removed between cases; branch-aware objects remain isolated.
 It registers no repository or triggers. Run it only when integration validation is explicitly
 requested, following the repository integration-test workflow.
