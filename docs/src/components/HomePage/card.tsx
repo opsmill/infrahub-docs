@@ -2,21 +2,24 @@ import React from 'react';
 import clsx from 'clsx';
 import Heading from '@theme/Heading'
 import Link from '@docusaurus/Link';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
 
 type SectionItem = {
     title: string;
-    svgPath: string;
+    svgPath?: string;
     description: React.ReactNode;
     link: string;
 };
 
 export default function HomePageCard({ title, svgPath, description, link }: SectionItem) {
+    const imgSrc = useBaseUrl(svgPath ?? '');
+
     return (
         <div className='flex col col--4 margin-bottom--md'>
             <Link to={link} className={clsx(styles.heroCard, "card text--no-decoration")}>
                 <div className={clsx("card__header", styles.cardTitle)}>
-                    <img src={svgPath} width="24px" alt="python logo" />
+                    {svgPath && <img src={imgSrc} width="24px" alt="" />}
                     <Heading as="h3">{title}</Heading>
                 </div>
 
