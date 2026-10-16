@@ -138,9 +138,9 @@ uv run invoke init
 
 This single command performs three things:
 
-1. **Seeds Semaphore** with the project, SSH key, repository, inventory, environment, and task template (idempotent — safe to run multiple times)
-2. **Loads the repository** configuration from `bootstrap/repository.yaml` into Infrahub — a read-write `CoreRepository` that references the local checkout mounted at `/upstream` in the container
-3. **Loads permissions** from `bootstrap/permissions.yml`, creating an operator account (`john` / `infrahub`) with permissions to manage repositories, merge branches, and review proposed changes
+1. **Seeds Semaphore** with the project, SSH key, repository, inventory, environment, and task template (idempotent: you can run it more than once)
+2. **Loads the repository** configuration from `bootstrap/repository.yaml` into Infrahub. It is a read-write `CoreRepository` that references the local checkout mounted at `/upstream` in the container
+3. **Loads permissions** from `bootstrap/permissions.yml`, creating an operator account (`john` / `infrahub`) with permissions to manage repositories, merge branches, and review proposed changes, and a change manager account (`emma` / `infrahub`) that approves and merges proposed changes and changes no other data
 
 #### What the repository provides
 
@@ -169,6 +169,29 @@ The schema uses a hierarchical structure:
 - Everything is version-controlled and auditable
 :::
 
+Infrahub also loads three service tiers (Gold, Silver, Bronze), four customers, friendly device names such as "Paris edge router 1", and a list price for each device type from the repository. The upstream circuits of the cost of service come with Step 6. After `invoke init` there are no services yet: you create them by ordering through the portal, or by running Step 6.
+
+### Step 6: Seed the business impact demo (optional)
+
+Run this step only for the [business impact](../business-impact/overview.mdx) pages. You do not need it for the service request walkthrough.
+
+```shell
+uv run invoke seed
+```
+
+The command uses the `INFRAHUB_ADDRESS` and `INFRAHUB_API_TOKEN` variables from Step 2 and takes a few minutes. It runs these steps in order:
+
+1. Waits until Infrahub has imported the repository: the tiers, the customers, the `business_impact_services` query and the generator definition, with the repository in sync. When the last import of the repository failed, it asks Infrahub to import the last commit again. It then sets the description that the Infrahub web interface shows for the Gold outage guard check, the generator, the artifact definitions and the stored queries. It then loads the circuit schema, the **Circuit** item of the **Device Management** menu, and an upstream circuit with a monthly cost for each edge router, for the cost of service. A repository import that runs while the circuit schema loads can fail, so after the schema load it waits again until the repository is in sync
+2. Creates twelve Dedicated Internet services in Paris and Brussels on `main`, each with a customer and a tier, and runs the provisioning generator for each one. It then gives the three Paris Gold services a second path through the other Paris switch and edge router, generates the "Cost of service" artifact, and creates the `gold-outreach` webhook, inactive, with a placeholder CRM URL
+3. Opens three maintenance proposed changes: "Paris router 1 maintenance", "Brussels switch 1 maintenance" and "New York router 1 maintenance"
+4. Waits for each proposed change pipeline to finish
+
+You can run it again. It creates only the services, second paths, webhook and proposed changes that are missing, and changes a description only when it differs. It runs the provisioning generator again for every service, sets the devices to maintenance again on their branches, and waits for the pipelines again. A webhook that already exists keeps its URL and its active setting.
+
+:::note The repository is imported from `main`
+Infrahub imports the repository from the committed `main` branch of your checkout. A feature that is not on `main` yet, such as a branch that has not been merged, is not imported, and `invoke seed` then waits until it times out.
+:::
+
 ## Verify your installation
 
 Confirm everything is working by accessing both interfaces:
@@ -178,6 +201,7 @@ Confirm everything is working by accessing both interfaces:
 - **URL**: [http://localhost:8000](http://localhost:8000)
 - **Admin account**: `admin` / `infrahub`
 - **Operator account**: `john` / `infrahub` (limited permissions)
+- **Change manager account**: `emma` / `infrahub` (approves and merges proposed changes; changes no other data)
 - **What to Check**:
     - Navigate to the Schema page to see loaded models
     - Check the Objects page to verify demo data is present
@@ -191,6 +215,7 @@ Confirm everything is working by accessing both interfaces:
     - Home page displays available services
     - Service request forms are accessible
     - No connection errors appear
+    - After Step 6, the "Planned maintenance" page shows "3 Gold services for Helix Health and Northbank have fewer separate paths during this change" for "Paris router 1 maintenance"
 
 ### Semaphore automation UI
 

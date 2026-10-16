@@ -66,6 +66,8 @@ In many ways, Infrahub is the perfect tool to support your service catalog imple
 
 To complete the workflow from service request to configuration deployment, this demo also integrates [Semaphore](https://semaphoreui.com/), an open-source Ansible automation UI. Once a proposed change is reviewed and merged in Infrahub, Semaphore runs Ansible playbooks that fetch the generated device configurations from Infrahub and deploy them to network devices — closing the loop from self-service request to production deployment.
 
+In the demo, each service is also linked to its customer and its service tier. With that business context in the same graph, the portal shows which services a planned change puts at risk or takes down, and Infrahub refuses to merge a plan that leaves a Gold service without a path. Infrahub also lists the customers each change affects, can send the at-risk Gold customers to a CRM with a webhook, and produces the cost of each service as a CSV file. See [Business impact](business-impact/overview.mdx).
+
 If you want more information about the business case and how this PoC was built, you can read the corresponding [blog post](https://opsmill.com/blog/how-to-turn-your-source-of-truth-into-a-service-factory/) on the OpsMill website.
 
 <ReferenceLink title="Blog post" url="https://opsmill.com/blog/how-to-turn-your-source-of-truth-into-a-service-factory/" openInNewTab/>

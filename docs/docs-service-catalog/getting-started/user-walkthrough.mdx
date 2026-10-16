@@ -82,7 +82,7 @@ When you submit the request:
 ### Track your service requests
 
 1. **View All Requests**
-   - Navigate to "📦 Service Requests" in the sidebar
+   - Select "Service Requests" under "Service catalog" in the sidebar
    - You'll see a table of all service requests with their current status
 
 2. **Monitor Request Progress**
@@ -99,7 +99,7 @@ When you submit the request:
    - **In Delivery**: Resources allocated, implementation in progress
    - **Active**: Service fully provisioned and operational
 
-In this example, the Service Request is in Draft state.
+In this example, DI-1001 is active, and its assets list the VLAN, gateway IP address, prefix and dedicated interfaces that the generator allocated.
 
 ![Service Requests](./../media/service_requests.png)
 
@@ -129,11 +129,11 @@ Infrahub serves as the "source of truth" for your network infrastructure, mainta
 
    The left sidebar organizes infrastructure data by category:
 
-   **Locations**
+   **Location**
    - Countries, metros, and sites
    - Geographic hierarchy for service placement
 
-   **DCIM (Data Center Infrastructure Management)**
+   **Device Management**
    - Devices (switches, routers, servers)
    - Interfaces and connections
    - Hardware specifications
@@ -187,6 +187,7 @@ By modeling infrastructure in Infrahub:
    **Checks Tab**
    - Automated validation results
    - Generator execution status (should show success)
+   - The Gold outage guard result (should pass, because a service order sets no device out of service)
    - Any constraint violations or conflicts
 
    **Data Tab**
@@ -259,7 +260,7 @@ This review process provides:
    - Your service should now show "Active" status
 
 2. **Review Allocated Resources**
-   - In Infrahub, navigate to the service under `Service` > `Dedicated Internet`
+   - In Infrahub, navigate to the service under `Services` > `Dedicated Internet`
    - Click on your service to see all allocated components
    - Verify relationships to VLANs, interfaces, and IP addresses
 
@@ -306,12 +307,12 @@ After the proposed change is merged, you can use Semaphore to deploy the generat
 :::tip What the Playbook Does
 The `deploy.yml` playbook performs two tasks per device:
 
-1. **Fetch configuration artifact** — Uses the `opsmill.infrahub.artifact_fetch` module to retrieve the `startup-config` artifact from Infrahub
-2. **Save configuration** — Writes the configuration to a local file for deployment
+1. **Fetch configuration artifact**: uses the `opsmill.infrahub.artifact_fetch` module to retrieve the `startup-config` artifact from Infrahub
+2. **Save configuration**: writes the configuration to a local file for deployment
 :::
 
-:::success Workflow Complete!
-You've successfully:
+:::success Workflow complete
+You have:
 
 1. ✅ Requested a service through the self-service portal
 2. ✅ Reviewed the automated resource allocation
@@ -319,29 +320,34 @@ You've successfully:
 4. ✅ Delivered a fully configured network service
 5. ✅ Deployed configurations to network devices via Semaphore
 
-All in minutes, with zero manual configuration errors!
+The generator allocated every resource, and Semaphore deployed the configuration that Infrahub generated.
 :::
+
+## Step 5: Check the business impact of a change (optional)
+
+With the seeded data from [Step 6 of the installation](installation#step-6-seed-the-business-impact-demo-optional), the portal also shows which services have no other path during a planned change, and Infrahub blocks a plan that leaves a Gold service without one. Follow [Plan maintenance that keeps Gold services in service](../business-impact/plan-maintenance.mdx) to run it end to end. To view which Gold services depend on a single device, follow [Find the Gold services that depend on a single device](../business-impact/find-single-points-of-failure.mdx).
 
 ## Key takeaways
 
 ### Business benefits
 
-- **Speed**: Service delivery in minutes instead of days/weeks
-- **Consistency**: Standardized configurations eliminate human error
-- **Self-Service**: Reduces bottlenecks and improves customer satisfaction
-- **Visibility**: Complete audit trail and resource tracking
+- **Speed**: The portal order, the generator and the deployment run without manual configuration steps
+- **Consistency**: Every service of the same type is built from the same generator, so its configuration uses the same rules
+- **Self-service**: A requester orders a service from a form, without knowing which VLAN, prefix or port it needs
+- **Visibility**: Each change is a proposed change with a diff, and each allocated resource is linked to its service
 
 ### Technical benefits
 
-- **Resource Management**: Automatic allocation prevents conflicts
-- **Version Control**: All changes tracked and reversible
-- **Validation**: Automated checks prevent invalid configurations
-- **Integration**: API-driven architecture enables broader automation
+- **Resource management**: VLANs and prefixes come from resource pools, so two services cannot receive the same one
+- **Version control**: Every change is made on a branch and reviewed before it merges
+- **Validation**: Checks run on each proposed change, and Infrahub does not merge a change whose checks have failed
+- **Integration**: The portal, the generator and Ansible all read the same data through the Infrahub API
 
 ### Next steps
 
 Now that you understand the user experience:
 
 - Explore the [developer walkthrough](developer-walkthrough) to understand the technical implementation
+- Learn how [business impact](../business-impact/overview.mdx) links customers and commitments to the network
 - Try creating additional service types or modifying existing ones
 - Consider how similar patterns could apply to your organization's services
