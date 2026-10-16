@@ -69,8 +69,55 @@ Set `INFRAHUB_SERVICE_CATALOG="true"` in `.env`, then run:
 uv run invoke start
 ```
 
-Every `invoke start` / `invoke init` will now also build and start the
-Streamlit sidecar. Visit `http://localhost:8501`. Create your first L3VPN.
+Every `invoke start` / `invoke init` will now also start the Streamlit
+sidecar, from the published image. Visit `http://localhost:8501`. Create your
+first L3VPN.
+
+### Container images
+
+`invoke start` pulls the Service Catalog and the Batfish runner from the
+OpsMill registry. Each image is published for `linux/amd64` and `linux/arm64`
+under these tags:
+
+| Tag | Points to |
+|---|---|
+| `main` | The latest build of the `main` branch. CI also rebuilds it weekly to pick up base image fixes. |
+| `sha-<commit>` | One exact commit. It never moves, so pin it in a deployment. |
+
+To run the Service Catalog without Docker Compose, point it at an Infrahub
+instance:
+
+```bash
+docker run --rm -p 8501:8501 \
+  -e INFRAHUB_ADDRESS=http://host.docker.internal:8000 \
+  -e INFRAHUB_API_TOKEN=<your-api-token> \
+  registry.opsmill.io/opsmill/infrahub-demo-sp-streamlit:main
+```
+
+The container listens on port 8501. Set `STREAMLIT_SERVER_PORT` to use another
+port.
+
+CI signs every image with Cosign and attaches a software bill of materials to it. To verify a signature:
+
+```bash
+cosign verify \
+  --certificate-identity-regexp "^https://github.com/opsmill/.*" \
+  --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+  registry.opsmill.io/opsmill/infrahub-demo-sp-streamlit:main
+```
+
+### Build the images from your checkout
+
+To change `service_catalog/` or `batfish_runner/`, build the images locally
+instead of pulling them. Either set `INFRAHUB_SERVICE_CATALOG_BUILD="true"` in
+`.env`, or run:
+
+```bash
+uv run invoke start --build
+```
+
+This builds both images from the repository and mounts their sources into the
+containers, so edits show up without a rebuild.
 
 The Service Catalog also exposes a second wizard — **Create SD-WAN
 service** — for provisioning Cisco Viptela or Versa Networks SD-WAN
@@ -114,7 +161,10 @@ command). `uv run invoke info` prints the resolved values.
 | `INFRAHUB_API_TOKEN` | demo token | Authentication. Rotate before any non-local use |
 | `INFRAHUB_UI_URL` | `http://localhost:8000` | Used by the Streamlit catalog for "open in Infrahub" links |
 | `INFRAHUB_GIT_LOCAL` | `false` | `true` registers a `CoreRepository` pointed at the bind-mounted `/upstream` (no GitHub clone needed). `false` registers a `CoreReadOnlyRepository` against the public GitHub repository |
-| `INFRAHUB_SERVICE_CATALOG` | `false` | `true` builds + starts the Streamlit sidecar on every `invoke start` / `invoke init` |
+| `INFRAHUB_SERVICE_CATALOG` | `false` | `true` starts the Streamlit sidecar, from the published image, on every `invoke start` / `invoke init` |
+| `INFRAHUB_SERVICE_CATALOG_BUILD` | `false` | `true` builds the Streamlit and Batfish runner images from this checkout instead of pulling them, and mounts their sources. `invoke start --build` does the same for one run |
+| `STREAMLIT_IMAGE` | `registry.opsmill.io/opsmill/infrahub-demo-sp-streamlit:main` | Image the Streamlit sidecar runs |
+| `BATFISH_RUNNER_IMAGE` | `registry.opsmill.io/opsmill/infrahub-demo-sp-batfish-runner:main` | Image the Batfish runner runs |
 | `INFRAHUB_DATASET` | `financial` | Selects a dataset overlay — one subdirectory of `objects/datasets/`. Each dataset ships its own backbone plus its tenants and services. `financial` (internal bank): 8 Arista cEOS PEs (`pe-01`…`pe-08`) in a partial mesh, 8 division tenants, `trading-floor-vpn`. `isp` (Lumina Networks pan-European ISP): 4 multi-vendor PEs in a full mesh, 8 customer tenants, `kestrel-bank-mpls` |
 | `INFRAHUB_ENTERPRISE` | `false` | `true` streams the Enterprise edition compose file from `https://infrahub.opsmill.io/enterprise/<INFRAHUB_VERSION>` instead of the Community one. Requires an Enterprise license / pull credentials |
 | `INFRAHUB_VERSION` | `stable` | Compose file version tag pulled from `infrahub.opsmill.io` (use `latest`, `stable`, or a specific release like `1.4.0`) |

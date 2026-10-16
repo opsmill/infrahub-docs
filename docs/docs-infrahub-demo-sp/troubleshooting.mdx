@@ -317,6 +317,30 @@ CEOS_IMAGE=ceos:local uv run invoke lab.deploy
 
 ---
 
+## Cannot pull the Streamlit or Batfish runner image
+
+**Symptom:** `invoke start` fails with `pull access denied`, `not found` or a
+network timeout for an image under `registry.opsmill.io/opsmill/`.
+
+**Cause:** The machine cannot reach `registry.opsmill.io`, or `STREAMLIT_IMAGE`
+or `BATFISH_RUNNER_IMAGE` names a tag that does not exist.
+
+**Fix:**
+
+```bash
+# Check that the registry answers and the tag exists:
+docker pull registry.opsmill.io/opsmill/infrahub-demo-sp-streamlit:main
+```
+
+If the registry is not reachable from your network, build the images from the
+repository instead:
+
+```bash
+uv run invoke start --build
+```
+
+---
+
 ## Streamlit catalog: "Infrahub not reachable"
 
 **Symptom:** The Streamlit app loads but shows "Cannot connect to Infrahub".
