@@ -35,6 +35,7 @@ you can find the right kind of page for what you need to do.
 | Page | Purpose |
 | ---- | ------- |
 | **[L3VPN service walkthrough](./services/l3vpn.mdx)** | End-to-end tour of the L3VPN service: how the catalog form drives `ServiceL3Vpn` creation, what the generator materialises (VRF, RTs, PE-CE links, eBGP), what each per-vendor template emits, and how the validation checks fit together. |
+| **[Add a PE router](./backbone/add-pe.mdx)** | Add a PE router to the MPLS backbone from the catalog or with `uv run invoke demo-add-device`: what the generator creates, which checks gate the merge, and how to boot the proposed change in containerlab before merging. |
 | **[SD-WAN service walkthrough](./services/sdwan.mdx)** | Companion tour of the SD-WAN service: vendor choice (Cisco Viptela vs Versa Networks), hub-spoke vs full-mesh topology, generator-created edge devices, and per-vendor edge configurations. |
 | **[Deploy with containerlab](./lab/containerlab.mdx)** | Take the rendered MPLS backbone artifacts and bring them up in a virtual lab with containerlab. Cover Arista cEOS, Nokia SR Linux substitution, and how to reach the lab CLIs. |
 
@@ -61,8 +62,12 @@ If you're ready to dive in:
    data — Devices, MPLS Backbones, Service Catalog → L3 VPNs and SD-WAN.
 3. Provision a new service from the **[Streamlit Service Catalog](./services/l3vpn.mdx)**
    at `http://localhost:8501`.
-4. (Optional) Bring up the MPLS backbone in **[containerlab](./lab/containerlab.mdx)**.
-5. Read the **[architecture](./architecture.mdx)** and **[schema reference](./schema-reference.mdx)**
+4. Add a PE router to the backbone as a proposed change with
+   `uv run invoke demo-add-device`, then review it in Infrahub. See
+   **[Add a PE router](./backbone/add-pe.mdx)**.
+5. (Optional) Bring up the MPLS backbone in **[containerlab](./lab/containerlab.mdx)**,
+   from `main` or from the proposed change's branch.
+6. Read the **[architecture](./architecture.mdx)** and **[schema reference](./schema-reference.mdx)**
    to understand the moving parts before you extend the demo.
 
 ## What you'll learn
@@ -80,8 +85,9 @@ Through this demo, you'll gain practical experience with:
   Cisco IOS-XR, Juniper Junos, Nokia SR OS, Cisco Viptela, and Versa VOS configurations.
 - **Validation checks** — Catching duplicate RDs, overlapping customer prefixes,
   exhausted interface pools, and missing iBGP sessions before merge.
-- **Branch-based workflows** — Catalog form → feature branch → generator
-  → artifact regeneration → proposed change → review → merge.
+- **Branch-based workflows** — Catalog form or `invoke demo-add-device` →
+  feature branch → generator → artifact regeneration → proposed change →
+  review → lab test of the branch → merge.
 - **Containerlab** — Booting the rendered backbone in a virtual lab for hands-on
   testing.
 
@@ -215,10 +221,14 @@ exercises the full per-vendor set.
 
 ### Branch-based workflows
 
-Every catalog submission opens a feature branch (`l3vpn/<hex>` or `sdwan/<hex>`),
-creates objects on the branch, polls the generator to completion, regenerates
-artifacts so the diff is meaningful, and opens a `CoreProposedChange` against
-`main`. Validation checks run on the PC before merge.
+Every catalog submission opens a feature branch (`l3vpn/<hex>`, `sdwan/<hex>`
+or `backbone/add-pe-<name>-<hex>`), creates objects on the branch, polls the
+generator to completion, regenerates artifacts so the diff is meaningful, and
+opens a `CoreProposedChange` against `main`. Validation checks run on the PC
+before merge. `uv run invoke demo-add-device` runs the Add PE flow from the
+command line and prints the proposed change's link, and
+`uv run invoke lab.deploy --branch <branch>` boots the change in containerlab
+before it is merged.
 
 ### Containerlab integration
 
@@ -228,7 +238,9 @@ addressing, plus every pre-provisioned CE and its PE-CE access link. For the
 default **financial** backbone that's eight Arista cEOS PEs, 15 backbone links,
 and four cEOS CEs that bring up real eBGP sessions against their PEs; for the
 **isp** dataset it's the Arista and Nokia PEs (Nokia SR OS substituted to SR
-Linux for the lab image). See the
+Linux for the lab image). `invoke lab.deploy --branch <branch>` boots the
+lab from a proposed change's branch instead of `main`, so a new PE can be
+tested before it is merged. See the
 **[containerlab guide](./lab/containerlab.mdx)**.
 
 ## Community and support

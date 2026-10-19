@@ -12,7 +12,9 @@ data by the `clab_topology` transform and renders a valid containerlab YAML
 topology. It wires up the lab-deployable PE nodes plus the L3VPN CE nodes for
 end-to-end testing. The backbone links are **data-driven** — derived from the
 shared /31 addressing rather than fixed in the template — so the lab tracks
-whatever backbone the active dataset defines.
+whatever backbone the active dataset defines, including a PE added through
+the [Add a PE router](../backbone/add-pe.mdx) flow, before or after its
+proposed change is merged.
 
 Which PEs are deployable depends on the dataset:
 
@@ -48,11 +50,10 @@ Which PEs that yields depends on the active dataset:
 
 :::note MPLS data plane
 
-The lab brings up IS-IS, the full iBGP mesh and PE-CE eBGP, and every customer
-prefix lands in the right VRF. It does **not** forward traffic between customer
-sites: cEOS never starts its LDP agent, so there is no MPLS label path between
-PEs. See
-[Troubleshooting](../troubleshooting.mdx#ldp-does-not-start-so-inter-site-vpn-traffic-fails).
+The lab brings up IS-IS, LDP, the full iBGP mesh and PE-CE eBGP, and forwards
+customer traffic between the sites of each L3VPN over MPLS. If sites of one VPN
+cannot reach each other, see
+[Troubleshooting](../troubleshooting.mdx#customer-sites-of-one-vpn-cannot-reach-each-other).
 
 :::
 
@@ -181,6 +182,22 @@ See
 # then call containerlab deploy.
 uv run invoke lab.deploy
 ```
+
+To boot the lab from a branch instead of `main`, for example the source branch
+of a proposed change, name it with `--branch`:
+
+```bash
+uv run invoke lab.deploy --branch backbone/add-pe-pe-09-a18c2693
+```
+
+Every Infrahub step then reads that branch: the artifacts are re-rendered on
+it, and the topology and the device configurations are fetched from it. This
+is how a change, such as a new PE, is tested in the lab before it is merged.
+`uv run invoke demo-add-device` and the catalog's **Add PE** page both print
+this command, with the branch name filled in, when they open the proposed
+change.
+The re-render step replaces the branch's artifacts with freshly rendered ones,
+so the proposed change shows new artifact versions afterwards.
 
 Expected output (default **financial** dataset — 8 Arista cEOS PEs, the four
 pre-provisioned Arista cEOS CE routers, and one customer host behind each CE):
@@ -336,7 +353,6 @@ different image tag in `templates/clab_topology.j2`.
 |---|---|
 | Nokia SR Linux configuration push | SR Linux uses a different CLI/API from SR OS, and the public SR Linux 23.10 image lacks several constructs SR OS supports (LDP, `l3vpn-ipv4-unicast` afi-safi, `bgp-vpn` under `network-instance`). The dedicated `pe-nokia-srlinux` artifact intentionally renders a **lab-minimum** configuration — hostname + interfaces + ISIS underlay only. BGP and per-VPN ip-vrf signalling are skipped on the SRL lab node. The production-quality configuration lives in the `pe-nokia-sros` artifact (real SR OS syntax) and is meant for a real Nokia box. |
 | Cisco / Juniper PEs | IOS-XR and Junos container images require vendor licences; these PEs are absent from the v1 lab topology. |
-| Inter-site VPN forwarding | PE-CE eBGP establishes and every customer prefix reaches the right VRF, but cEOS never starts its LDP agent, so there is no MPLS label path between PEs and traffic does not cross the backbone. See [Troubleshooting](../troubleshooting.mdx#ldp-does-not-start-so-inter-site-vpn-traffic-fails). |
 | Unmanaged CEs | Only sites with a `ce_device` get a lab CE. On the **isp** dataset no site names one, so that lab has no CE nodes, no PE-CE links, and no customer hosts. |
 
 ---

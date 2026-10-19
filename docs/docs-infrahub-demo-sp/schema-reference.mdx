@@ -152,6 +152,36 @@ one row per backbone domain. The demo has exactly one row: `mpls-backbone-1`.
 
 ---
 
+## TopologyPeOnboarding
+
+**Namespace:** `Topology` · **Kind:** `TopologyPeOnboarding`
+**File:** `schemas/sp/pe_onboarding.yml`
+
+A request to add a PE router to a backbone. The Add PE catalog page creates
+one per request; `PeOnboardingGenerator` reads it and materialises the device.
+See [Add a PE router](./backbone/add-pe.mdx).
+
+### Attributes
+
+| Field | Kind | Required | Description | Who sets it |
+|---|---|---|---|---|
+| `name` | Text | Required | Device name of the new PE, for example `pe-09` | User / catalog |
+| `description` | Text | Optional | Free text | User / catalog |
+| `status` | Dropdown | Required | `draft`, `active` or `decommissioned` (default `draft`) | Generator sets `active` |
+
+### Relationships
+
+| Field | Peer | Cardinality | Required | Description | Who sets it |
+|---|---|---|---|---|---|
+| `backbone` | `TopologyMplsBackbone` | one | Required | Backbone the router joins | User / catalog |
+| `location` | `LocationSite` | one | Required | Site the router is placed at | User / catalog |
+| `platform` | `DcimPlatform` | one | Required | Platform, which selects the artifact target group | User / catalog |
+| `device_type` | `DcimDeviceType` | one | Required | Hardware model | User / catalog |
+| `uplinks` | `DcimDevice` | many | Required | Existing PEs the router gets a core link to; at least two | User / catalog |
+| `device` | `DcimDevice` | one | Optional | The router the generator created | Generator |
+
+---
+
 ## MplsIsisProcess
 
 **Namespace:** `Mpls` · **Kind:** `MplsIsisProcess`
@@ -288,7 +318,7 @@ by the generator and the Streamlit catalog:
 ## User-provided vs generator-filled summary
 
 The following table consolidates which fields an operator must supply and which
-the `L3VpnGenerator` fills in automatically:
+the generators fill in automatically:
 
 | Object | Field | Source |
 |---|---|---|
@@ -301,3 +331,6 @@ the `L3VpnGenerator` fills in automatically:
 | `IpamIPAddress` (PE-CE) | all | Generator |
 | `RoutingAutonomousSystem` (customer) | all — ASN from `customer_asn_pool` | Generator |
 | `RoutingBGPSession` (PE-CE and CE-PE) | all (only when `routing_protocol = ebgp`) | Generator |
+| `TopologyPeOnboarding` | `name`, `backbone`, `location`, `platform`, `device_type`, `uplinks` | User / catalog |
+| `TopologyPeOnboarding` | `device`, `status = active` | PE generator |
+| `DcimDevice` (new PE), its Loopback0, core ports, processes and iBGP sessions | all | PE generator |

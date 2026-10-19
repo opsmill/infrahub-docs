@@ -18,11 +18,12 @@ Schema definition  →  Bootstrap data  →  Generators  →  Transforms  →  A
 | `schemas/extensions/` | VRF, routing, BGP, topology extensions from the Infrahub Marketplace |
 | `schemas/sp/` | SP-demo-specific schemas (MPLS, L3VPN service, PE role) |
 | `objects/` | Pre-loaded bootstrap data (PEs, backbone, pools, tenants) |
-| `generators/` | `L3VpnGenerator` materialises VRF + interfaces + IPs |
+| `generators/` | `L3VpnGenerator` materialises VRF + interfaces + IPs; `PeOnboardingGenerator` builds a new PE; `SdwanGenerator` builds SD-WAN edges |
 | `transforms/` | One Python+Jinja transform per vendor + the clab transform |
 | `templates/` | Jinja2 templates (one per vendor + clab + macros) |
 | `checks/` | Five checks gating the proposed-change pipeline (incl. Batfish) |
-| `service_catalog/` | Streamlit sidecar (Dashboard + Create L3VPN), published as a container image |
+| `service_catalog/` | Streamlit sidecar (Dashboard, Create L3VPN, Create SD-WAN, Batfish Check, Add PE), published as a container image |
+| `scripts/` | Helpers `invoke` runs, including `demo_add_pe.py` behind `invoke demo-add-device` |
 | `queries/` | GraphQL queries used by generators, transforms, checks |
 | `menus/` | Sidebar menu configuration |
 | `lab/` | Runtime-only; not committed |
@@ -38,7 +39,8 @@ between them at degree 4–5. The **isp** dataset has 4 PEs, one per vendor, in 
 full mesh (6 p2p links). Both run ISIS L2 for the underlay and LDP for label
 distribution. To add or move PEs, edit
 `objects/datasets/<dataset>/60_backbone.yml` (and `70_topology.yml` for the
-p2p links) by hand and rerun `invoke bootstrap`.
+p2p links) by hand and rerun `invoke bootstrap`. To add a PE as a reviewed
+change instead, use the [PE onboarding flow](#pe-onboarding-flow).
 
 ### Customer edge
 
@@ -97,6 +99,19 @@ When an operator creates an L3VPN through the Streamlit catalog:
 7. The operator reviews the diff in the Infrahub UI and merges.
 
 See [services/l3vpn](./services/l3vpn.mdx) for the full service reference.
+
+## PE onboarding flow
+
+Adding a PE router follows the same pattern as an L3VPN. The operator submits
+the catalog's **Add PE** page or runs `uv run invoke demo-add-device`. Either
+one opens a `backbone/add-pe-<name>-<hex>` branch, creates a
+`TopologyPeOnboarding` request and adds it to the `pe_onboardings` group. The
+group trigger runs `PeOnboardingGenerator` on the branch. The generator creates
+the device, its loopback, a core link to each uplink, IS-IS, LDP and an iBGP
+session with every other PE. Then the artifacts are rendered on the branch and
+a proposed change opens into `main`. `uv run invoke lab.deploy --branch
+<branch>` boots the proposed change in containerlab before it is merged. See
+[Add a PE router](./backbone/add-pe.mdx).
 
 ## Transform layer
 

@@ -16,6 +16,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'services/l3vpn',
         'services/sdwan',
+        'backbone/add-pe',
         'lab/containerlab',
       ],
     },

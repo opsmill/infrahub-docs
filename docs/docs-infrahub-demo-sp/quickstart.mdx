@@ -145,7 +145,29 @@ uv run invoke batfish
 See [validation/batfish](./validation/batfish.mdx) for what each
 finding means and how severity is tiered.
 
-## 6. (Optional) Bring up the containerlab
+## 6. Add a PE router as a proposed change
+
+```bash
+uv run invoke demo-add-device
+```
+
+This adds a PE router to the backbone the way the catalog's **Add PE** page
+does. It opens a branch, creates the router with its loopback, core links,
+IS-IS, LDP and iBGP sessions to every other PE, and opens a proposed change
+into `main`. On the default **financial** dataset the new router is `pe-09`,
+linked to `pe-01` and `pe-02`. The command ends with a link to the proposed
+change, where the checks run and the configuration diffs show, and with the
+command that boots the change in the lab (step 7).
+
+See [Add a PE router](./backbone/add-pe.mdx) for the options and what each
+step creates.
+
+## 7. (Optional) Bring up the containerlab
+
+```bash
+uv run invoke lab.deploy                     # the backbone on main
+uv run invoke lab.deploy --branch <branch>   # a proposed change, before merging
+```
 
 See [`lab/containerlab`](./lab/containerlab.mdx).
 

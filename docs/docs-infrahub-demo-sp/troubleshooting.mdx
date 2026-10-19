@@ -117,12 +117,16 @@ the configuration files agree.
 
 ---
 
-## LDP does not start, so inter-site VPN traffic fails
+## Customer sites of one VPN cannot reach each other
 
-**Symptom:** Every prefix is exchanged correctly — IS-IS is up, the iBGP mesh is
-up, PE-CE eBGP is up, and each PE holds the customer prefixes in the right VRF —
-but a host on one customer site cannot reach the same customer's other site. On
-any PE:
+**Symptom:** IS-IS is up, the iBGP mesh is up and PE-CE eBGP is up, but a host
+on one customer site cannot reach the same customer's other site. Two separate
+configuration defects produced this, and both are fixed in the PE templates.
+If you see it again, check for each of them in turn.
+
+### LDP is shut down on every PE
+
+On any PE:
 
 ```text
 show mpls ldp neighbor
@@ -130,27 +134,42 @@ show mpls ldp neighbor
 ! LDP is not enabled
 ```
 
-**Cause:** Not a configuration defect. The rendered PE configuration contains the
-full `mpls ldp` block, including `no shutdown` and the per-interface statements,
-and it pushes without error — but cEOS never starts the LDP agent. It appears
-to be a limitation of the cEOS-lab image rather than something the configuration
-can influence.
+The remote VPN routes reach each PE but are not marked valid (`*`) in
+`show bgp vpn-ipv4`, because without LDP there is no label path to the remote
+PE.
 
-**Consequence:** An L3VPN needs an MPLS label path between PEs to carry VPN
-traffic. Without LDP there is no transport, so VPNv4 routes cannot be used for
-forwarding even though BGP has exchanged them. The control plane is complete and
-demonstrable; the data plane between sites is not.
+**Cause:** EOS has no `interface` sub-command under `mpls ldp`. An
+`interface Loopback0` line inside that block moves the parser into the
+interface's own configuration mode, so the `no shutdown` after it applies to
+the last interface listed instead of to LDP. LDP stays in its default shutdown
+state. `show running-config section mpls ldp` shows the block without its
+`interface` lines and without `no shutdown`.
 
-**What still works:** everything up to the label path — IS-IS adjacencies, the
-full iBGP mesh, PE-CE eBGP, VRF route import/export, and customer LAN
-reachability *within* a site (host to its own CE gateway over the tagged VLAN).
+**Fix:** `templates/pe_arista_eos.j2` no longer renders `interface` lines
+under `mpls ldp`. LDP runs on each core interface because the interface
+carries `mpls ip`. Confirmed on cEOS 4.36.0.1F with nine PEs: every core link
+forms an LDP session.
 
-**Fix:** Unverified. This was diagnosed against cEOS 4.29.0.2F (which reports
-itself as 4.28.9M), whose LDP agent never starts. The lab now runs 4.36.0.1F, so
-the gap may already be closed — if you can confirm either way on a real deploy
-(which needs an x86_64 host), update this page. To test another build,
-point `CEOS_IMAGE` at it (`CEOS_IMAGE=<image> uv run invoke lab.deploy`). Segment routing instead of LDP would
-be the other option, and a larger change.
+### The PE does not send routes from a site with the same customer AS
+
+LDP is up, and the remote site's prefixes are installed in the VRF on the PE, but
+the CE does not receive them. `show ip bgp neighbors <pe> received-routes` on
+the CE lists only routes whose AS path does not contain the AS of the CE itself.
+
+**Cause:** both sites of a VPN use the same customer AS (on the **financial**
+dataset, 65100 for the trading VPN and 65101 for the IB VPN). The routes from
+the far site carry that AS in their AS path, so the PE does not advertise them
+to a CE in the same AS.
+
+**Fix:** each PE template sets as-override on every CE neighbor, so the PE
+replaces the customer AS with its own AS in the routes it sends to the CE:
+
+- Arista EOS: `neighbor <ce> as-path remote-as replace out`
+- Cisco IOS-XR: `as-override` under the neighbor's `address-family ipv4 unicast`
+- Juniper Junos: `as-override` in the neighbor block
+- Nokia SR OS: `as-override true` in the neighbor block
+
+The Nokia SR Linux lab configuration has no PE-CE BGP, so it is not affected.
 
 ---
 
