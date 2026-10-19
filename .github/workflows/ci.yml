@@ -111,7 +111,7 @@ jobs:
       needs.files-changed.outputs.documentation == 'true'
     needs: ["files-changed", "yaml-lint", "python-lint", "markdown-lint"]
     runs-on: ubuntu-22.04
-    timeout-minutes: 5
+    timeout-minutes: 15
     outputs:
       build-status: ${{ job.status }}
     steps:
@@ -128,7 +128,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: docs/package-lock.json
       - name: Install Node dependencies
-        run: npm install
+        run: npm ci
       - name: Install uv
         uses: "astral-sh/setup-uv@v7"
         with:
