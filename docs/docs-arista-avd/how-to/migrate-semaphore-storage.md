@@ -12,9 +12,9 @@ procedure once when upgrading an existing checkout whose Semaphore container sto
 the container filesystem.
 
 The start, stop, and initialization commands check the existing container and stop with a migration
-message if its UID/GID or persistent mounts do not match. This prevents Compose's `down` operation
-from removing an unmigrated container and its SQLite database. They leave its files and report
-directory unchanged when that check fails.
+message if its UID/GID or persistent mounts do not match. This prevents a `docker compose down`
+operation from removing the container before its SQLite database has been migrated. Its files and
+report directory remain unchanged when that check fails.
 
 ## Prepare and back up
 
