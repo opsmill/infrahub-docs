@@ -51,5 +51,9 @@ https://telemetry.opsmill.cloud/infrahub
 # GitHub adds the #readme anchor with JavaScript, so it is not in the HTML
 ^https://github\.com/[^/]+/[^/]+#readme$
 
+# GitHub issue and pull request links, mostly from release notes. There are
+# hundreds of them and github.com rate-limits requests to them.
+^https://github\.com/[^/]+/[^/]+/(issues|pull)/
+
 # Anchor links that may be dynamically generated
 #.*

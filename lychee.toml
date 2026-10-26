@@ -7,8 +7,10 @@ max_concurrency = 10
 # Request timeout in seconds
 timeout = 30
 
-# Maximum number of retries for failed requests
-max_retries = 2
+# Maximum number of retries for failed requests. The wait between retries
+# doubles each time, which gives rate-limited hosts such as github.com time
+# to recover.
+max_retries = 4
 
 # User agent string
 user_agent = "Mozilla/5.0 (compatible; lychee link checker)"
@@ -66,3 +68,8 @@ exclude = [
 # CI passes --remap to check https://docs.infrahub.app links against the
 # locally served build, for example:
 # remap = ["^https://docs\\.infrahub\\.app http://localhost:3000"]
+
+# github.com answers bursts of requests with 429, so space them out
+[hosts."github.com"]
+concurrency = 2
+request_interval = "500ms"
