@@ -40,6 +40,9 @@ https://registry.npmjs.org
 # Returns 429 to automated requests (Cloudflare bot challenge)
 ^https://docs\.ansible\.com/
 
+# Schema library v2.0.0 release notes: opsmill/schema-library has no v2.0.0 tag
+^https://github\.com/opsmill/schema-library/compare/v1\.4\.11\.\.\.v2\.0\.0$
+
 # Telemetry API endpoint listed as a configuration default, not a page
 https://telemetry.opsmill.cloud/infrahub
 
