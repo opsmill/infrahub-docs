@@ -20,7 +20,23 @@ The Helm chart approach offers several advantages over running `infrahub-backup`
 
 For Kubernetes deployments using HA PostgreSQL, `infrahub-backup` supports [CloudNativePG](https://cloudnative-pg.io/) clusters. CloudNativePG is the only supported HA PostgreSQL operator.
 
-When multiple `task-manager-db` pods are detected, the tool automatically identifies the primary instance using the `cnpg.io/instanceRole` pod label and targets it for backup and restore operations. No additional configuration is required — HA detection is transparent.
+When multiple `task-manager-db` pods are detected, the tool automatically identifies the primary instance using the `cnpg.io/instanceRole` pod label and targets it for backup and restore operations.
+
+The tool finds the CloudNativePG pods by their `infrahub/service: task-manager-db` label. CloudNativePG copies the labels set in the Cluster's `spec.inheritedMetadata` to every instance pod, as in the [Infrahub high availability deployment](https://docs.infrahub.app/deploy-manage/install-configure/production-deployment/high-availability) example:
+
+```yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: taskmanagerdb
+spec:
+  instances: 3
+  inheritedMetadata:
+    labels:
+      infrahub/service: task-manager-db
+```
+
+CloudNativePG also labels every instance pod `app.kubernetes.io/component: database`, the same value as the Neo4j service name. The tool checks `infrahub/service` before that label, so label the Neo4j pods `infrahub/service: database`, as the high availability example does. A Neo4j installed from the Neo4j Helm chart is also found by that chart's own pod label. See [Kubernetes pod detection](../reference/configuration.mdx#kubernetes-pod-detection) for the full lookup order.
 
 :::info
 If you are using a different PostgreSQL HA operator, you must ensure a single `task-manager-db` pod is available during backup and restore operations.

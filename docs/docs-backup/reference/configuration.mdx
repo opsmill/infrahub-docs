@@ -103,6 +103,20 @@ Detection command:
 docker compose ls --filter "name=*infrahub*"
 ```
 
+### Kubernetes pod detection
+
+For each service, the tool tries these label selectors in order and uses the first one that returns pods:
+
+1. `infrahub/service=<service>`. The Infrahub Helm chart and the [Infrahub high availability deployment](https://docs.infrahub.app/deploy-manage/install-configure/production-deployment/high-availability) example set this label on every component.
+2. For the `database` service only, `helm.neo4j.com/pod_category=neo4j-instance`, which the Neo4j Helm chart sets on every Neo4j server pod.
+3. `app.kubernetes.io/component=<service>`, then `app=<service>`, then `component=<service>`.
+
+If no selector returns pods, the tool uses the pods whose name contains the service name.
+
+Other software in the namespace can set the labels in step 3 to the same values. For example, CloudNativePG labels its PostgreSQL pods `app.kubernetes.io/component=database`, the same value as the Neo4j service name. Set `infrahub/service` on the pods of every Infrahub service, so the tool finds them in step 1.
+
+When several pods match and the tool needs one, it uses the pod labelled `cnpg.io/instanceRole=primary` or `role=primary`, and otherwise the first pod.
+
 ### Database credential detection
 
 For Docker Compose deployments:

@@ -23,7 +23,7 @@ Infrahub Backup supports high availability (HA) deployments on both Kubernetes a
 
 ## Community edition support
 
-Infrahub Backup works with Infrahub Community Edition as well as Enterprise deployments. A backup against Community Edition stops the Infrahub service while the snapshot is taken, so plan for a short interruption. A restore must target the same edition that produced the backup — Enterprise backups cannot be restored to Community Edition.
+Infrahub Backup works with Infrahub Community Edition as well as Enterprise deployments. A backup against Community Edition stops the Infrahub service while the snapshot is taken, so plan for a short interruption. The tool queries the Neo4j edition before the backup starts. If the query fails, the backup stops with an error before any service is stopped. A restore must target the same edition that produced the backup — Enterprise backups cannot be restored to Community Edition.
 
 ## Best practices
 
