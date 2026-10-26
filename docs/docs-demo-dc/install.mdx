@@ -125,6 +125,13 @@ Enable and configure the optional Service Catalog Streamlit application:
 # The service catalog provides a web UI for managing data center deployments
 INFRAHUB_SERVICE_CATALOG=false
 
+# Build the service catalog image from this checkout instead of pulling the published
+# image (registry.opsmill.io/opsmill/infrahub-demo-dc-streamlit)
+# Set to "true" to build locally and mount the sources for live editing
+# `uv run invoke start --rebuild` does the same for one run
+# Default: false
+INFRAHUB_SERVICE_CATALOG_BUILD=false
+
 # Default branch to use when the service catalog application starts
 # Default: main
 DEFAULT_BRANCH=main

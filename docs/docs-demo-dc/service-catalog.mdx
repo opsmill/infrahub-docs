@@ -36,7 +36,7 @@ The Service Catalog is an optional component that simplifies infrastructure prov
 
 ## Step 1: enable the service catalog
 
-The Service Catalog runs as a separate Docker container that can be enabled through environment variables or Docker Compose profiles.
+The Service Catalog runs as a separate Docker container that can be enabled through environment variables or Docker Compose profiles. The container runs the published image `registry.opsmill.io/opsmill/infrahub-demo-dc-streamlit`, so there is nothing to build.
 
 <Tabs>
   <TabItem value="env" label="Environment Variables (Recommended)">
@@ -65,6 +65,16 @@ docker-compose --profile service-catalog up -d
 
   </TabItem>
 </Tabs>
+
+### Build the image from your checkout
+
+To change the files under `service_catalog/`, build the image locally instead of pulling it. Either set `INFRAHUB_SERVICE_CATALOG_BUILD=true` in your `.env` file, or run:
+
+```bash
+uv run invoke start --rebuild
+```
+
+This builds the image from the repository and mounts the sources into the container, so edits show up without a rebuild.
 
 ### Verify the container is running
 
