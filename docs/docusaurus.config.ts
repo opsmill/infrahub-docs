@@ -5,6 +5,7 @@ import globalVars from './globalVars';
 import path from 'path';
 import { redirects_migration } from './redirects-doc-migration';
 import { redirects_academy_to_learn } from './redirects-academy-to-learn';
+import { redirects_backup_guides } from './redirects-backup-guides';
 
 function getDocsRelative(filePath) {
   const rootDocsDir = path.join(process.cwd(), 'docs');
@@ -131,6 +132,8 @@ const config: Config = {
           ...redirects_migration,
           // "academy" section renamed to "learn"
           ...redirects_academy_to_learn,
+          // Infrahub Backup "guides" pages moved to "backup" and "collect"
+          ...redirects_backup_guides,
         ],
       },
     ],
