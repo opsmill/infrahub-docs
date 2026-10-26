@@ -37,6 +37,8 @@ https://linkedin.com
 
 # URLs that commonly have rate limiting
 https://registry.npmjs.org
+# Returns 429 to automated requests (Cloudflare bot challenge)
+^https://docs\.ansible\.com/
 
 # Telemetry API endpoint listed as a configuration default, not a page
 https://telemetry.opsmill.cloud/infrahub
