@@ -39,6 +39,8 @@ https://linkedin.com
 https://registry.npmjs.org
 # Returns 429 to automated requests (Cloudflare bot challenge)
 ^https://docs\.ansible\.com/
+# Limits unauthenticated requests per IP address, so shared CI runners get 429
+^https://gitlab\.com/
 
 # Schema library v2.0.0 release notes: opsmill/schema-library has no v2.0.0 tag
 ^https://github\.com/opsmill/schema-library/compare/v1\.4\.11\.\.\.v2\.0\.0$
