@@ -293,14 +293,14 @@ The repository uses GitHub Actions for CI/CD:
   - Runs appropriate linters (ruff, yamllint, markdownlint)
   - Builds documentation with Node.js 20
   - Updates submodules before build
-  - Link checking (currently disabled)
+  - Checks links with Lychee against the locally served build
 
 **Key CI Steps**:
 
 1. File change detection via `opsmill/paths-filter`
 2. Parallel linting jobs for Python and YAML (if files changed)
 3. Documentation build job (depends on lint jobs passing)
-4. Link checking with Lychee (disabled, can be re-enabled)
+4. Link checking with Lychee (depends on the documentation build passing); full `https://docs.infrahub.app` URLs are remapped to the local server
 
 ### Deployment
 
