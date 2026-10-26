@@ -141,14 +141,12 @@ jobs:
   # Link checking job
   check-links:
     name: Check documentation links
-    # TEMPORARILY DISABLED
-    if: false
-    # if: |
-    #   always() && !cancelled() &&
-    #   !contains(needs.*.result, 'failure') &&
-    #   !contains(needs.*.result, 'cancelled') &&
-    #   needs.files-changed.outputs.documentation == 'true' &&
-    #   needs.documentation.outputs.build-status == 'success'
+    if: |
+      always() && !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.files-changed.outputs.documentation == 'true' &&
+      needs.documentation.outputs.build-status == 'success'
     needs: ["files-changed", "documentation"]
     runs-on: ubuntu-22.04
     timeout-minutes: 20
@@ -200,7 +198,7 @@ jobs:
           args: |
             --no-progress
             --config ./lychee.toml
-            --remap 'https://docs.infrahub.app http://localhost:3000'
+            --remap '^https://docs\.infrahub\.app http://localhost:3000'
             $(sitemap2urllist http://localhost:3000/sitemap.xml | sed 's,https://docs.infrahub.app,http://localhost:3000,g')
           fail: true
           jobSummary: true

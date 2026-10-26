@@ -5,6 +5,8 @@
 http://localhost:8000
 http://localhost:8080
 http://localhost:8501
+# Grafana from the observability stack guide
+http://localhost:3500
 
 # Example domains
 http://example.com
@@ -35,6 +37,12 @@ https://linkedin.com
 
 # URLs that commonly have rate limiting
 https://registry.npmjs.org
+
+# Telemetry API endpoint listed as a configuration default, not a page
+https://telemetry.opsmill.cloud/infrahub
+
+# GitHub adds the #readme anchor with JavaScript, so it is not in the HTML
+^https://github\.com/[^/]+/[^/]+#readme$
 
 # Anchor links that may be dynamically generated
 #.*
