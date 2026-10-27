@@ -35,8 +35,8 @@ List available backups in your S3 bucket:
 # AWS S3
 aws s3 ls s3://my-infrahub-backups/
 
-# MinIO
-mc ls myminio/my-infrahub-backups/
+# S3-compatible storage, using the mc client
+mc ls mys3/my-infrahub-backups/
 ```
 
 Note the exact filename of the backup you want to restore, for example:

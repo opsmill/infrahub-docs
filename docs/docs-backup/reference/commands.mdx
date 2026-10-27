@@ -23,7 +23,7 @@ These flags apply to all infrahub-backup commands:
 | `--log-format <text\|json>` | Output format for logs | `text` | `INFRAHUB_LOG_FORMAT` |
 | `--s3-bucket <name>` | S3 bucket name for backup storage | - | `INFRAHUB_S3_BUCKET` |
 | `--s3-prefix <path>` | S3 key prefix (path within bucket) | - | `INFRAHUB_S3_PREFIX` |
-| `--s3-endpoint <url>` | Custom S3 endpoint URL (for MinIO) | - | `INFRAHUB_S3_ENDPOINT` |
+| `--s3-endpoint <url>` | Custom S3 endpoint URL (for S3-compatible storage) | - | `INFRAHUB_S3_ENDPOINT` |
 | `--s3-region <region>` | AWS region for S3 bucket | `us-east-1` | `INFRAHUB_S3_REGION` |
 | `--help, -h` | Show help for any command | - | - |
 
@@ -139,8 +139,8 @@ infrahub-backup restore --latest --s3 --s3-bucket my-backups --s3-prefix infrahu
 # Restore from S3
 infrahub-backup restore s3://my-backups/infrahub/prod/infrahub_backup_20250929_143022.tar.gz
 
-# Restore from MinIO
-infrahub-backup restore --s3-endpoint http://minio.local:9000 s3://my-backups/infrahub_backup_20250929_143022.tar.gz
+# Restore from S3-compatible storage
+infrahub-backup restore --s3-endpoint https://s3.example.com s3://my-backups/infrahub_backup_20250929_143022.tar.gz
 
 # Restore when the task manager database was excluded from the backup
 infrahub-backup restore infrahub_backup_20251022_120000.tar.gz --exclude-taskmanager

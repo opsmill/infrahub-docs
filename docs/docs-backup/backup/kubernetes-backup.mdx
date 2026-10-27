@@ -205,7 +205,7 @@ The chart works with any S3-compatible storage:
 | Provider | Endpoint Example |
 |----------|------------------|
 | AWS S3 | `https://s3.amazonaws.com` |
-| MinIO | `https://minio.example.com` |
+| Other S3-compatible storage | `https://s3.example.com` |
 
 </TabItem>
 <TabItem value="local" label="Local Storage">
@@ -315,8 +315,8 @@ Verify the backup exists in your S3 bucket:
 # Using AWS CLI
 aws s3 ls s3://my-infrahub-backups/
 
-# Using MinIO client
-mc ls myminio/my-infrahub-backups/
+# Using the mc client
+mc ls mys3/my-infrahub-backups/
 ```
 
 ### Validate backup integrity

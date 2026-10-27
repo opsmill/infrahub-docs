@@ -101,12 +101,12 @@ infrahub-backup restore s3://my-backups/infrahub/prod/infrahub_backup_20250929_1
 ```
 
 </TabItem>
-<TabItem value="minio" label="MinIO">
+<TabItem value="s3-compatible" label="S3-compatible">
 
 ```bash
-# Restore from MinIO or S3-compatible storage
+# Restore from S3-compatible storage
 infrahub-backup restore \
-  --s3-endpoint http://minio.local:9000 \
+  --s3-endpoint https://s3.example.com \
   s3://my-backups/infrahub_backup_20250929_143022.tar.gz
 ```
 

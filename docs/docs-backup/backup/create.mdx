@@ -231,7 +231,7 @@ fi
 
 ### S3 backup storage
 
-Upload backups directly to S3 or S3-compatible storage (like MinIO):
+Upload backups directly to S3 or S3-compatible storage:
 
 <Tabs>
 <TabItem value="aws-s3" label="AWS S3" default>
@@ -245,13 +245,13 @@ infrahub-backup create --s3-upload --s3-bucket my-backups --s3-keep-local
 ```
 
 </TabItem>
-<TabItem value="minio" label="MinIO">
+<TabItem value="s3-compatible" label="S3-compatible">
 
 ```bash
-# Upload to MinIO or S3-compatible storage
+# Upload to S3-compatible storage
 infrahub-backup create --s3-upload \
   --s3-bucket my-backups \
-  --s3-endpoint http://minio.local:9000 \
+  --s3-endpoint https://s3.example.com \
   --s3-region us-east-1
 ```
 
