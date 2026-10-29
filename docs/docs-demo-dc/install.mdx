@@ -296,15 +296,20 @@ uv run infrahubctl object load objects/bootstrap
 # 4. Load security data (optional)
 uv run infrahubctl object load objects/security/
 
-# 5. Populate security relationships (optional, required if you loaded security data)
-uv run python scripts/populate_security_relationships.py
+# 5. Load the demo accounts, roles and permissions
+uv run infrahubctl object load objects/rbac/
 
 # 6. Add the demo repository
-uv run infrahubctl repository add DEMO https://github.com/opsmill/infrahub-demo-dc.git --read-only --ref main
+uv run infrahubctl object load objects/git-repo/github.yml
 
-# 7. Load event actions (optional, enables automatic generator execution)
+# 7. Check the import of the repository: repeat until the Sync status column shows in-sync
+uv run infrahubctl repository list
+
+# 8. Load event actions (optional, enables automatic generator execution)
 uv run infrahubctl object load objects/events/
 ```
+
+The event actions run the generators that Infrahub imports from the repository, so load them only after the import has ended. A sync status that starts with `error` means the import failed.
 
   </TabItem>
 </Tabs>
@@ -312,6 +317,20 @@ uv run infrahubctl object load objects/events/
 :::tip
 Loading schemas and data can take several minutes. Watch the console output to monitor progress.
 :::
+
+### Build the demo on an Infrahub that already runs
+
+To load the demo into an empty Infrahub that runs elsewhere, for example a public sandbox, point the variables at it and run `sandbox-setup`:
+
+```bash
+export INFRAHUB_ADDRESS=https://infrahub.example.com
+export INFRAHUB_API_TOKEN=<token>
+uv run invoke sandbox-setup
+```
+
+`sandbox-setup` runs the same steps as `uv run invoke bootstrap` on the `main` branch and starts no container. It waits until Infrahub has imported the repository before it loads the event actions, and stops if the import fails. To register a fork or another ref, set `INFRAHUB_REPO_URL` and `INFRAHUB_REPO_REF` before the first bootstrap.
+
+Reruns must use the existing repository's kind, URL and ref. Bootstrap rejects changes to these settings before loading the repository or event actions: an existing `in-sync` status does not prove the new configuration was imported. Restore the settings to match the repository shown in Infrahub, or use a fresh Infrahub instance for a different configuration.
 
 ## Step 8: verify the installation
 
