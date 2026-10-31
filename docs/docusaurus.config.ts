@@ -285,6 +285,10 @@ const config: Config = {
         routeBasePath: 'backup',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-backup.ts',
+        // A function, not a string: a string editUrl gets this repo's
+        // docs-backup/ path appended, which does not exist in the source repo.
+        editUrl: ({ docPath }) =>
+          `https://github.com/opsmill/infrahub-backup/edit/main/docs/docs/${docPath}`,
       },
     ],
     [
