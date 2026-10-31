@@ -133,7 +133,9 @@ Vale style checks run in the source repositories, not here. This repository has 
 ### Navbar
 
 - Sections are grouped into navbar dropdowns: Tools & SDKs, Integrations, Demos and Reference Designs. Each entry is a `docSidebar` item that names a `docsPluginId` and a `sidebarId`.
-- The GitHub icon is a custom navbar item (`type: "custom-githubRepoLink"`) defined in `docs/src/components/GitHubRepoNavbarItem.tsx`. It links to the source repository of the section being viewed, looked up by plugin ID in `REPO_BY_PLUGIN_ID`. Pages outside a docs section, and plugin IDs missing from the map, link to `opsmill/infrahub`.
+- The GitHub icon is a custom navbar item (`type: "custom-githubRepoLink"`) defined in `docs/src/components/GitHubRepoNavbarItem.tsx`. It links to the repository that holds the page being viewed:
+  - Docs pages link to the repository mapped to their plugin ID in `REPO_BY_PLUGIN_ID`. A plugin ID missing from the map links to `opsmill/infrahub`.
+  - The landing page (`/`), the Integrations section, and pages that are not docs (such as `/labs` and the 404 page) link to `opsmill/infrahub-docs`. The landing page text is synced from `opsmill/infrahub`, but its components in `docs/src/components/HomePage/` are maintained here.
 
 ### Environment Variables
 
