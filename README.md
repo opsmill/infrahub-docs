@@ -261,7 +261,7 @@ import sidebars<ProjectName> from "./sidebars-<projectname>";
     path: "docs-<projectname>",
     routeBasePath: "<projectname>",
     sidebarPath: "./sidebars-<projectname>.ts",
-    editUrl: "https://github.com/opsmill/<source-repo>/tree/main/docs",
+    editUrl: editUrlFor("<projectname>"),
   },
 ],
 ```
@@ -280,15 +280,20 @@ import sidebars<ProjectName> from "./sidebars-<projectname>";
 
 Or add to an existing dropdown menu if appropriate.
 
-#### Step 3: Map the section to its GitHub repository
+#### Step 3: Register the section's source in `docs/doc-sources.ts`
 
-Add the plugin ID and the source repository name to `REPO_BY_PLUGIN_ID` in `docs/src/components/GitHubRepoNavbarItem.tsx`:
+Add the plugin ID to `DOC_SOURCES` in `docs/doc-sources.ts`:
 
 ```typescript
-'<plugin-id>': '<source-repo>',
+'<plugin-id>': { repo: '<source-repo>', branch: 'main', contentDir: 'docs/docs' },
 ```
 
-The GitHub icon in the site header uses this map to link to the repository of the section being viewed. Without an entry, the icon on the new section links to `opsmill/infrahub`.
+- `branch` is the branch the source repository's `sync-docs.yml` runs on, usually `main` or `stable`.
+- `contentDir` is the folder the sync workflow copies from, usually `docs/docs`.
+
+This entry sets the "Edit this page" links on the section, through `editUrlFor()` in the plugin configuration, and the GitHub icon in the site header. The build fails until the entry exists.
+
+Do not use a plain string for `editUrl`. Docusaurus adds the file's path in this repository, for example `docs-<projectname>/guide.mdx`, which does not exist in the source repository.
 
 ### Part 3: Final Setup
 

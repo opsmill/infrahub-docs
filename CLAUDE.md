@@ -35,7 +35,7 @@ Each section is a `@docusaurus/plugin-content-docs` instance in `docs/docusaurus
 | AI data center reference design | `docs-infrahub-solution-ai-dc` | `docs/docs-infrahub-solution-ai-dc/` | `/infrahub-solution-ai-dc` | `opsmill/infrahub-solution-ai-dc` |
 | Arista AVD reference design | `docs-arista-avd` | `docs/docs-arista-avd/` | `/arista-avd` | `opsmill/infrahub-arista-avd` |
 
-Keep this table, the plugin list in `docs/docusaurus.config.ts` and `REPO_BY_PLUGIN_ID` in `docs/src/components/GitHubRepoNavbarItem.tsx` in step with each other.
+`docs/doc-sources.ts` records each section's source as `DOC_SOURCES`: repository, branch and content folder, keyed by plugin ID. It sets the "Edit this page" links and the header GitHub icon. Keep this table, the plugin list in `docs/docusaurus.config.ts` and `DOC_SOURCES` in step with each other.
 
 ### What Each Sync Overwrites
 
@@ -50,6 +50,7 @@ The sync workflows authenticate with a token secret in the source repository, ei
 ### Files Maintained in This Repository
 
 - `docs/docusaurus.config.ts`: plugin definitions, navbar, theme, Algolia search, analytics and redirects
+- `docs/doc-sources.ts`: each docs section's source repository, branch and content folder (`DOC_SOURCES`), and `editUrlFor()`, which builds the "Edit this page" links
 - `docs/redirects-*.ts`: redirect lists passed to `@docusaurus/plugin-client-redirects`
 - `docs/docs-integrations/` and `docs/sidebars-integrations.ts`: the Integrations overview section
 - `docs/src/pages/`: standalone pages, such as `labs.tsx` (`/labs`), with its data in `docs/src/data/labs.ts`
@@ -134,7 +135,7 @@ Vale style checks run in the source repositories, not here. This repository has 
 
 - Sections are grouped into navbar dropdowns: Tools & SDKs, Integrations, Demos and Reference Designs. Each entry is a `docSidebar` item that names a `docsPluginId` and a `sidebarId`.
 - The GitHub icon is a custom navbar item (`type: "custom-githubRepoLink"`) defined in `docs/src/components/GitHubRepoNavbarItem.tsx`. It links to the repository that holds the page being viewed:
-  - Docs pages link to the repository mapped to their plugin ID in `REPO_BY_PLUGIN_ID`. A plugin ID missing from the map links to `opsmill/infrahub`.
+  - Docs pages link to the repository listed for their plugin ID in `DOC_SOURCES` (`docs/doc-sources.ts`).
   - The landing page (`/`), the Integrations section, and pages that are not docs (such as `/labs` and the 404 page) link to `opsmill/infrahub-docs`. The landing page text is synced from `opsmill/infrahub`, but its components in `docs/src/components/HomePage/` are maintained here.
 
 ### Environment Variables
@@ -162,14 +163,14 @@ Vale style checks run in the source repositories, not here. This repository has 
 
 2. **In this repository**:
    - Run `python scripts/setup-docs-repo.py --infrahub-docs-repo . --project-name <name> --source-repo-name <github-repo> --display-name "New Project"`. It creates `docs/docs-<name>/readme.mdx` and `docs/sidebars-<name>.ts`, and prints the snippets for the steps below.
-   - Add the plugin to the `plugins` array in `docs/docusaurus.config.ts`, with `id: 'docs-<name>'`, `routeBasePath`, `sidebarPath` and `editUrl` pointing at the source repository.
+   - Add the plugin to the `plugins` array in `docs/docusaurus.config.ts`, with `id: 'docs-<name>'`, `routeBasePath`, `sidebarPath` and `editUrl: editUrlFor('docs-<name>')`. Do not use a plain string for `editUrl`: Docusaurus adds the file's path in this repository (`docs-<name>/...`), which does not exist in the source repository.
    - Add a navbar entry in the right dropdown in `docs/docusaurus.config.ts`.
-   - **Add the plugin ID and the GitHub repository name to `REPO_BY_PLUGIN_ID` in `docs/src/components/GitHubRepoNavbarItem.tsx`.** Without it, the header GitHub icon on the new section links to `opsmill/infrahub`. Check that the repository is public, so readers do not get a 404.
+   - **Add an entry for the plugin ID to `DOC_SOURCES` in `docs/doc-sources.ts`**, with the source repository, the branch its `sync-docs.yml` runs on (`main` or `stable`) and the folder it copies from (usually `docs/docs`). The "Edit this page" links and the header GitHub icon both use it, and the build fails until it exists. Check that the repository is public, so readers do not get a 404.
    - Add a row to the section table in this file.
 
 3. **Rollout**:
    - Merge the `infrahub-docs` PR first, then the source repository PR.
-   - Check that the sync workflow ran, the section renders, and the GitHub icon on a page in the new section opens the right repository.
+   - Check that the sync workflow ran, the section renders, and on a page in the new section both the GitHub icon and "Edit this page" open the right repository and file.
 
 ### Local Development
 

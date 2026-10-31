@@ -326,7 +326,7 @@ export default sidebars;
         routeBasePath: '{project_name}',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-{project_name}.ts',
-        editUrl: 'https://github.com/opsmill/{source_repo}/tree/main/docs',
+        editUrl: editUrlFor('docs-{project_name}'),
       }},
     ],"""
 
@@ -338,8 +338,8 @@ export default sidebars;
               docsPluginId: "docs-{project_name}",
             }},"""
 
-    # Generate the GitHub navbar icon mapping entry
-    repo_map_entry = f"  'docs-{project_name}': '{source_repo}',"
+    # Generate the docs/doc-sources.ts entry used for edit links and the GitHub icon
+    doc_source_entry = f"  'docs-{project_name}': {{ repo: '{source_repo}', branch: 'main', contentDir: 'docs/docs' }},"
 
     print("\n" + "=" * 60)
     print("Placeholder files created!")
@@ -353,10 +353,12 @@ export default sidebars;
     print("-" * 40)
     print(navbar_entry)
     print("-" * 40)
-    print("\n3. Add this entry to REPO_BY_PLUGIN_ID in docs/src/components/GitHubRepoNavbarItem.tsx")
-    print("   so the header GitHub icon links to the source repository:")
+    print("\n3. Add this entry to DOC_SOURCES in docs/doc-sources.ts. It sets the")
+    print("   'Edit this page' links and the header GitHub icon. Set 'branch' to the")
+    print("   branch the source repo's sync-docs.yml runs on (main or stable).")
+    print("   The build fails until this entry exists.")
     print("-" * 40)
-    print(repo_map_entry)
+    print(doc_source_entry)
     print("-" * 40)
 
     # Optionally try to auto-insert (with user confirmation)
@@ -411,7 +413,7 @@ def insert_plugin_config(
         print("  WARNING: Could not find plugin insertion marker")
 
     print("\n  NOTE: Navbar entry must be added manually to the appropriate location")
-    print("  NOTE: REPO_BY_PLUGIN_ID entry must be added manually to docs/src/components/GitHubRepoNavbarItem.tsx")
+    print("  NOTE: DOC_SOURCES entry must be added manually to docs/doc-sources.ts")
     print(f"  Suggested dropdown: {navbar_dropdown or 'top-level or new dropdown'}")
 
 
