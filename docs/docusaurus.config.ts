@@ -6,6 +6,7 @@ import path from 'path';
 import { redirects_migration } from './redirects-doc-migration';
 import { redirects_academy_to_learn } from './redirects-academy-to-learn';
 import { redirects_backup_guides } from './redirects-backup-guides';
+import { editUrlFor } from './doc-sources';
 
 function getDocsRelative(filePath) {
   const rootDocsDir = path.join(process.cwd(), 'docs');
@@ -67,7 +68,7 @@ const config: Config = {
           routeBasePath: "/",
           sidebarCollapsed: true,
           sidebarPath: "./sidebars.ts",
-          editUrl: "https://github.com/opsmill/infrahub/tree/stable/docs",
+          editUrl: editUrlFor('default'),
           exclude: ["**/AGENTS.md", "tutorials/getting-started/**"],
         },
         blog: false,
@@ -141,6 +142,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-demo-dc',
+        editUrl: editUrlFor('docs-demo-dc'),
         path: 'docs-demo-dc',
         routeBasePath: 'demo-dc',
         sidebarCollapsed: false,
@@ -151,6 +153,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-emma',
+        editUrl: editUrlFor('docs-emma'),
         path: 'docs-emma',
         routeBasePath: 'emma',
         sidebarCollapsed: false,
@@ -161,6 +164,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-vscode',
+        editUrl: editUrlFor('docs-vscode'),
         path: 'docs-vscode',
         routeBasePath: 'vscode',
         sidebarCollapsed: false,
@@ -171,6 +175,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-nornir',
+        editUrl: editUrlFor('docs-nornir'),
         path: 'docs-nornir',
         routeBasePath: 'nornir',
         sidebarCollapsed: false,
@@ -181,6 +186,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-sync',
+        editUrl: editUrlFor('docs-sync'),
         path: 'docs-sync',
         routeBasePath: 'sync',
         sidebarCollapsed: false,
@@ -191,6 +197,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-ansible',
+        editUrl: editUrlFor('docs-ansible'),
         path: 'docs-ansible',
         routeBasePath: 'ansible',
         sidebarCollapsed: false,
@@ -201,6 +208,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-schema-library',
+        editUrl: editUrlFor('docs-schema-library'),
         path: 'docs-schema-library',
         routeBasePath: 'schema-library',
         sidebarCollapsed: false,
@@ -211,6 +219,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-python-sdk',
+        editUrl: editUrlFor('docs-python-sdk'),
         path: 'docs-python-sdk/python-sdk',
         routeBasePath: 'python-sdk',
         sidebarCollapsed: false,
@@ -221,6 +230,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'infrahubctl',
+        editUrl: editUrlFor('infrahubctl'),
         path: 'docs-python-sdk/infrahubctl',
         routeBasePath: 'infrahubctl',
         sidebarCollapsed: false,
@@ -231,6 +241,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-service-catalog',
+        editUrl: editUrlFor('docs-service-catalog'),
         path: 'docs-service-catalog',
         routeBasePath: 'demo-service-catalog',
         sidebarCollapsed: false,
@@ -241,6 +252,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-exporter',
+        editUrl: editUrlFor('docs-exporter'),
         path: 'docs-exporter',
         routeBasePath: 'exporter',
         sidebarCollapsed: false,
@@ -251,6 +263,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-mcp',
+        editUrl: editUrlFor('docs-mcp'),
         path: 'docs-mcp',
         routeBasePath: 'mcp',
         sidebarCollapsed: false,
@@ -261,6 +274,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-ai-skills',
+        editUrl: editUrlFor('docs-ai-skills'),
         path: 'docs-ai-skills',
         routeBasePath: 'skills',
         sidebarCollapsed: false,
@@ -271,6 +285,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-integrations',
+        editUrl: editUrlFor('docs-integrations'),
         path: 'docs-integrations',
         routeBasePath: 'integrations',
         sidebarCollapsed: false,
@@ -281,6 +296,7 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-backup',
+        editUrl: editUrlFor('docs-backup'),
         path: 'docs-backup',
         routeBasePath: 'backup',
         sidebarCollapsed: false,
@@ -291,44 +307,44 @@ const config: Config = {
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-infrahub-solution-ai-dc',
+        editUrl: editUrlFor('docs-infrahub-solution-ai-dc'),
         path: 'docs-infrahub-solution-ai-dc',
         routeBasePath: 'infrahub-solution-ai-dc',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-solution-ai-dc.ts',
-        editUrl: 'https://github.com/opsmill/infrahub-solution-ai-dc/tree/main/docs',
       },
     ],
     [
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-arista-avd',
+        editUrl: editUrlFor('docs-arista-avd'),
         path: 'docs-arista-avd',
         routeBasePath: 'arista-avd',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-arista-avd.ts',
-        editUrl: 'https://github.com/opsmill/infrahub-arista-avd/tree/main/docs',
       },
     ],
     [
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-infrahub-demo-sp',
+        editUrl: editUrlFor('docs-infrahub-demo-sp'),
         path: 'docs-infrahub-demo-sp',
         routeBasePath: 'infrahub-demo-sp',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-infrahub-demo-sp.ts',
-        editUrl: 'https://github.com/opsmill/infrahub-demo-sp/tree/main/docs',
       },
     ],
     [
       '@docusaurus/plugin-content-docs',
       {
         id: 'docs-demo-otn',
+        editUrl: editUrlFor('docs-demo-otn'),
         path: 'docs-demo-otn',
         routeBasePath: 'demo-otn',
         sidebarCollapsed: false,
         sidebarPath: './sidebars-demo-otn.ts',
-        editUrl: 'https://github.com/opsmill/infrahub-demo-otn/tree/main/docs',
       },
     ],
     [
@@ -540,7 +556,9 @@ const config: Config = {
           position: "right",
         },
         {
-          href: "https://github.com/opsmill/infrahub",
+          // Links to the repository of the docs section being viewed.
+          // Repository mapping lives in src/components/GitHubRepoNavbarItem.tsx.
+          type: "custom-githubRepoLink",
           position: "right",
           className: "header-github-link",
           "aria-label": "GitHub repository",
