@@ -540,7 +540,9 @@ const config: Config = {
           position: "right",
         },
         {
-          href: "https://github.com/opsmill/infrahub",
+          // Links to the repository of the docs section being viewed.
+          // Repository mapping lives in src/components/GitHubRepoNavbarItem.tsx.
+          type: "custom-githubRepoLink",
           position: "right",
           className: "header-github-link",
           "aria-label": "GitHub repository",

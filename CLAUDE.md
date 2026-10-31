@@ -170,6 +170,7 @@ When adding a new documentation section to this aggregation site:
    - Edit `docs/docusaurus.config.ts`:
      - Add new plugin configuration
      - Add navbar entry
+   - Add the plugin ID and its GitHub repo name to `REPO_BY_PLUGIN_ID` in `docs/src/components/GitHubRepoNavbarItem.tsx`, so the header GitHub icon links to the right repo
    - Optionally add as git submodule or configure sync workflow
 
 3. **Infrastructure setup**:
