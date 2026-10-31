@@ -64,7 +64,7 @@ The sync workflows authenticate with a token secret in the source repository, ei
 
 ### Git Submodule and Symlinks
 
-`infrahub/` is a git submodule of `opsmill/infrahub` that tracks the `stable` branch. The synced core docs import files from the Infrahub repository by relative path, so the repository root has symlinks into the submodule: `development -> infrahub/development` and `models -> infrahub/models`. If a core docs page imports from another top-level Infrahub folder, the build fails with `Module not found` until a matching symlink is added here.
+`infrahub/` is a git submodule of `opsmill/infrahub` that tracks the `stable` branch. The synced core docs import files from the Infrahub repository by relative path, so the repository root has symlinks into the submodule: `development -> infrahub/development`, `models -> infrahub/models` and `utilities -> infrahub/utilities`. If a core docs page imports from another top-level Infrahub folder, the build fails with `Module not found` until a matching symlink is added here.
 
 CI runs `git submodule update --recursive --remote` before every build, so it builds against the latest `stable`. Run the same command locally before building:
 
