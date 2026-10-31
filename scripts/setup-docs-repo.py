@@ -338,6 +338,9 @@ export default sidebars;
               docsPluginId: "docs-{project_name}",
             }},"""
 
+    # Generate the GitHub navbar icon mapping entry
+    repo_map_entry = f"  'docs-{project_name}': '{source_repo}',"
+
     print("\n" + "=" * 60)
     print("Placeholder files created!")
     print("=" * 60)
@@ -349,6 +352,11 @@ export default sidebars;
     print("\n2. Add this navbar entry (in appropriate dropdown or top-level):")
     print("-" * 40)
     print(navbar_entry)
+    print("-" * 40)
+    print("\n3. Add this entry to REPO_BY_PLUGIN_ID in docs/src/components/GitHubRepoNavbarItem.tsx")
+    print("   so the header GitHub icon links to the source repository:")
+    print("-" * 40)
+    print(repo_map_entry)
     print("-" * 40)
 
     # Optionally try to auto-insert (with user confirmation)
@@ -403,6 +411,7 @@ def insert_plugin_config(
         print("  WARNING: Could not find plugin insertion marker")
 
     print("\n  NOTE: Navbar entry must be added manually to the appropriate location")
+    print("  NOTE: REPO_BY_PLUGIN_ID entry must be added manually to docs/src/components/GitHubRepoNavbarItem.tsx")
     print(f"  Suggested dropdown: {navbar_dropdown or 'top-level or new dropdown'}")
 
 

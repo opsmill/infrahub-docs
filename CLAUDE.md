@@ -4,198 +4,175 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a **documentation aggregation repository** that combines documentation from multiple Infrahub-related projects into a single documentation website using Docusaurus. The content here is mostly read-only and automatically synced from source repositories via git submodules and GitHub Actions workflows.
+This is a **documentation aggregation repository**. It builds <https://docs.infrahub.app> with Docusaurus from documentation that lives in other OpsMill repositories. A GitHub Actions workflow in each source repository copies its docs into this repository and commits them, so most content here is overwritten on the next sync.
 
-**Important**: Most documentation changes should be made in the source repositories, not here. Direct edits to synced content in this repository will be overwritten during the next sync cycle.
+**Important**: Make documentation content changes in the source repository, not here. This repository owns the site itself: Docusaurus configuration, navbar, theme, redirects, landing pages and the hand-maintained Integrations section.
 
-### Source Repositories
+### Documentation Sections and Source Repositories
 
-Documentation is synced from these upstream repositories:
+Each section is a `@docusaurus/plugin-content-docs` instance in `docs/docusaurus.config.ts`. The core Infrahub docs use the `classic` preset's docs plugin (plugin ID `default`).
 
-- Core Infrahub docs: `opsmill/infrahub`
-- Python SDK docs: `opsmill/infrahub-sdk-python`
-- Ansible collection docs: `opsmill/infrahub-ansible`
-- Service catalog docs: `opsmill/infrahub-demo-service-catalog`
-- Nornir integration docs: `opsmill/nornir-infrahub`
-- Schema library docs: `opsmill/schema-library`
-- Infrahub Sync docs: `opsmill/infrahub-sync`
-- Emma docs: `opsmill/emma`
-- Infrahub Skills docs: `opsmill/infrahub-skills`
+| Section | Plugin ID | Directory | Route | Source repo |
+|---------|-----------|-----------|-------|-------------|
+| Core Infrahub | `default` | `docs/docs/` | `/` | `opsmill/infrahub` (`stable` branch) |
+| Python SDK | `docs-python-sdk` | `docs/docs-python-sdk/python-sdk/` | `/python-sdk` | `opsmill/infrahub-sdk-python` |
+| Infrahubctl | `infrahubctl` | `docs/docs-python-sdk/infrahubctl/` | `/infrahubctl` | `opsmill/infrahub-sdk-python` |
+| Emma | `docs-emma` | `docs/docs-emma/` | `/emma` | `opsmill/emma` |
+| VS Code extension | `docs-vscode` | `docs/docs-vscode/` | `/vscode` | `opsmill/infrahub-vscode` |
+| MCP server | `docs-mcp` | `docs/docs-mcp/` | `/mcp` | `opsmill/infrahub-mcp` |
+| AI skills | `docs-ai-skills` | `docs/docs-ai-skills/` | `/skills` | `opsmill/infrahub-skills` |
+| Backup | `docs-backup` | `docs/docs-backup/` | `/backup` | `opsmill/infrahub-backup` |
+| Integrations overview | `docs-integrations` | `docs/docs-integrations/` | `/integrations` | None, maintained in this repository |
+| Ansible | `docs-ansible` | `docs/docs-ansible/` | `/ansible` | `opsmill/infrahub-ansible` |
+| Exporter | `docs-exporter` | `docs/docs-exporter/` | `/exporter` | `opsmill/infrahub-exporter` |
+| Infrahub Sync | `docs-sync` | `docs/docs-sync/` | `/sync` | `opsmill/infrahub-sync` |
+| Nornir | `docs-nornir` | `docs/docs-nornir/` | `/nornir` | `opsmill/nornir-infrahub` |
+| Schema library | `docs-schema-library` | `docs/docs-schema-library/` | `/schema-library` | `opsmill/schema-library` |
+| Data center demo | `docs-demo-dc` | `docs/docs-demo-dc/` | `/demo-dc` | `opsmill/infrahub-demo-dc` |
+| Service provider demo | `docs-infrahub-demo-sp` | `docs/docs-infrahub-demo-sp/` | `/infrahub-demo-sp` | `opsmill/infrahub-demo-sp` |
+| Optical transport demo | `docs-demo-otn` | `docs/docs-demo-otn/` | `/demo-otn` | `opsmill/infrahub-demo-otn` |
+| Service catalog demo | `docs-service-catalog` | `docs/docs-service-catalog/` | `/demo-service-catalog` | `opsmill/infrahub-demo-service-catalog` |
+| AI data center reference design | `docs-infrahub-solution-ai-dc` | `docs/docs-infrahub-solution-ai-dc/` | `/infrahub-solution-ai-dc` | `opsmill/infrahub-solution-ai-dc` |
+| Arista AVD reference design | `docs-arista-avd` | `docs/docs-arista-avd/` | `/arista-avd` | `opsmill/infrahub-arista-avd` |
 
-### Git Submodules
+Keep this table, the plugin list in `docs/docusaurus.config.ts` and `REPO_BY_PLUGIN_ID` in `docs/src/components/GitHubRepoNavbarItem.tsx` in step with each other.
 
-The repository uses a git submodule at `infrahub/` that tracks the `stable` branch from `opsmill/infrahub`. Update submodules with:
+### What Each Sync Overwrites
+
+Each source repository has a `.github/workflows/sync-docs.yml` that deletes and re-copies its files here on every push to its main branch (`stable` for `opsmill/infrahub`). Do not edit these files in this repository:
+
+- `opsmill/infrahub`: `docs/docs/`, `docs/sidebars.ts`, `docs/sidebar-releases.ts`, `docs/plugins/` and `docs/src/components/ReleaseFeed/`
+- `opsmill/infrahub-sdk-python`: `docs/docs-python-sdk/`, `docs/sidebars-python-sdk.ts`, `docs/sidebars-infrahubctl.ts` and `docs/sidebar-utils.ts`
+- Every other source repository: `docs/docs-<name>/` and `docs/sidebars-<name>.ts`
+
+The sync workflows authenticate with a token secret in the source repository, either `GH_INFRAHUB_BOT_TOKEN` or `PAT_TOKEN` depending on the repository.
+
+### Files Maintained in This Repository
+
+- `docs/docusaurus.config.ts`: plugin definitions, navbar, theme, Algolia search, analytics and redirects
+- `docs/redirects-*.ts`: redirect lists passed to `@docusaurus/plugin-client-redirects`
+- `docs/docs-integrations/` and `docs/sidebars-integrations.ts`: the Integrations overview section
+- `docs/src/pages/`: standalone pages, such as `labs.tsx` (`/labs`), with its data in `docs/src/data/labs.ts`
+- `docs/src/components/`: React components, except `ReleaseFeed/`, which is synced from `opsmill/infrahub`
+- `docs/src/theme/`: swizzled Docusaurus theme components:
+  - `MDXComponents.js`: adds the Iconify `Icon` component to MDX
+  - `NavbarItem/ComponentTypes.tsx`: registers the `custom-githubRepoLink` navbar item
+  - `NotFound/`, `SearchBar/` and `Tabs/`
+- `docs/src/css/custom.css`: site styling, including the navbar GitHub and Discord icons
+- `docs/globalVars.js`: variables available in Markdown (`base_url: 'RELATIVE'`)
+- `scripts/setup-docs-repo.py` and `scripts/templates/`: setup tooling for a new documentation section
+
+### Git Submodule and Symlinks
+
+`infrahub/` is a git submodule of `opsmill/infrahub` that tracks the `stable` branch. The synced core docs import files from the Infrahub repository by relative path, so the repository root has symlinks into the submodule: `development -> infrahub/development` and `models -> infrahub/models`. If a core docs page imports from another top-level Infrahub folder, the build fails with `Module not found` until a matching symlink is added here.
+
+CI runs `git submodule update --recursive --remote` before every build, so it builds against the latest `stable`. Run the same command locally before building:
 
 ```bash
-git submodule update --recursive --remote
+git submodule update --init --recursive --remote
 ```
 
 ## Development Commands
 
-### Quick Start
+### Docusaurus
 
 All Docusaurus commands run from the `docs/` directory:
 
 ```bash
 cd docs
-npm install        # Install dependencies (first time or after package.json changes)
-npm start          # Start local development server with hot reload (http://localhost:3000)
-npm run build      # Build static site for production
-npm run serve      # Serve built site locally
+npm install        # Install dependencies (CI uses npm ci)
+npm start          # Start the development server with hot reload (http://localhost:3000)
+npm run build      # Build the static site into docs/build/
+npm run serve      # Serve the built site locally
 npm run typecheck  # Run TypeScript type checking
-npm run clear      # Clear Docusaurus build cache
+npm run clear      # Clear the Docusaurus build cache
 ```
 
 ### Python Task Runner (Invoke)
 
-From the repository root, use Python invoke tasks:
+From the repository root, after `uv sync`:
 
 ```bash
 uv run invoke docs        # Build documentation (runs npm run build in docs/)
-uv run invoke lint        # Run all linters (ruff + yamllint)
-uv run invoke format      # Format Python files with ruff
+uv run invoke lint        # Run markdownlint, yamllint, ruff and mypy
+uv run invoke format      # Format and fix Python files with ruff
 ```
 
-**Note**: Requires uv installation. Run `uv sync` to set up Python dependencies.
-
-### Linting and Quality Checks
+### Linting
 
 Run from the repository root:
 
 ```bash
-# Markdown linting
-markdownlint --config .markdownlint.yaml docs/**/*.mdx docs/**/*.md
-
-# Documentation style validation (requires Vale installation)
-vale --glob='!{docs/docs-schema-library/reference/*}' $(find ./docs -type f \( -name "*.mdx" -o -name "*.md" \) )
-
-# Python linting and formatting
-ruff check .
-ruff format .                    # Auto-format Python files
-ruff format --check --diff       # Check formatting without changes
-
-# YAML linting
-yamllint -s .
+markdownlint "**/*.{md,mdx}"     # Markdown, skips paths in .markdownlintignore
+uv run yamllint -s .             # YAML
+uv run ruff format --check --diff
+uv run ruff check .
+uv run mypy .
 ```
 
-### Linting Configuration Files
+Configuration files:
 
-- `.markdownlint.yaml`: Markdown linting rules (repository root)
-  - Disables line length limits (MD013)
-  - Allows inline HTML (MD033)
-  - Permits duplicate headings for tabs (MD024)
-- `.vale.ini`: Documentation style rules and vocabulary (in submodules)
-- `.yamllint.yml`: YAML formatting and style rules
-- `pyproject.toml`: Ruff configuration (line-length: 120)
+- `.markdownlint.yaml`: all default rules, except that MD013 (line length) and MD060 (table column style) are off, MD024 (duplicate headings) applies to sibling headings only, and MD025 ignores the front matter title
+- `.markdownlintignore`: excludes synced content (`docs/docs/`, `docs/docs-*`), the submodule and build output
+- `.yamllint.yml`: YAML rules
+- `pyproject.toml`: ruff (line length 120) and mypy settings
+- `lychee.toml` and `.lycheeignore`: link checker settings
+
+Vale style checks run in the source repositories, not here. This repository has no `.vale.ini`.
 
 ## Architecture
 
-### Multi-Plugin Documentation Structure
+### Key Dependencies
 
-This site uses multiple Docusaurus plugin instances to combine documentation from different sources. Each plugin creates an independent documentation section with its own URL path and sidebar.
+- Docusaurus 3.10, React 18.3, TypeScript 5.6 (see `docs/package.json`)
+- `@docusaurus/plugin-client-redirects`: redirects for moved pages
+- `@docusaurus/theme-mermaid`: Mermaid diagrams
+- `@docusaurus/theme-search-algolia`: search across all sections
+- `@signalwire/docusaurus-plugin-llms-txt`: generates `llms.txt`
 
-**Plugin Architecture**:
+### Navbar
 
-- Each documentation section is defined as a plugin in `docs/docusaurus.config.ts`
-- Each plugin has its own `docs-<name>/` directory and `sidebars-<name>.ts` file
-- Plugins are configured with unique IDs, route paths, and edit URLs pointing to source repositories
+- Sections are grouped into navbar dropdowns: Tools & SDKs, Integrations, Demos and Reference Designs. Each entry is a `docSidebar` item that names a `docsPluginId` and a `sidebarId`.
+- The GitHub icon is a custom navbar item (`type: "custom-githubRepoLink"`) defined in `docs/src/components/GitHubRepoNavbarItem.tsx`. It links to the source repository of the section being viewed, looked up by plugin ID in `REPO_BY_PLUGIN_ID`. Pages outside a docs section, and plugin IDs missing from the map, link to `opsmill/infrahub`.
 
-**Documentation Sections**:
+### Environment Variables
 
-| Section | Directory | Route | Source Repo |
-|---------|-----------|-------|-------------|
-| Core Infrahub | `docs/docs/` | `/` | `opsmill/infrahub` |
-| Python SDK | `docs/docs-python-sdk/python-sdk/` | `/python-sdk` | `opsmill/infrahub-sdk-python` |
-| Infrahubctl | `docs/docs-python-sdk/infrahubctl/` | `/infrahubctl` | `opsmill/infrahub-sdk-python` |
-| Ansible | `docs/docs-ansible/` | `/ansible` | `opsmill/infrahub-ansible` |
-| Infrahub Sync | `docs/docs-sync/` | `/sync` | `opsmill/infrahub-sync` |
-| Nornir | `docs/docs-nornir/` | `/nornir` | `opsmill/nornir-infrahub` |
-| DC Fabric Demo | `docs/docs-demo/` | `/demo` | Demo content |
-| Service Catalog | `docs/docs-service-catalog/` | `/demo-service-catalog` | `opsmill/infrahub-demo-service-catalog` |
-| Schema Library | `docs/docs-schema-library/` | `/schema-library` | `opsmill/schema-library` |
-| Emma | `docs/docs-emma/` | `/emma` | `opsmill/emma` |
-| VS Code Extension | `docs/docs-vscode/` | `/vscode` | VS Code extension docs |
-| MCP Server | `docs/docs-mcp/` | `/mcp` | MCP integration docs |
-| Skills | `docs/docs-skills/` | `/skills` | `opsmill/infrahub-skills` |
-| Integrations | `docs/docs-integrations/` | `/integrations` | Integration guides |
-| Exporter | `docs/docs-exporter/` | `/exporter` | Exporter documentation |
+- `ANALYTICS`: adds the Plausible analytics script
+- `DOCS_IN_APP`: sets `url` to `http://localhost:8000` and `baseUrl` to `/docs/` for docs embedded in the Infrahub app
+- `GA_MEASUREMENT_ID`: overrides the Google Analytics tracking ID
 
-### Key Configuration Files
+### Content Conventions
 
-- `docs/docusaurus.config.ts`: Main configuration with all plugin definitions, navbar, theme, redirects, and analytics
-- `docs/sidebars-*.ts`: Individual sidebar configurations for each documentation section (auto-generated or manually defined)
-- `docs/globalVars.js`: Global variables used across documentation (`base_url: 'RELATIVE'`)
-- `docs/package.json`: Node.js dependencies (Docusaurus 3.9.2, React 18, theme packages)
-- `docs/src/css/custom.css`: Custom theme styling
-
-### Content Organization
-
-- Each documentation section has its own `docs-<name>/` directory within `docs/`
-- Sidebar configuration is managed separately for each section in `sidebars-<name>.ts`
-- Cross-references between sections use absolute paths (e.g., `/python-sdk/introduction`)
-- Media files are stored in section-specific directories
-- MDX format is used for documentation files (supports React components)
-
-### Key Features
-
-- **Multi-section navigation**: Dropdown menus in navbar organize different documentation types
-- **Search integration**: Algolia search across all documentation sections (configured with site verification)
-- **Redirects**: Plugin handles URL changes from previous documentation structure (see `@docusaurus/plugin-client-redirects`)
-- **Variable substitution**: Global variables from `globalVars.js` can be used in Markdown
-- **Analytics**: Plausible analytics integration when `ANALYTICS` env var is set
-- **Mermaid diagrams**: Theme support for Mermaid diagrams via `@docusaurus/theme-mermaid`
-- **LLMs.txt**: Plugin for LLM-friendly documentation format via `@signalwire/docusaurus-plugin-llms-txt`
+- Cross-references between sections use absolute paths, for example `/python-sdk/introduction`
+- Content is MDX, so pages can use React components
 
 ## Working with Documentation
 
-### Adding New Documentation Sections
+### Adding a New Documentation Section
 
-When adding a new documentation section to this aggregation site:
+`scripts/setup-docs-repo.py` automates most of this; `README.md` has the full manual procedure. Every new section needs all of the following.
 
-1. **In the source repository** (e.g., `opsmill/new-project`):
-   - Copy these files/directories from an existing repo (like `emma`):
-     - `docs/` directory structure
-     - `.vale/`, `.vale.ini`, `.markdownlint.yml`, `.yamllint.yml`
-     - `tasks.py`
-     - `.github/build-docs.sh` (make executable: `chmod 755`)
-     - `.github/workflows/sync-docs.yml` (update paths)
-     - `.github/workflows/ci.yml` (add docs build section)
-     - `.github/file-filters.yml`, `labeler.yml`, `labels.yml`
-   - Modify `docs/docusaurus.config.ts` and `docs/sidebars.ts` in source repo
-   - Place documentation content in `docs/docs/`
+1. **In the source repository** (for example `opsmill/new-project`):
+   - Run `python scripts/setup-docs-repo.py --source-repo /path/to/new-project --display-name "New Project"`. It copies `scripts/templates/` into the source repository: the Docusaurus skeleton under `docs/`, the Vale, markdownlint and yamllint configuration, and `.github/build-docs.sh`, `file-filters.yml`, `labeler.yml`, `labels.yml` and `workflows/sync-docs.yml`.
+   - Add a documentation build job to the source repository's `ci.yml`. The script's `CI_WORKFLOW_JOBS` constant has an example.
+   - Write the content in `docs/docs/` and the sidebar in `docs/sidebars.ts`.
+   - Add the sync token secret (`PAT_TOKEN` in the template) with write access to `opsmill/infrahub-docs`.
 
-2. **In this repository** (`infrahub-docs`):
-   - Create placeholder: `touch docs/docs-<projectname>/readme.mdx`
-   - Create sidebar: `touch docs/sidebars-<projectname>.ts`
-   - Edit `docs/docusaurus.config.ts`:
-     - Add new plugin configuration
-     - Add navbar entry
-   - Add the plugin ID and its GitHub repo name to `REPO_BY_PLUGIN_ID` in `docs/src/components/GitHubRepoNavbarItem.tsx`, so the header GitHub icon links to the right repo
-   - Optionally add as git submodule or configure sync workflow
+2. **In this repository**:
+   - Run `python scripts/setup-docs-repo.py --infrahub-docs-repo . --project-name <name> --source-repo-name <github-repo> --display-name "New Project"`. It creates `docs/docs-<name>/readme.mdx` and `docs/sidebars-<name>.ts`, and prints the snippets for the steps below.
+   - Add the plugin to the `plugins` array in `docs/docusaurus.config.ts`, with `id: 'docs-<name>'`, `routeBasePath`, `sidebarPath` and `editUrl` pointing at the source repository.
+   - Add a navbar entry in the right dropdown in `docs/docusaurus.config.ts`.
+   - **Add the plugin ID and the GitHub repository name to `REPO_BY_PLUGIN_ID` in `docs/src/components/GitHubRepoNavbarItem.tsx`.** Without it, the header GitHub icon on the new section links to `opsmill/infrahub`. Check that the repository is public, so readers do not get a 404.
+   - Add a row to the section table in this file.
 
-3. **Infrastructure setup**:
-   - Configure Cloudflare Pages integration
-   - Create PRs and test sync workflow
+3. **Rollout**:
+   - Merge the `infrahub-docs` PR first, then the source repository PR.
+   - Check that the sync workflow ran, the section renders, and the GitHub icon on a page in the new section opens the right repository.
 
 ### Local Development
 
-- Use `npm start` (from `docs/` directory) for live development with hot reload
-- The site runs on `http://localhost:3000` by default
-- Changes to MDX files trigger automatic browser refresh
-- Configuration changes (`.ts` files) require server restart
-- Environment variables:
-  - `ANALYTICS`: Enable Plausible analytics
-  - `DOCS_IN_APP`: Adjust base URL for embedded docs
-
-### Content Synchronization
-
-Documentation content is automatically synced from source repositories via:
-
-- **Git submodules**: Main `infrahub` repository is tracked as submodule
-- **GitHub Actions**: CI workflows sync documentation on push to source repos
-- **Update submodules**: Run `git submodule update --recursive --remote` to pull latest
-
-**Warning**: Manual changes to synced content in `docs/docs-*/` directories will be overwritten during the next sync cycle. Always edit in the source repository.
+- Run `npm start` from `docs/` for a development server with hot reload on `http://localhost:3000`
+- Changes to MDX files refresh the browser; changes to `.ts` configuration need a server restart
 
 ### Documentation Writing Guidelines
 
@@ -285,54 +262,44 @@ See `docs/docs/development/docs.mdx` in source repositories for complete guideli
 
 ## CI/CD and Deployment
 
-### GitHub Actions Workflows
+### GitHub Actions
 
-The repository uses GitHub Actions for CI/CD:
+`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`:
 
-- **`.github/workflows/ci.yml`**: Main CI pipeline
-  - Detects file changes (documentation, Python, YAML)
-  - Runs appropriate linters (ruff, yamllint, markdownlint)
-  - Builds documentation with Node.js 20
-  - Updates submodules before build
-  - Checks links with Lychee against the locally served build
+1. Detects changed files with `opsmill/paths-filter` and `.github/file-filters.yml`
+2. Runs ruff and mypy, yamllint and markdownlint, each only when matching files changed
+3. Builds the documentation (Node.js 20, `npm ci`, then `uv run invoke docs`) after `git submodule update --recursive --remote`, with a 15-minute timeout
+4. Serves the build and checks every sitemap URL with Lychee. `https://docs.infrahub.app` URLs are remapped to the local server.
 
-**Key CI Steps**:
-
-1. File change detection via `opsmill/paths-filter`
-2. Parallel linting jobs for Python and YAML (if files changed)
-3. Documentation build job (depends on lint jobs passing)
-4. Link checking with Lychee (depends on the documentation build passing); full `https://docs.infrahub.app` URLs are remapped to the local server
+`.github/workflows/notify-ci-failure.yml` sends a Slack notification when the CI workflow fails.
 
 ### Deployment
 
-- Hosted on Cloudflare Pages
-- Production URL: `https://docs.infrahub.app`
-- Deployment triggered by pushes to `main` branch
-- Build command: `uv run invoke docs` (runs `npm run build` in `docs/`)
-- Build output directory: `docs/build/`
+- Hosted on Cloudflare Pages at `https://docs.infrahub.app`
+- Pushes to `main` trigger a deployment
+- Build command: `uv run invoke docs`; output directory: `docs/build/`
 
 ## Troubleshooting
 
-### Common Issues
+**Build fails with `Module not found` for a path outside `docs/`**:
 
-**Build failures**:
+- A synced core docs page imports a file from the Infrahub repository. Update the submodule with `git submodule update --init --recursive --remote`, and add a root-level symlink into `infrahub/` if the folder has none (see "Git Submodule and Symlinks").
 
-- Clear cache: `cd docs && npm run clear`
-- Reinstall dependencies: `rm -rf node_modules package-lock.json && npm install`
-- Update submodules: `git submodule update --recursive --remote`
+**Other build failures**:
+
+- Clear the cache: `cd docs && npm run clear`
+- Reinstall dependencies: `cd docs && rm -rf node_modules && npm ci`
 
 **Broken links**:
 
-- Use absolute paths for cross-section references (e.g., `/python-sdk/introduction`)
-- Check redirect configuration in `docusaurus.config.ts`
+- Use absolute paths for cross-section references (for example `/python-sdk/introduction`)
+- Add a redirect in the relevant `docs/redirects-*.ts` file when a page moves
 
 **Markdown linting errors**:
 
-- Review `.markdownlint.yaml` for disabled rules
-- Line length (MD013) is disabled
-- Inline HTML (MD033) is allowed for MDX components
+- Check `.markdownlint.yaml` for the rule settings. Synced content is excluded by `.markdownlintignore`.
 
 **TypeScript errors**:
 
-- Run `npm run typecheck` in `docs/` directory
-- Check sidebar configuration in `sidebars-*.ts` files
+- Run `npm run typecheck` in `docs/`
+- Check the sidebar configuration in the `sidebars-*.ts` files

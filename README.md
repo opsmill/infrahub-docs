@@ -280,6 +280,16 @@ import sidebars<ProjectName> from "./sidebars-<projectname>";
 
 Or add to an existing dropdown menu if appropriate.
 
+#### Step 3: Map the section to its GitHub repository
+
+Add the plugin ID and the source repository name to `REPO_BY_PLUGIN_ID` in `docs/src/components/GitHubRepoNavbarItem.tsx`:
+
+```typescript
+'<plugin-id>': '<source-repo>',
+```
+
+The GitHub icon in the site header uses this map to link to the repository of the section being viewed. Without an entry, the icon on the new section links to `opsmill/infrahub`.
+
 ### Part 3: Final Setup
 
 #### Step 1: Set up Cloudflare Pages integration
