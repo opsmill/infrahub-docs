@@ -4,6 +4,10 @@ import Translate from '@docusaurus/Translate';
 import type {Props} from '@theme/NotFound/Content';
 import Heading from '@theme/Heading';
 
+// Global function from the Plausible script, which docusaurus.config.ts loads
+// only when the ANALYTICS environment variable is set.
+declare const plausible: ((eventName: string) => void) | undefined;
+
 export default function NotFoundContent({className}: Props): ReactNode {
   useEffect(() => {
     // Only run on the client (browser)
