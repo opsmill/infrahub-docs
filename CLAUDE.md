@@ -46,7 +46,7 @@ Each source repository has a `.github/workflows/sync-docs.yml` that deletes and 
 - `opsmill/infrahub-sdk-python`: `docs/docs-python-sdk/`, `docs/sidebars-python-sdk.ts`, `docs/sidebars-infrahubctl.ts` and `docs/sidebar-utils.ts`
 - Every other source repository: `docs/docs-<name>/` and `docs/sidebars-<name>.ts`
 
-The sandbox pipeline generates its MDX pages from Infrahub, retains them in its own repository, and syncs them here on source changes, manual runs and hourly refreshes. Its source is private, so `DOC_SOURCES` sets `isPublic: false`: generated pages have no edit link, and their header GitHub icon links to this aggregation repository. Each demo page links to its public demo repository.
+The sandbox pipeline generates its MDX pages from Infrahub, retains them in its own repository, and syncs them here on relevant source pushes to `main` and manual runs. Its source is private, so `DOC_SOURCES` sets `isPublic: false`: generated pages have no edit link, and their header GitHub icon links to this aggregation repository. Each demo page links to its public demo repository.
 
 The section is registered at `/sandboxes` without a navbar item. Source sync runs only when `DOCS_SYNC_ENABLED=true` in the pipeline repository.
 
