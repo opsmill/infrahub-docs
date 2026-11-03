@@ -34,13 +34,14 @@ const config: Config = {
       }
     ] : []),
     {
-      // Kapa.ai Ask AI widget (search stays on Algolia). The website ID is public: it is safe to commit it.
+      // Kapa.ai Ask AI widget, with a search tab. The navbar search and Cmd/Ctrl+K stay on Algolia. The website ID is public: it is safe to commit it.
       src: 'https://widget.kapa.ai/kapa-widget.bundle.js',
       async: true,
       'data-website-id': '296dff8a-e375-4941-82ae-1d95f1effa44',
       'data-project-name': 'opsmill',
       'data-project-logo': 'https://avatars.githubusercontent.com/u/118297816?s=200&v=4',
       'data-modal-title': 'OpsMill AI',
+      'data-modal-title-search': 'Search OpsMill docs',
       // Match the site's Inter font instead of the default system stack.
       'data-font-family': 'Inter, system-ui, -apple-system, sans-serif',
       // Follow the Docusaurus light/dark toggle instead of the OS preference.
@@ -83,6 +84,15 @@ const config: Config = {
       'data-submit-button-hover-background-color-dark': '#557CB9',
       'data-example-question-button-hover-border-color': '#426DB1',
       'data-source-link-hover-border-color': '#426DB1',
+      // Search tab inside the Kapa modal. Kapa's Cmd/Ctrl+K shortcut stays off so it
+      // does not conflict with Algolia DocSearch.
+      'data-search-mode-enabled': 'true',
+      'data-search-input-placeholder': 'Search the documentation...',
+      'data-search-result-target': '_self',
+      'data-search-result-badge-background-color': '#ECF0F7',
+      'data-search-result-badge-color': '#426DB1',
+      'data-search-result-badge-background-color-dark': '#2A3035',
+      'data-search-result-badge-color-dark': '#8EA7D0',
     },
   ],
 
