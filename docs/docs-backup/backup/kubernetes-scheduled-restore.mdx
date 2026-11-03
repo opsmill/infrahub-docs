@@ -65,6 +65,8 @@ List the prefix to confirm the archives are where you expect:
 aws s3 ls s3://my-infrahub-backups/infrahub/prod/
 ```
 
+If your S3-compatible storage uses a certificate issued by a private certificate authority (CA), or a self-signed certificate, the restore pod needs your CA certificate to list and download the archives. Create the ConfigMap in the target namespace and add the `extraEnv`, `extraVolumes` and `extraVolumeMounts` values described in [Trust a private certificate authority](./kubernetes-backup.mdx#trust-a-private-certificate-authority) to the values of the next step.
+
 ## Step 2: Enable the restore CronJob
 
 <Tabs>
@@ -271,6 +273,10 @@ A trailing-slash or path mismatch between the target's `restore.storage.s3.prefi
 ### Access denied while listing the bucket
 
 Selection lists the prefix before it downloads anything, so a credential with `s3:GetObject` but no `s3:ListBucket` fails at selection rather than at download. Grant both rights on the bucket and prefix.
+
+### The run fails with a certificate error
+
+A log line with `x509: certificate signed by unknown authority` means the restore pod does not trust the certificate of the S3 endpoint. The run fails while it lists the prefix, before it changes anything in the target. See [Trust a private certificate authority](./kubernetes-backup.mdx#trust-a-private-certificate-authority).
 
 ### The CronJob exists but never runs
 

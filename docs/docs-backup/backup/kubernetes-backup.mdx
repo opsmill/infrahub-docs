@@ -207,6 +207,41 @@ The chart works with any S3-compatible storage:
 | AWS S3 | `https://s3.amazonaws.com` |
 | Other S3-compatible storage | `https://s3.example.com` |
 
+### Trust a private certificate authority
+
+If your S3-compatible storage uses a certificate issued by a private certificate authority (CA), or a self-signed certificate, the backup pod cannot verify it and the upload fails with `x509: certificate signed by unknown authority`. `infrahub-backup` has no option to skip certificate verification. Give the pod your CA certificate instead, so it keeps verifying the connection that carries your S3 credentials and the database dump.
+
+`infrahub-backup` reads the file named in the `SSL_CERT_FILE` environment variable and trusts the certificates in it in addition to the system trust store of the container. The file holds one or more certificates in PEM format: the certificate of your root CA and of any intermediate CA, or the server certificate itself when it is self-signed.
+
+Store the file in a ConfigMap in the Infrahub namespace:
+
+```bash
+kubectl create configmap s3-ca \
+  --namespace infrahub \
+  --from-file=ca.crt=./s3-ca.pem
+```
+
+Mount the ConfigMap into the pod with `extraVolumes` and `extraVolumeMounts`, and point `SSL_CERT_FILE` at the file with `extraEnv`:
+
+```yaml
+infrahub-backup:
+  extraEnv:
+    - name: SSL_CERT_FILE
+      value: /etc/ssl/custom/ca.crt
+  extraVolumes:
+    - name: s3-ca
+      configMap:
+        name: s3-ca
+  extraVolumeMounts:
+    - name: s3-ca
+      mountPath: /etc/ssl/custom
+      readOnly: true
+```
+
+The value of `SSL_CERT_FILE` is the `mountPath` followed by the ConfigMap key, `ca.crt`. With the standalone chart, set the three values at the top level of your values file, without the `infrahub-backup` key.
+
+The three values apply to the backup and restore Jobs and CronJobs alike, so a restore from the same release trusts the same CA.
+
 </TabItem>
 <TabItem value="local" label="Local Storage">
 

@@ -69,6 +69,8 @@ kubectl create secret generic backup-s3-credentials \
   --from-literal=AWS_SECRET_ACCESS_KEY=your-secret-key
 ```
 
+If your S3-compatible storage uses a certificate issued by a private certificate authority (CA), or a self-signed certificate, the restore pod needs your CA certificate to download the backup. Add the `extraEnv`, `extraVolumes` and `extraVolumeMounts` values described in [Trust a private certificate authority](./kubernetes-backup.mdx#trust-a-private-certificate-authority) to the values of the next step. If the release already sets them for backups, the restore Job uses them too.
+
 ## Step 3: Configure the restore Job
 
 <Tabs>
@@ -292,6 +294,8 @@ kubectl logs -n infrahub -l app.kubernetes.io/name=infrahub-backup
 # - Invalid credentials
 # - Network policy blocking egress
 ```
+
+A log line with `x509: certificate signed by unknown authority` means the restore pod does not trust the certificate of the S3 endpoint. See [Trust a private certificate authority](./kubernetes-backup.mdx#trust-a-private-certificate-authority).
 
 ### Restore hangs or times out
 
