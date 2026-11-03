@@ -21,27 +21,93 @@ const config: Config = {
   title: "Infrahub Documentation",
   tagline: "Explore our guides and examples for Infrahub",
   favicon: "img/favicon.ico",
-  scripts: process.env.ANALYTICS ? [
+  scripts: [
+    ...(process.env.ANALYTICS ? [
+      {
+        src: 'https://plausible.io/js/script.js',
+        defer: true,
+        'data-domain': 'docs.infrahub.app'
+      }, {
+        src: '/js/custom-reo.js'
+      }, {
+        src: 'https://static.claydar.com/init.v1.js?id=cbhzbmnLAA'
+      }
+    ] : []),
     {
-      src: 'https://plausible.io/js/script.js',
-      defer: true,
-      'data-domain': 'docs.infrahub.app'
-    }, {
-      src: '/js/custom-reo.js'
-    }, {
-      src: 'https://static.claydar.com/init.v1.js?id=cbhzbmnLAA'
-    }
-  ] : [],
-
-  headTags: [
-    {
-      tagName: 'meta',
-      attributes: {
-        name: 'algolia-site-verification',
-        content: '3BD5875DCE009A8F',
-      },
+      // Kapa.ai search and Ask AI widget. The website ID is public: it is safe to commit it.
+      src: 'https://widget.kapa.ai/kapa-widget.bundle.js',
+      async: true,
+      'data-website-id': '296dff8a-e375-4941-82ae-1d95f1effa44',
+      'data-project-name': 'opsmill',
+      'data-project-logo': 'https://avatars.githubusercontent.com/u/118297816?s=200&v=4',
+      'data-modal-title': 'OpsMill AI',
+      'data-modal-title-search': 'Search OpsMill docs',
+      // Match the site's Inter font instead of the default system stack.
+      'data-font-family': 'Inter, system-ui, -apple-system, sans-serif',
+      // Follow the Docusaurus light/dark toggle instead of the OS preference.
+      'data-color-scheme-selector': "[data-theme='dark']",
+      // Brand accents: Infrahub blue for links, toggles and the send button.
+      'data-project-color': '#426DB1',
+      'data-anchor-color': '#426DB1',
+      'data-anchor-color-dark': '#8EA7D0',
+      // Neutral surfaces taken from the site theme (src/css/custom.css) so the
+      // widget looks like part of the page; brand colour is kept for accents.
+      'data-surface-color': '#FFFFFF',
+      'data-surface-elevated-color': '#F9F9F9',
+      'data-surface-hover-color': '#ECF0F7',
+      'data-text-color': '#130D30',
+      'data-text-muted-color': '#655B89',
+      'data-border-color': '#E5E7EB',
+      'data-surface-color-dark': '#1E2327',
+      'data-surface-elevated-color-dark': '#151A1C',
+      'data-surface-hover-color-dark': '#2A3035',
+      'data-text-color-dark': '#E9E8EE',
+      'data-text-muted-color-dark': '#A1A8B0',
+      'data-border-color-dark': '#3A4045',
+      // Kapa's own launcher is replaced by a custom pill (src/theme/Root.tsx).
+      'data-launcher-button-hidden': 'true',
+      // Modal: rounded, light header with a thin divider instead of a solid band.
+      'data-modal-border-radius': '14px',
+      'data-modal-header-background-color': '#FFFFFF',
+      'data-modal-header-background-color-dark': '#1E2327',
+      'data-modal-header-border-bottom': '1px solid #E5E7EB',
+      'data-modal-header-border-bottom-dark': '1px solid #3A4045',
+      'data-modal-title-color': '#231556',
+      'data-modal-title-color-dark': '#E9E8EE',
+      'data-modal-title-font-weight': '600',
+      // Inputs and buttons.
+      'data-query-input-border-radius': '10px',
+      'data-query-input-focus-border-color': '#426DB1',
+      'data-query-input-focus-border-color-dark': '#8EA7D0',
+      'data-submit-button-background-color': '#426DB1',
+      'data-submit-button-hover-background-color': '#231556',
+      'data-submit-button-hover-background-color-dark': '#557CB9',
+      'data-example-question-button-hover-border-color': '#426DB1',
+      'data-source-link-hover-border-color': '#426DB1',
+      // Search results.
+      'data-search-input-placeholder': 'Search the documentation...',
+      'data-search-result-target': '_self',
+      'data-search-result-badge-background-color': '#ECF0F7',
+      'data-search-result-badge-color': '#426DB1',
+      'data-search-result-badge-background-color-dark': '#2A3035',
+      'data-search-result-badge-color-dark': '#8EA7D0',
+      // Kapa search mode powers the navbar search (see src/theme/SearchBar).
+      'data-search-mode-enabled': 'true',
+      'data-modal-open-on-command-k': 'true',
+      'data-modal-command-k-search-mode-default': 'true',
     },
   ],
+
+  // Algolia site verification is disabled along with Algolia search (see themeConfig).
+  // headTags: [
+  //   {
+  //     tagName: 'meta',
+  //     attributes: {
+  //       name: 'algolia-site-verification',
+  //       content: '3BD5875DCE009A8F',
+  //     },
+  //   },
+  // ],
 
   url: process.env.DOCS_IN_APP ? "http://localhost:8000" : "https://docs.infrahub.app",
   baseUrl: process.env.DOCS_IN_APP ? "/docs/" : "/",
@@ -578,36 +644,37 @@ const config: Config = {
       theme: prismThemes.oneDark,
       additionalLanguages: ["bash", "python", "markup-templating", "django", "json", "toml", "yaml"],
     },
-    algolia: {
-      // The application ID provided by Algolia
-      appId: 'MKBNCZRNI3',
-      // Public API key: it is safe to commit it
-      apiKey: 'f12e2a9c8472d0f5287cc34715a24518',
-      indexName: 'Docs',
-      // Ask AI configuration
-      askAi: {
-        assistantId: 'hh3YkWRV6fxH',
-        indexName: 'Docs',  // Changed from 'Docs-markdown' to use same index
-        appId: 'MKBNCZRNI3',
-        apiKey: 'f12e2a9c8472d0f5287cc34715a24518',
-      },
-      // Optional: Enable contextual search (default: true)
-      // This ensures search results match the current version and language
-      contextualSearch: true,
-      // Optional: Specify domains for external navigation
-      // externalUrlRegex: 'external\\.com|domain\\.com',
-      // Optional: Path replacements for different deployments
-      replaceSearchResultPathname: {
-        from: '/docs/', // or as RegExp: /\/docs\//
-        to: '/',
-      },
-      // Optional: Algolia search parameters
-      searchParameters: {},
-      // Optional: Path for search page (default: 'search', false to disable)
-      searchPagePath: 'search',
-      // Optional: Enable insights feature (default: false)
-      insights: false,
-    },
+    // Algolia search is disabled: Kapa.ai powers search and Ask AI (see `scripts` above).
+    // algolia: {
+    //   // The application ID provided by Algolia
+    //   appId: 'MKBNCZRNI3',
+    //   // Public API key: it is safe to commit it
+    //   apiKey: 'f12e2a9c8472d0f5287cc34715a24518',
+    //   indexName: 'Docs',
+    //   // Ask AI configuration
+    //   askAi: {
+    //     assistantId: 'hh3YkWRV6fxH',
+    //     indexName: 'Docs',  // Changed from 'Docs-markdown' to use same index
+    //     appId: 'MKBNCZRNI3',
+    //     apiKey: 'f12e2a9c8472d0f5287cc34715a24518',
+    //   },
+    //   // Optional: Enable contextual search (default: true)
+    //   // This ensures search results match the current version and language
+    //   contextualSearch: true,
+    //   // Optional: Specify domains for external navigation
+    //   // externalUrlRegex: 'external\\.com|domain\\.com',
+    //   // Optional: Path replacements for different deployments
+    //   replaceSearchResultPathname: {
+    //     from: '/docs/', // or as RegExp: /\/docs\//
+    //     to: '/',
+    //   },
+    //   // Optional: Algolia search parameters
+    //   searchParameters: {},
+    //   // Optional: Path for search page (default: 'search', false to disable)
+    //   searchPagePath: 'search',
+    //   // Optional: Enable insights feature (default: false)
+    //   insights: false,
+    // },
   } satisfies Preset.ThemeConfig,
 
   markdown: {
