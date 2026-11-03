@@ -38,10 +38,10 @@ const config: Config = {
       src: 'https://widget.kapa.ai/kapa-widget.bundle.js',
       async: true,
       'data-website-id': '296dff8a-e375-4941-82ae-1d95f1effa44',
-      'data-project-name': 'opsmill',
+      'data-project-name': 'Infrahub',
       'data-project-logo': 'https://avatars.githubusercontent.com/u/118297816?s=200&v=4',
-      'data-modal-title': 'OpsMill AI',
-      'data-modal-title-search': 'Search OpsMill docs',
+      'data-modal-title': 'Infrahub AI',
+      'data-modal-title-search': 'Search Infrahub docs',
       // Match the site's Inter font instead of the default system stack.
       'data-font-family': 'Inter, system-ui, -apple-system, sans-serif',
       // Follow the Docusaurus light/dark toggle instead of the OS preference.
