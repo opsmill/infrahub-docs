@@ -16,6 +16,8 @@ export type DocSource = {
   branch: string;
   /** Folder in the repository that holds the section's pages. */
   contentDir: string;
+  /** False for a private source: public readers get no edit link or private repository link. */
+  isPublic?: boolean;
 };
 
 export const GITHUB_ORG_URL = 'https://github.com/opsmill';
@@ -39,6 +41,7 @@ export const DOC_SOURCES: Record<string, DocSource> = {
   'docs-nornir': { repo: 'nornir-infrahub', branch: 'stable', contentDir: 'docs/docs' },
   'docs-schema-library': { repo: 'schema-library', branch: 'main', contentDir: 'docs/docs' },
   'docs-demo-dc': { repo: 'infrahub-demo-dc', branch: 'main', contentDir: 'docs/docs' },
+  'docs-sandboxes': { repo: 'infrahub-sandbox-pipelines', branch: 'main', contentDir: 'docs/docs', isPublic: false },
   'docs-infrahub-demo-sp': { repo: 'infrahub-demo-sp', branch: 'main', contentDir: 'docs/docs' },
   'docs-demo-otn': { repo: 'infrahub-demo-otn', branch: 'main', contentDir: 'docs/docs' },
   'docs-service-catalog': { repo: 'infrahub-demo-service-catalog', branch: 'main', contentDir: 'docs/docs' },
@@ -54,11 +57,12 @@ export const DOC_SOURCES: Record<string, DocSource> = {
  * does not exist in the source repository. docPath is the file's path inside
  * the section, so it matches the layout under contentDir.
  */
-export function editUrlFor(pluginId: string): ({ docPath }: { docPath: string }) => string {
+export function editUrlFor(pluginId: string): (({ docPath }: { docPath: string }) => string) | undefined {
   const source = DOC_SOURCES[pluginId];
   if (!source) {
     throw new Error(`No entry for docs plugin "${pluginId}" in docs/doc-sources.ts`);
   }
+  if (source.isPublic === false) return undefined;
   return ({ docPath }) =>
     `${GITHUB_ORG_URL}/${source.repo}/edit/${source.branch}/${source.contentDir}/${docPath}`;
 }
