@@ -29,6 +29,7 @@ Each section is a `@docusaurus/plugin-content-docs` instance in `docs/docusaurus
 | Nornir | `docs-nornir` | `docs/docs-nornir/` | `/nornir` | `opsmill/nornir-infrahub` |
 | Schema library | `docs-schema-library` | `docs/docs-schema-library/` | `/schema-library` | `opsmill/schema-library` |
 | Data center demo | `docs-demo-dc` | `docs/docs-demo-dc/` | `/demo-dc` | `opsmill/infrahub-demo-dc` |
+| Public sandboxes | `docs-sandboxes` | `docs/docs-sandboxes/` | `/sandboxes` | `opsmill/infrahub-sandbox-pipelines` (private) |
 | Service provider demo | `docs-infrahub-demo-sp` | `docs/docs-infrahub-demo-sp/` | `/infrahub-demo-sp` | `opsmill/infrahub-demo-sp` |
 | Optical transport demo | `docs-demo-otn` | `docs/docs-demo-otn/` | `/demo-otn` | `opsmill/infrahub-demo-otn` |
 | Service catalog demo | `docs-service-catalog` | `docs/docs-service-catalog/` | `/demo-service-catalog` | `opsmill/infrahub-demo-service-catalog` |
@@ -44,6 +45,10 @@ Each source repository has a `.github/workflows/sync-docs.yml` that deletes and 
 - `opsmill/infrahub`: `docs/docs/`, `docs/sidebars.ts`, `docs/sidebar-releases.ts`, `docs/plugins/` and `docs/src/components/ReleaseFeed/`
 - `opsmill/infrahub-sdk-python`: `docs/docs-python-sdk/`, `docs/sidebars-python-sdk.ts`, `docs/sidebars-infrahubctl.ts` and `docs/sidebar-utils.ts`
 - Every other source repository: `docs/docs-<name>/` and `docs/sidebars-<name>.ts`
+
+The sandbox pipeline generates its MDX pages from Infrahub, retains them in its own repository, and syncs them here on source changes, manual runs and hourly refreshes. Its source is private, so `DOC_SOURCES` sets `isPublic: false`: generated pages have no edit link, and their header GitHub icon links to this aggregation repository. Each demo page links to its public demo repository.
+
+The section is registered at `/sandboxes` without a navbar item. Source sync runs only when `DOCS_SYNC_ENABLED=true` in the pipeline repository.
 
 The sync workflows authenticate with a token secret in the source repository, either `GH_INFRAHUB_BOT_TOKEN` or `PAT_TOKEN` depending on the repository.
 
@@ -165,7 +170,7 @@ Vale style checks run in the source repositories, not here. This repository has 
    - Run `python scripts/setup-docs-repo.py --infrahub-docs-repo . --project-name <name> --source-repo-name <github-repo> --display-name "New Project"`. It creates `docs/docs-<name>/readme.mdx` and `docs/sidebars-<name>.ts`, and prints the snippets for the steps below.
    - Add the plugin to the `plugins` array in `docs/docusaurus.config.ts`, with `id: 'docs-<name>'`, `routeBasePath`, `sidebarPath` and `editUrl: editUrlFor('docs-<name>')`. Do not use a plain string for `editUrl`: Docusaurus adds the file's path in this repository (`docs-<name>/...`), which does not exist in the source repository.
    - Add a navbar entry in the right dropdown in `docs/docusaurus.config.ts`.
-   - **Add an entry for the plugin ID to `DOC_SOURCES` in `docs/doc-sources.ts`**, with the source repository, the branch its `sync-docs.yml` runs on (`main` or `stable`) and the folder it copies from (usually `docs/docs`). The "Edit this page" links and the header GitHub icon both use it, and the build fails until it exists. Check that the repository is public, so readers do not get a 404.
+   - **Add an entry for the plugin ID to `DOC_SOURCES` in `docs/doc-sources.ts`**, with the source repository, the branch its `sync-docs.yml` runs on (`main` or `stable`) and the folder it copies from (usually `docs/docs`). The "Edit this page" links and the header GitHub icon both use it, and the build fails until it exists. Set `isPublic: false` for a private source: edit links are omitted and the header icon links to this aggregation repository.
    - Add a row to the section table in this file.
 
 3. **Rollout**:

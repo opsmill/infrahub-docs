@@ -83,6 +83,17 @@ const config: Config = {
     ],
   ],
   plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'docs-sandboxes',
+        editUrl: editUrlFor('docs-sandboxes'),
+        path: 'docs-sandboxes',
+        routeBasePath: 'sandboxes',
+        sidebarCollapsed: false,
+        sidebarPath: './sidebars-sandboxes.ts',
+      },
+    ],
     // Scans release-notes frontmatter into global data for <ReleaseFeed/>.
     './plugins/release-notes-data',
     [
