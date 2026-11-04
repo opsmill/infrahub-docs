@@ -10,30 +10,23 @@ the [Infrahub documentation](https://docs.infrahub.app) or open an issue.
 **Symptom:**
 
 ```text
-[ERROR] ConnectionRefusedError: [Errno 111] Connection refused
+✗ ERROR: Infrahub at http://localhost:8000 is not responding
 ```
 
-or the bootstrap script exits immediately with "Infrahub not reachable".
-
-**Cause:** The bootstrap script runs too soon after `docker compose up`.
-Infrahub takes 20–40 seconds to initialise its database and API server.
+**Cause:** `invoke bootstrap` waits up to 5 minutes for the Infrahub API
+(`/api/schema`) to answer, then stops. Infrahub is not running at
+`INFRAHUB_ADDRESS`, or it is still starting, for example after pulling new
+images.
 
 **Fix:**
 
 ```bash
-# Wait for Infrahub to be ready, then bootstrap manually:
-uv run invoke start
-sleep 40
-uv run invoke bootstrap
+uv run invoke start       # start the containers if they are not running
+docker ps                 # the infrahub-server container should be up
+uv run invoke bootstrap   # run the bootstrap again: it waits for the API
 ```
 
-Alternatively, run `invoke init` which includes a built-in wait, but if your
-machine is slow, increase the sleep in `tasks.py`:
-
-```python
-# tasks.py — find the sleep call in init_demo and increase it
-time.sleep(40)  # change to 60 or more on slow machines
-```
+When Infrahub runs somewhere else, set `INFRAHUB_ADDRESS` to its address.
 
 ---
 

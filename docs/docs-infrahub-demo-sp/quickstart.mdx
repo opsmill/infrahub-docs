@@ -183,6 +183,8 @@ command). `uv run invoke info` prints the resolved values.
 | `INFRAHUB_API_TOKEN` | demo token | Authentication. Rotate before any non-local use |
 | `INFRAHUB_UI_URL` | `http://localhost:8000` | Used by the Streamlit catalog for "open in Infrahub" links |
 | `INFRAHUB_GIT_LOCAL` | `false` | `true` registers a `CoreRepository` pointed at the bind-mounted `/upstream` (no GitHub clone needed). `false` registers a `CoreReadOnlyRepository` against the public GitHub repository |
+| `INFRAHUB_REPO_URL` | `https://github.com/opsmill/infrahub-demo-sp.git` | Repository registered when `INFRAHUB_GIT_LOCAL` is `false`. Set it to register a fork |
+| `INFRAHUB_REPO_REF` | the checked-out branch | Git ref the server clones. Falls back to `main` on a detached checkout |
 | `INFRAHUB_SERVICE_CATALOG` | `false` | `true` starts the Streamlit sidecar, from the published image, on every `invoke start` / `invoke init` |
 | `INFRAHUB_SERVICE_CATALOG_BUILD` | `false` | `true` builds the Streamlit and Batfish runner images from this checkout instead of pulling them, and mounts their sources. `invoke start --build` does the same for one run |
 | `STREAMLIT_IMAGE` | `registry.opsmill.io/opsmill/infrahub-demo-sp-streamlit:main` | Image the Streamlit sidecar runs |
@@ -202,6 +204,19 @@ INFRAHUB_DATASET="isp"
 ```
 
 …then `uv run invoke init` to wipe and reload from the new dataset.
+
+## Build the demo on an Infrahub that already runs
+
+```bash
+INFRAHUB_ADDRESS="https://infrahub.example.com" INFRAHUB_API_TOKEN="<token>" \
+  uv run invoke sandbox-setup
+```
+
+`sandbox-setup` loads the whole demo into an empty Infrahub that runs elsewhere,
+for example a public sandbox. It runs the same steps as `invoke bootstrap`, reads
+only the variables above and starts no container. The public sandbox pipeline runs
+it with `INFRAHUB_REPO_URL` and `INFRAHUB_REPO_REF` set to the repository and ref
+of the sandbox.
 
 ## Troubleshooting
 
