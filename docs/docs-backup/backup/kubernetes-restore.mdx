@@ -308,6 +308,17 @@ kubectl get networkpolicy -n infrahub
 
 If a default-deny egress policy is present, add an egress rule allowing the pod to reach the API server. See [Network access to the API server](./kubernetes-backup.mdx#network-access-to-the-api-server).
 
+### Restore fails because the Neo4j database does not come online
+
+With a Neo4j cluster, the restore waits for the restored database to be `online` on every server that hosts it. When that does not happen within `--neo4j-cluster-online-timeout`, 10 minutes by default, the restore stops before it starts `infrahub-server` and `task-worker` again. It logs one line for each server where the database is not online:
+
+```text
+level=error msg="Database neo4j is not online on this server" reason="Neo4j gave no status message" server="neo4j-1:7687" status="store copying"
+```
+
+- If the status is `store copying` or `starting`, the server was still copying the restored data. Run the restore again with a longer wait, for example `--neo4j-cluster-online-timeout=30m`. With the Helm chart, add the flag to `restore.options.extraArgs`.
+- For any other status, the `reason` field holds the message Neo4j reports for that server, such as `No store found on any of the seeders`.
+
 ### Checksum validation fails
 
 The backup file may be corrupted. Try downloading a fresh copy:
