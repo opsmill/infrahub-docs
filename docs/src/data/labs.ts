@@ -114,8 +114,8 @@ const INSTRUQT_TRACKS = 'https://play.instruqt.com/opsmill/tracks';
 
 export const labs: Lab[] = [
   // --- Infrahub: Fundamentals to Expert -----------------------------------
-  // Docs stated ~5 hours across the five labs. Instruqt sets no per-lab
-  // duration, so each is recorded as 1 hour.
+  // Docs stated ~5 hours across the first five labs. Instruqt sets no per-lab
+  // duration, so each is recorded as 1 hour; the sixth runs about 2 hours.
   {
     id: 'orientation',
     title: 'Orientation',
@@ -213,6 +213,27 @@ export const labs: Lab[] = [
       'Render a full device configuration from source-of-truth data',
       'Trace each rendered value, from hostname to BGP ASN, back to the object it came from',
     ],
+    status: 'active',
+  },
+  {
+    id: 'ai-assisted-development',
+    title: 'AI-Assisted Development',
+    description:
+      'Use Claude Code with the Infrahub AI skills to take one change through the schema, a Generator and a Transform, and merge it through a reviewed proposed change.',
+    durationMinutes: 120,
+    level: 'Intermediate',
+    topics: ['automation', 'schema-modeling', 'config-rendering'],
+    trackUrl: `${INSTRUQT_TRACKS}/infrahub-ai-skills`,
+    overview:
+      'Make one complete change to OtterNet as a developer working with an AI coding assistant. The lab installs the Infrahub AI skills with npx skills add, and Claude Code asks before every edit and command. The assistant creates a branch synced with Git, adds maintenance window attributes, changes the campus site Generator to fill them in and changes the device configuration Transform to render them as a login banner. You review the schema, data, code and rendered router configurations in a proposed change and merge it, then connect the Infrahub MCP server and review a change the assistant makes to live data.',
+    whatYouWillLearn: [
+      'Install the Infrahub AI skills and use them from Claude Code',
+      'Review and approve the edits and commands an AI assistant proposes',
+      'Take a schema, Generator and Transform change from a branch to main through a proposed change',
+      'Read the artifact diff in a proposed change to see a Transform change before it reaches a device',
+      'Connect the Infrahub MCP server and review a change to live data in a proposed change',
+    ],
+    prerequisites: 'Familiarity with the earlier OtterNet labs helps. The lab starts from their end state, so you can take it on its own.',
     status: 'active',
   },
 
@@ -408,22 +429,24 @@ export const sections: Section[] = [
     id: 'fundamentals-to-expert',
     title: 'Infrahub: Fundamentals to Expert',
     description:
-      'Join the network automation team at OtterNet and take a site from an empty Infrahub instance to a fully automated deployment. Five labs on one shared dataset, each building on the last.',
+      'Join the network automation team at OtterNet and take a site from an empty Infrahub instance to a fully automated deployment. Six labs on one shared dataset, each building on the last.',
     labIds: [
       'orientation',
       'schema-modeling',
       'enforcement-validation',
       'design-driven-generator',
       'transforms-config-rendering',
+      'ai-assisted-development',
     ],
     overview:
-      'Join the network automation team at a fictional operator called OtterNet and learn Infrahub by working through a real use case. The five labs share one dataset and together give a full tour of the product, from schema design to automated configuration deployment. Each builds on the concepts introduced by the one before, so they are best taken in order, but you can finish one and come back for the rest later.',
+      'Join the network automation team at a fictional operator called OtterNet and learn Infrahub by working through a real use case. The six labs share one dataset and together give a full tour of the product, from schema design to automated configuration deployment and AI-assisted development. Each builds on the concepts introduced by the one before, so they are best taken in order, but you can finish one and come back for the rest later.',
     whatYouWillLearn: [
       'Modelling infrastructure data with custom node types, generic hierarchies and inheritance',
       'Enforcing data quality through schema constraints, branch isolation and Python checks',
       'Keeping shared values consistent using resource pools and Profiles',
       'Automating provisioning with design-driven Generators',
       'Rendering deployable configuration from source-of-truth data with Jinja2 Transforms',
+      'Developing with an AI assistant and the Infrahub AI skills, with every change reviewed in a proposed change',
       'Reaching Infrahub programmatically through infrahubctl and the Python SDK',
     ],
     prerequisites: 'No prior experience with Infrahub required.',
