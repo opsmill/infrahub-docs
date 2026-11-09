@@ -39,12 +39,12 @@ Holding business intent in the same graph as the network changes how a team plan
 
 When customers and tiers are kept outside the source of truth, the review of a maintenance window usually takes these steps:
 
-1. Export the devices the change touches.
-2. Find the services that run on those devices in the inventory.
-3. Look up the customer and the tier of each service in the CRM or a spreadsheet.
-4. Decide which services need another path first, often after the window is already scheduled.
-5. Write to the customers by hand.
-6. Rely on the approver to remember which commitments the plan must keep.
+1. Read the device configs to find the ports and VLANs the change touches.
+2. Match those ports to services in the inventory or a spreadsheet.
+3. Look up each service's customer and tier in the CRM.
+4. Check by hand which services lose their last path, often after the window is booked.
+5. Email the affected customers from a list someone put together by hand.
+6. The approver signs off on the plan's description, with no check against customer commitments.
 
 With the business context in Infrahub, the same review takes these steps:
 
