@@ -847,7 +847,8 @@ The inventory file (`ansible/inventory.yml`) uses the `opsmill.infrahub.inventor
 
 ```yaml title="ansible/inventory.yml"
 plugin: opsmill.infrahub.inventory
-api_endpoint: "http://infrahub-server:8000"
+# The plugin reads the Infrahub address and token from INFRAHUB_ADDRESS and INFRAHUB_API_TOKEN,
+# which Semaphore passes to the playbook (SEMAPHORE_FORWARDED_ENV_VARS).
 
 nodes:
   DcimDevice:
@@ -896,12 +897,13 @@ The `ansible/deploy.yml` playbook performs two tasks per device:
 
 ### Semaphore container setup
 
-The Semaphore container (`semaphore/Dockerfile`) extends the official image with the dependencies needed to interact with Infrahub:
+The Semaphore image (`semaphore/Dockerfile`, published as `registry.opsmill.io/opsmill/infrahub-demo-service-catalog-semaphore`) extends the official image with what the playbooks need to interact with Infrahub:
 
-- **infrahub-sdk**: Python SDK installed via pip, required by the Ansible collection
-- **`opsmill.infrahub` collection**: Ansible collection installed via `ansible-galaxy`, providing the `inventory` plugin and `artifact_fetch` module
+- **infrahub-sdk**: the Python SDK that the Ansible collection imports, installed in Semaphore's Ansible environment at the version pinned in `uv.lock`
+- **`opsmill.infrahub` collection**: Ansible collection installed with `ansible-galaxy`, providing the `inventory` plugin and `artifact_fetch` module
+- **The playbooks**: the `ansible/` folder, copied to `/opt/semaphore/playbooks`
 
-At runtime, the container mounts the `ansible/` directory as its playbook source, so any changes to playbooks or inventory are reflected immediately without rebuilding.
+The playbooks read the Infrahub address and token from the `INFRAHUB_ADDRESS` and `INFRAHUB_API_TOKEN` variables that Semaphore passes to them, so the same image works in the local stack and in a public sandbox. With `uv run invoke start --build`, the stack builds the image from your checkout and mounts the `ansible/` folder over the copied playbooks, so your changes to playbooks or inventory apply without rebuilding.
 
 ## The business impact layer
 

@@ -117,7 +117,7 @@ The `invoke start` command is a wrapper that:
 - Sets up networking between containers
 :::
 
-The Service Catalog portal runs from a published image, `registry.opsmill.io/opsmill/infrahub-demo-service-catalog-streamlit:main`, which `invoke start` pulls. To build the portal from your checkout instead, run `uv run invoke start --build`, or set `INFRAHUB_SERVICE_CATALOG_BUILD=true`. The build mounts the `service_catalog` folder, so your edits to the portal appear without rebuilding. To run another image, set `STREAMLIT_IMAGE`.
+The Service Catalog portal and Semaphore run from published images, `registry.opsmill.io/opsmill/infrahub-demo-service-catalog-streamlit:main` and `registry.opsmill.io/opsmill/infrahub-demo-service-catalog-semaphore:main`, which `invoke start` pulls. The Semaphore image holds the playbooks of the `ansible` folder. To build both images from your checkout instead, run `uv run invoke start --build`, or set `INFRAHUB_SERVICE_CATALOG_BUILD=true`. The build mounts the `service_catalog` and `ansible` folders, so your edits to the portal and the playbooks appear without rebuilding. To run other images, set `STREAMLIT_IMAGE` or `SEMAPHORE_IMAGE`.
 
 #### What gets started
 
