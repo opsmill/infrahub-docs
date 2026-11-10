@@ -319,6 +319,13 @@ level=error msg="Database neo4j is not online on this server" reason="Neo4j gave
 - If the status is `store copying` or `starting`, the server was still copying the restored data. Run the restore again with a longer wait, for example `--neo4j-cluster-online-timeout=30m`. With the Helm chart, add the flag to `restore.options.extraArgs`.
 - For any other status, the `reason` field holds the message Neo4j reports for that server, such as `No store found on any of the seeders`.
 
+### Restore fails because the Neo4j server still holds cluster state for the database
+
+With a Neo4j cluster, the restore drops the database and then restores the backup on the server where the restore runs. That server removes its cluster state for the database only after it has stopped and dropped the database, which takes longer for a large database. Until then, `neo4j-admin database restore` fails with `Database with name [neo4j] has replicated cluster state locally`. The restore tries again every 5 seconds for up to 5 minutes. If the state is still there after that, the restore stops before it starts `infrahub-server` and `task-worker` again.
+
+- Run the restore again after the server has finished dropping the database. The next run finds the database already dropped and restores the backup.
+- If every run fails with the same error, the server holds cluster state for a database that no longer exists. The Neo4j error message says to remove it with `neo4j-admin server unbind`, which requires stopping the server and affects every database on it.
+
 ### Checksum validation fails
 
 The backup file may be corrupted. Try downloading a fresh copy:
