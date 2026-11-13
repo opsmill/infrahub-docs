@@ -11,11 +11,11 @@ When you plan maintenance, two groups of customers need different handling:
 - Gold customers whose services keep a path during the change are at risk. The team notifies them, for example with an outreach campaign from the CRM.
 - Silver and Bronze customers whose services go down are listed, but not notified. Their tiers allow announced maintenance to take the service down.
 
-Infrahub produces the list of affected customers for each proposed change as an artifact. The Customer notification page in the portal shows that list, grouped by status. A webhook in Infrahub sends the at-risk Gold customers of a new proposed change to the CRM. The demo runs no CRM: the webhook is set up but not active.
+Infrahub produces the list of affected customers for each proposed change as an artifact. The Customer notification page in the portal shows that list, grouped by status. A webhook in Infrahub sends the at-risk Gold customers of a new proposed change to the CRM. The demo does not run a CRM: the webhook is set up but not active.
 
 ## Why the notification list comes from the source of truth
 
-The list of customers to notify depends on which services run through the devices in the change, and on how many separate paths each service keeps. Both are in the network model. When the list is built from the same data as the Gold outage guard, the team notifies the customers the change affects, no more and no fewer, and a change that the guard blocks notifies nobody.
+The list of customers to notify depends on which services run through the devices in the change and how many separate paths each service keeps. Both are in the network model. When the list is built from the same data as the redundancy check, the team notifies only the customers the change affects. A change that the redundancy check blocks notifies nobody.
 
 ## Before you begin
 
@@ -25,11 +25,11 @@ Install the demo and run the optional seed step, as described in the [installati
 
 Each affected customer gets one row per tier, with its affected services and one of these statuses:
 
-- **At risk, notified**: a Gold service keeps at least 1 path during the change, and the guard passes. The webhook sends this customer to the CRM.
+- **At risk, notified**: a Gold service keeps at least 1 path during the change, and the redundancy check passes. The webhook sends this customer to the CRM.
 - **Down, not notified**: a Silver or Bronze service has no path during the change.
-- **Down, change blocked**: a Gold service has no path during the change. The guard blocks the change, so no customer is notified.
+- **Down, change blocked**: a Gold service has no path during the change. The redundancy check blocks the change, so no customer is notified.
 
-The list holds customer names, tiers and service identifiers only. Contact details stay in the CRM, which maps a customer and a tier to the people to write to.
+The list contains only customer names, tiers and service identifiers. Contact details stay in the CRM, which maps a customer and a tier to the people to contact.
 
 ## View the affected customers in Infrahub
 
@@ -56,7 +56,7 @@ The page computes the affected customers of the selected change from the current
 
 ![The Customer notification page for Paris router 1 maintenance: Helix Health and Northbank at risk, notified, and Maison Verte and Rapid Freight down, not notified](../media/business-impact/notification-page.png)
 
-Select "Brussels switch 1 maintenance". The page states that the Gold outage guard blocks this change, so no customer is notified. Helix Health (Gold, DI-2001) is down, change blocked. Maison Verte (Silver, DI-2003) and Rapid Freight (Bronze, DI-2005) are down, not notified.
+Select "Brussels switch 1 maintenance". The page states that the redundancy check blocks this change, so no customer is notified. Helix Health (Gold, DI-2001) is down, change blocked. Maison Verte (Silver, DI-2003) and Rapid Freight (Bronze, DI-2005) are down, not notified.
 
 ![The Customer notification page for Brussels switch 1 maintenance: the change is blocked, Helix Health is down, change blocked, and Maison Verte and Rapid Freight are down, not notified](../media/business-impact/notification-brussels.png)
 
@@ -64,14 +64,14 @@ Select "New York router 1 maintenance". No customer is affected by this change.
 
 ### When the artifact is older than the page
 
-Infrahub generates the artifact again when a node of the change's services, devices or interfaces changes on the change's branch, and in each proposed change pipeline. A change merged into the current network, or a change to the links between interfaces, does not regenerate it. So the page compares its list with the artifact of the selected change and says when they differ:
+Infrahub generates the artifact again when a service, device or interface associated with the change changes on the change's branch. It also generates the artifact in each proposed change pipeline. A change merged into the current network, or a change to the links between interfaces, does not regenerate it. The page therefore compares its list with the artifact of the selected change and reports when they differ:
 
 - "The file in Infrahub is older than the figures on this page": the artifact lists other customers or statuses.
 - "The file in Infrahub for this change is not generated yet": Infrahub has not finished generating the artifact for this change.
 - An error that starts with "Generation failed": Infrahub could not generate the artifact. The Infrahub task log has the details.
 - "The affected customers file in Infrahub could not be read": the artifact holds content the page cannot read.
 
-In each case, select **Regenerate**. Infrahub generates the artifact again for the selected change, and the page waits for it, then loads again.
+In each case, select **Regenerate**. Infrahub generates the artifact again for the selected change. The page waits for generation to finish and then reloads.
 
 ## The gold-outreach webhook
 
@@ -87,10 +87,10 @@ The webhook has these settings:
 - URL: `https://crm.example.com/api/campaigns`, a placeholder.
 - **Active**: not active, so the demo sends nothing.
 
-When the proposed change is created, the transform reads the change's source branch from the event, runs the Gold outage guard on that branch, and builds the body from the same affected customers list as the artifact:
+When the proposed change is created, the transform reads the change's source branch from the event, runs the redundancy check on that branch, and builds the body from the same affected customers list as the artifact:
 
-- When the guard would pass, the body lists each Gold customer with at least one service at risk, with its tier and those services.
-- When the guard would fail, the body has `blocked: true` and lists no customer.
+- When the redundancy check would pass, the body lists each Gold customer with at least one service at risk, with its tier and those services.
+- When the redundancy check would fail, the body has `blocked: true` and lists no customers.
 - Silver and Bronze customers are never in the body.
 
 ## The payload the CRM receives for the Paris change
@@ -121,7 +121,7 @@ For "Paris router 1 maintenance", the CRM receives this body:
 }
 ```
 
-For "Brussels switch 1 maintenance", which the guard blocks, the body has `"blocked": true` and an empty `customers` list. The `id` is the ID of the proposed change in Infrahub, so the CRM can link the campaign back to the change.
+For "Brussels switch 1 maintenance", which the redundancy check blocks, the body has `"blocked": true` and an empty `customers` list. The `id` is the ID of the proposed change in Infrahub, so the CRM can link the campaign back to the change.
 
 ## Point the webhook at your CRM
 
@@ -139,4 +139,4 @@ Each delivery is a task in Infrahub. To view it, open **Tasks** and filter on `w
 
 ![The Send webhook gold-outreach task in Infrahub: state completed, the POST to the configured endpoint, the body with Helix Health and Northbank as Gold customers, and the line "Webhook delivered … HTTP 200"](../media/business-impact/outreach-webhook-delivered.png)
 
-In this delivery, the webhook pointed at an endpoint on the demo host, for a proposed change opened after the seed. The last log line, "Webhook delivered … HTTP 200", confirms that the endpoint accepted the body. A CRM that returns 200 has received the list of Gold customers for its outreach campaign.
+In this delivery, the webhook sent the request to an endpoint on the demo host for a proposed change opened after the seed. The last log line, "Webhook delivered … HTTP 200", confirms that the endpoint accepted the body. A CRM that returns 200 has received the list of Gold customers for its outreach campaign.

@@ -5,17 +5,17 @@ description: A step-by-step guide to running the demo from a developer perspecti
 
 import ReferenceLink from "../../src/components/Card";
 
-In this walkthrough, we detail the key building blocks of the demo, explain how it works, and describe how the components interact. This guide is intended for developers who want to understand the implementation details of the service catalog PoC.
+This walkthrough explains the demo's main building blocks, how the demo works and how its components interact. It is for developers who want to understand the implementation of the service catalog proof of concept (PoC).
 
 <ReferenceLink title="Need help or have questions? Join our Discord community for support!" url="https://discord.gg/opsmill" openInNewTab/>
 
 ## The schema
 
-To structure and store data, we define a schema in Infrahub. You can find the schema files in the `schemas` folder.
+The demo defines an Infrahub schema to structure and store data. The schema files are in the `schemas` folder.
 
 ### Schema architecture overview
 
-The following diagram illustrates the complete schema architecture, showing how different objects relate to each other in the Service Catalog demo:
+The following diagram shows how the objects in the Service Catalog demo relate to each other:
 
 ```mermaid
 graph TB
@@ -113,9 +113,9 @@ graph TB
 
 ### Consuming the Infrahub Marketplace
 
-Much of the schema is based on the [Infrahub Marketplace](https://marketplace.infrahub.app), which provides reusable schema components for quickly scaffolding a schema.
+Much of the schema is based on reusable components from the [Infrahub Marketplace](https://marketplace.infrahub.app).
 
-- `base`: Contains generic definitions for `IPAM` (IP address, prefix, etc.), `DCIM` (network device, interface, etc.), `location`, and `organization` (provider, manufacturer). Importing this folder is mandatory as it provides the basic definitions required for extensions.
+- `base`: Contains generic definitions for `IPAM` (IP address, prefix, etc.), `DCIM` (network device, interface, etc.), `location`, and `organization` (provider, manufacturer). The demo must import this folder because extensions depend on its definitions.
 - `location_minimal`: Defines a hierarchical tree for country, metro, and site.
 - `vlan`: Includes nodes for VLANs and L2 domains.
 - `circuit` (optional): Defines circuits with endpoints for site-to-site connections. This schema is available in `schemas/circuit/` but is not loaded by default. To load it with the repository, remove the `#` before `schemas/circuit` and `data/09_circuit.yml` in `.infrahub.yml`, and add `menu_circuit.yml` under `menus`: the circuit node types and the **Circuit** menu item then appear in Infrahub. `invoke seed` also loads the schema and the menu item, with the upstream circuits of the cost of service.
@@ -124,7 +124,7 @@ Much of the schema is based on the [Infrahub Marketplace](https://marketplace.in
 
 ### Custom service schema
 
-The service layer is unique to each organization, so we define a custom schema to represent services and their components.
+Each organization has its own service layer, so the demo defines a custom schema for services and their components.
 
 ```yaml title="/schemas/service/service.yml"
 ---
@@ -325,7 +325,7 @@ extensions:
 
 :::success
 
-We now have the data model and data to support our use case. It captures everything from services to the backbone, with some abstraction for flexibility. This setup is a strong foundation for automation.
+The data model stores everything this use case requires, from the services to the backbone.
 
 :::
 
@@ -337,12 +337,12 @@ A generator creates the infrastructure objects that implement a service request.
 
 :::important
 
-We want to build the generator with the concept of **idempotency** in mind, meaning it should be repeatable: it assigns resources the first time it runs, and if run again, it changes nothing if the desired state is already achieved. This approach ensures the code is robust and predictable.
+The generator must be **idempotent**, which means that it is repeatable. It assigns resources the first time it runs. On later runs, it changes nothing when the service already has the required resources.
 
 Infrahub provides a set of features to help:
 
-- Resource manager: It allows users to create pools and allocate resources from them, such as prefixes, IP addresses, or even numbers. We will use this feature to allocate our prefixes/vlan in a branch-agnostic and idempotent way. Learn more about [resource managers](https://docs.infrahub.app/topics/resource-manager).
-- `allow_upsert=True`: This parameter is provided when saving the node, allowing it to be created if it doesn't exist or updated if it does. This is useful for ensuring that the generator can run multiple times without creating duplicates or errors.
+- Resource manager: With this feature, you can create pools and allocate resources such as prefixes, IP addresses or numbers from them. The generator uses it to allocate prefixes and VLANs in a branch-agnostic and idempotent way. Learn more about [resource managers](https://docs.infrahub.app/topics/resource-manager).
+- `allow_upsert=True`: Pass this parameter when saving a node to create the node if it does not exist or update it if it does. The generator can then run multiple times without creating duplicates or errors.
 
 :::
 
@@ -712,7 +712,7 @@ class DedicatedInternetGenerator(InfrahubGenerator):
 
 ### Service provisioning flow
 
-Here's a focused view of how resources flow during service provisioning:
+The following diagram shows how the generator allocates resources during service provisioning:
 
 ```mermaid
 flowchart LR
@@ -787,7 +787,7 @@ The demo uses [Streamlit](https://streamlit.io/) for the user interface because 
 
 #### Infrahub SDK integration
 
-The portal uses several patterns to efficiently interact with Infrahub:
+The portal caches Infrahub SDK clients:
 
 ```python title="Client Caching Pattern"
 @st.cache_resource
@@ -803,10 +803,10 @@ def get_client(branch: str = "main") -> InfrahubClientSync:
 :::tip Why Cache the Client?
 The `@st.cache_resource` decorator:
 
-- Creates client once and reuses it
-- Reduces connection overhead
-- Maintains consistent state
-- Improves page load performance
+- Creates one client and reuses it
+- Avoids repeated connections
+- Retains the client state
+- Reduces page load time
 :::
 
 <ReferenceLink title="Learn about Streamlit" url="https://streamlit.io/" openInNewTab/>
@@ -815,7 +815,7 @@ The `@st.cache_resource` decorator:
 
 ### Semaphore for Ansible automation
 
-[Semaphore](https://semaphoreui.com/) (SemaphoreUI) is an open-source web UI for running Ansible playbooks. In this demo, it serves as the deployment step: after a service is provisioned in Infrahub and the proposed change is merged, Semaphore runs playbooks that fetch the generated device configurations and deploy them to network equipment.
+[Semaphore](https://semaphoreui.com/) (SemaphoreUI) is an open-source web UI for running Ansible playbooks. In this demo, Semaphore handles deployment. After a service is provisioned in Infrahub and the proposed change is merged, Semaphore runs playbooks that fetch the generated device configurations and deploy them to network equipment.
 
 ```mermaid
 flowchart LR
@@ -843,7 +843,7 @@ flowchart LR
 
 ### Dynamic inventory
 
-The inventory file (`ansible/inventory.yml`) uses the `opsmill.infrahub.inventory` plugin to build the device inventory dynamically from Infrahub at runtime. Instead of maintaining a static list of hosts, the plugin queries Infrahub for all `DcimDevice` nodes and composes host variables from their attributes:
+The inventory file (`ansible/inventory.yml`) uses the `opsmill.infrahub.inventory` plugin to build the device inventory dynamically from Infrahub at runtime. The inventory comes from Infrahub on each run. The plugin queries Infrahub for all `DcimDevice` nodes and composes host variables from their attributes:
 
 ```yaml title="ansible/inventory.yml"
 plugin: opsmill.infrahub.inventory
@@ -907,11 +907,11 @@ The playbooks read the Infrahub address and token from the `INFRAHUB_ADDRESS` an
 
 ## The business impact layer
 
-In the business impact layer, business context is stored in the same graph that provisioning uses. Several parts read it: four pages in the portal, a check in the proposed change pipeline, two artifacts and a webhook. A seed task loads the demo data. For the concepts, see [Business impact](../business-impact/overview.mdx).
+In the business impact layer, business context is stored in the same graph that provisioning uses. Four portal pages, a check in the proposed change pipeline, two artifacts and a webhook read this data. A seed task loads the demo data. For the concepts, see [Business impact](../business-impact/overview.mdx).
 
 ### What runs in Infrahub and what runs in the portal
 
-The Planned maintenance, Single points of failure, Customer notification and Cost of service pages are part of a small Streamlit app in this repository, not screens that Infrahub provides. They read stored queries and artifacts from Infrahub and draw the figures. Infrahub holds the data, enforces the rule, generates the artifacts and sends the webhook.
+A small Streamlit app in this repository provides the Planned maintenance, Single points of failure, Customer notification and Cost of service pages. The pages read stored queries and artifacts from Infrahub, then calculate and display the figures. Infrahub stores the data, enforces the rule, generates the artifacts and sends the webhook.
 
 In Infrahub:
 
@@ -919,7 +919,7 @@ In Infrahub:
 - The list price of each device type and the monthly cost of each upstream circuit, the demo inputs of the cost of service
 - Each maintenance plan, on its own branch with a proposed change
 - The stored queries `business_impact_services` and `cost_of_service`, which the pages read through the Infrahub API
-- The Gold outage guard, a check written in Python in this repository. Infrahub runs it in every proposed change pipeline, refuses the merge while it fails, and keeps the record of the approval and the merge
+- The redundancy check, written in Python in this repository. Infrahub runs it in every proposed change pipeline, refuses the merge while it fails, and keeps the record of the approval and the merge
 - Three Python transforms: `affected_customers` and `cost_of_service`, which produce the "Affected customers" and "Cost of service" artifacts, and `outreach_payload`, which builds the body of the `gold-outreach` webhook
 - The `gold-outreach` webhook, which sends the at-risk Gold customers of a new proposed change to a CRM
 - The generator that allocates each service's VLAN, prefix, switch port and gateway
@@ -931,7 +931,7 @@ In the portal:
 - The Customer notification page, which shows the "Affected customers" artifact of a proposed change
 - The Cost of service page, which shows the cost figures and offers the "Cost of service" artifact as a CSV download
 
-The pages only read from Infrahub. The figures come from Python in this repository, in `service_catalog/business_impact/` and `service_catalog/cost_of_service/`. The pages, the guard and the transforms use the same code, so they report the same services. Your own portal, ITSM tool or reporting tool can read the same stored queries and artifacts and show the same figures.
+The pages only read from Infrahub. Python modules in `service_catalog/business_impact/` and `service_catalog/cost_of_service/` calculate the figures. The pages, the redundancy check and the transforms use the same code, so they report the same services. Your own portal, ITSM tool or reporting tool can read the same stored queries and artifacts and show the same figures.
 
 ### Schema additions
 
@@ -971,7 +971,7 @@ Infrahub path traversal is the one way the demo finds the devices and circuits a
 - **Devices**: from the service to each switch and edge router at its site, at most two relationships deep (service, interface, device). The kind filter allows `ServiceDedicatedInternet`, `DcimInterfaceL2`, `DcimInterfaceL3` and `DcimDevice`, passed as the generated protocol classes of `service_catalog/protocols_async.py`. A device is in the footprint when the traversal finds a path to it.
 - **Circuits**: only when the circuit schema is loaded, from the service to each upstream circuit at its site, at most five relationships deep (service, gateway interface, edge router, upstream interface, circuit endpoint, circuit). The kind filter allows `ServiceDedicatedInternet`, `DcimInterfaceL3`, `DcimDevice`, `DcimCircuitEndpoint` and `DcimCircuit`. The footprint keeps each circuit it reaches with the edge router on the path.
 
-The calls run at the same time, at most eight at once. `with_footprints` adds the footprints to the query result, and the Gold outage guard, the business impact pages, the "Affected customers" and outreach transforms and the cost of service read the devices and circuits of each service from there. A path is the route a service's traffic takes through the network at a site: it enters through a switch port, goes through a switch, and leaves through the edge router with the same number. `network.pair_paths` builds the paths by pairing each switch in the service's footprint with the edge router of the same number at the same site.
+The code runs up to eight calls at the same time. `with_footprints` adds the footprints to the query result. The redundancy check, business impact pages, "Affected customers" and outreach transforms, and cost of service calculation read each service's devices and circuits from that result. A path is the route a service's traffic takes through the network at a site: it enters through a switch port, goes through a switch, and leaves through the edge router with the same number. `network.pair_paths` builds the paths by pairing each switch in the service's footprint with the edge router of the same number at the same site.
 
 ### The business impact pages
 
@@ -987,32 +987,32 @@ The Single points of failure page comes from `service_catalog/business_impact/si
 
 Both buttons call `service_catalog.artifact_view.render_regenerate`, which calls `infrahub.generate_artifact`. It sends `POST /api/artifact/generate/<definition id>?branch=<branch>`, then reads the artifact every two seconds until it is Ready with a new checksum, for at most a minute. Infrahub answers the request as soon as it queues the generation, so the page cannot rely on the answer alone.
 
-### The Gold outage guard check
+### The redundancy check
 
-`checks/gold_outage_guard.py` is registered under `check_definitions` in `.infrahub.yml` and runs in every proposed change pipeline. It runs the same stored query on the branch and on `main`, adds the footprint of each active service on each side, and reuses the logic in `blast_radius.py`. The rule comes from `ServiceTier.min_paths`, the minimum number of separate paths each active service of the tier keeps during a change; the demo data sets Gold to 1, and Silver and Bronze to 0. A service depends on the devices in its footprint, and has as many separate paths as its footprint has switch and edge router pairs with no device out of service. When a traversal fails, the check logs an error and fails. It fails when the change leaves an active service with fewer separate paths than its tier's rule, either by setting a device on its path to not active or by deleting a device, switch port or gateway interface on its path. It also fails when the change raises a tier's `min_paths` while active services of that tier have fewer separate paths than the new value. Infrahub does not merge a proposed change while a check has failed. It has no override.
+`checks/service_redundancy.py` is registered under `check_definitions` in `.infrahub.yml` and runs in every proposed change pipeline. It runs the same stored query on the branch and on `main`, adds the footprint of each active service on each side, and reuses the logic in `blast_radius.py`. The rule comes from `ServiceTier.min_paths`, the minimum number of separate paths each active service of the tier keeps during a change. The demo data sets Gold to 1 and Silver and Bronze to 0. A service depends on the devices in its footprint. Its number of separate paths is the number of switch and edge router pairs in its footprint that have no device out of service. When a traversal fails, the check logs an error and fails. The check also fails when a change leaves an active service with fewer separate paths than its tier's rule. This can happen when the change sets a device on the service's path to not active or deletes a device, switch port or gateway interface on that path. The check also fails when the change raises a tier's `min_paths` while active services of that tier have fewer separate paths than the new value. Infrahub does not merge a proposed change while a check has failed. The redundancy check has no override.
 
 #### How the check imports shared code
 
-Infrahub runs a check from a copy of the repository at the commit of the proposed change, and imports the check file as `commits.<sha>.checks.gold_outage_guard`. Only the repository directory is on the Python path, and `service_catalog` is not installed in the stock Infrahub image, so `import service_catalog` fails inside the check.
+Infrahub runs a check from a copy of the repository at the commit of the proposed change, and imports the check file as `commits.<sha>.checks.service_redundancy`. Only the repository directory is on the Python path, and `service_catalog` is not installed in the stock Infrahub image, so `import service_catalog` fails inside the check.
 
 The check imports the shared code relative to its own package instead, from the same commit. It uses `load` in `transforms/worktree.py`, the helper the transforms use, and takes the stored query's name from the module it loads:
 
-```python title="checks/gold_outage_guard.py (excerpt)"
+```python title="checks/service_redundancy.py (excerpt)"
 try:
-    # Infrahub imports this file as `commits.<sha>.checks.gold_outage_guard`.
+    # Infrahub imports this file as `commits.<sha>.checks.service_redundancy`.
     from ..transforms.worktree import IMPACT_MODULE, load  # noqa: TID252 - the commit worktree import
 except ImportError:
-    # Imported on its own, as `checks.gold_outage_guard`.
+    # Imported on its own, as `checks.service_redundancy`.
     from transforms.worktree import IMPACT_MODULE, load
 
 
 def load_impact() -> ModuleType:
-    """The module that runs the guard, from this file's commit worktree."""
+    """The module that applies the redundancy rule, from this file's commit worktree."""
     module: ModuleType = load(IMPACT_MODULE)
     return module
 
 
-class GoldOutageGuard(InfrahubCheck):
+class ServiceRedundancy(InfrahubCheck):
     query = load_impact().QUERY_NAME
 ```
 
@@ -1024,43 +1024,43 @@ def load(module: str) -> ModuleType:
     return importlib.import_module(name)
 ```
 
-`service_catalog/business_impact/change_impact.py` reads the stored query on the branch and on `main`, adds the footprints and applies the rule. The check always runs the rule from its own commit. When the file is imported on its own, in unit tests or with `infrahubctl check`, `load` falls back to the absolute module name. `change_impact.py` imports the rule, `footprint.py`, `blast_radius.py` and `service_catalog/network.py` relatively for the same reason, and `footprint.py` imports `service_catalog/protocols_async.py` relatively too. Apply the same pattern when a check of your own needs code that lives outside `checks/`.
+`service_catalog/business_impact/change_impact.py` reads the stored query on the branch and on `main`, adds the footprints and applies the rule. The check always runs the rule from its own commit. When the file is imported on its own, in unit tests or with `infrahubctl check`, `load` falls back to the absolute module name. `change_impact.py` imports the rule, `footprint.py`, `blast_radius.py` and `service_catalog/network.py` relatively for the same reason. `footprint.py` also imports `service_catalog/protocols_async.py` relatively. Apply the same pattern when a check of your own needs code that is outside `checks/`.
 
 ### The transforms, artifacts and webhook
 
-Three Python transforms are registered under `python_transforms` in `.infrahub.yml`. They import the shared code from their own commit through the same `load` helper as the check. The `affected_customers` and `outreach_payload` transforms run the guard through `service_catalog/business_impact/change_impact.py`, the module the check uses, and take their query name from its `QUERY_NAME`.
+Three Python transforms are registered under `python_transforms` in `.infrahub.yml`. They import the shared code from their own commit through the same `load` helper as the check. The `affected_customers` and `outreach_payload` transforms run the redundancy check through `service_catalog/business_impact/change_impact.py`, the module the check uses, and take their query name from its `QUERY_NAME`.
 
 Each transform has a `watch` list in `.infrahub.yml`: the repository files it imports or reads besides its own file. Infrahub only reads the transform's own file to find what it depends on. With the list, a commit that changes one of these files generates the artifact again, and a commit that changes none of them, such as a documentation change, does not. The `cost_of_service` list includes `service_catalog/queries/cost_of_service_circuits.gql`, the circuit query the transform reads from disk. Each of the three lists includes `service_catalog/business_impact/footprint.py` and `service_catalog/protocols_async.py`, because each transform finds the paths of the services with them. When you add an import or a file read to a transform, add the file to its `watch` list.
 
-- `affected_customers` (`transforms/affected_customers.py`) produces the "Affected customers" artifact, JSON, for the `ServiceReport` named "Affected customers". Infrahub generates the artifact on each branch, so each proposed change has its own list on its source branch, regenerated by its pipeline. The transform runs the Gold outage guard on the branch as the check does, and `service_catalog/business_impact/notification.py` gives each affected customer a status.
+- `affected_customers` (`transforms/affected_customers.py`) produces the "Affected customers" artifact, JSON, for the `ServiceReport` named "Affected customers". Infrahub generates the artifact on each branch, so each proposed change has its own list on its source branch, regenerated by its pipeline. The transform runs the redundancy check on the branch as the check does, and `service_catalog/business_impact/notification.py` gives each affected customer a status.
 - `cost_of_service` (`transforms/cost_of_service.py`) produces the "Cost of service" artifact, CSV, on `main`, with one row per service, path and part.
-- `outreach_payload` (`transforms/outreach_payload.py`) builds the body of the `gold-outreach` webhook. Infrahub calls it with the creation event of a proposed change. It reads the source branch from the event, runs the guard on that branch, and returns the at-risk Gold customers, or `blocked: true` and no customer when the guard would fail.
+- `outreach_payload` (`transforms/outreach_payload.py`) builds the body of the `gold-outreach` webhook. Infrahub calls it with the creation event of a proposed change. It reads the source branch from the event, runs the redundancy check on that branch, and returns the at-risk Gold customers, or `blocked: true` and no customers when the redundancy check would fail.
 
 The `gold-outreach` webhook is a custom webhook on the event `infrahub.node.created` for the node kind `CoreProposedChange`, on the default branch, with the transformation `outreach_payload`. [Notify the Gold customers a change puts at risk](../business-impact/notify-gold-customers.mdx) shows its settings and payload.
 
 ### The seed task
 
-`invoke seed` (`service_catalog/business_impact/seed.py`) first sets the description that the Infrahub web interface shows for the check, the generator, the artifact definitions and the stored queries. `.infrahub.yml` has a `description` key only for transforms, so the texts sit in `REPOSITORY_DESCRIPTIONS` in `seed.py`. A repository import does not change them.
+`invoke seed` (`service_catalog/business_impact/seed.py`) first sets the descriptions that the Infrahub web interface shows for the check, generator, artifact definitions and stored queries. `.infrahub.yml` has a `description` key only for transforms, so `REPOSITORY_DESCRIPTIONS` in `seed.py` defines these descriptions. A repository import does not change them.
 
-![The check definition of the Gold outage guard in Infrahub, with its description, file path, class name and stored query](../media/business-impact/check-definition-description.png)
+![The check definition of the redundancy check in Infrahub, with its description, file path, class name and stored query](../media/business-impact/check-definition-description.png)
 
 The seed then creates twelve services on `main` and runs the provisioning generator for each, so the seeded services look like ordered ones. It pins each service to a switch by linking one free customer port before the generator runs; the generator reuses that port and picks the edge router with the same index.
 
 It then gives the three Paris Gold services, DI-1001, DI-1002 and DI-1003, a second path: a free customer port on the other Paris switch, and a gateway interface `vlan_<vlan id>` with status active and no IP address on the other Paris edge router. The order form and the generator stay single path.
 
-It regenerates the "Cost of service" artifact on `main`, creates the `gold-outreach` webhook inactive with the placeholder URL `https://crm.example.com/api/campaigns`, and opens three maintenance proposed changes: Paris router 1, Brussels switch 1 and New York router 1. It waits for each pipeline and reports the guard result it expects: passed for Paris and New York, failed for Brussels.
+It regenerates the "Cost of service" artifact on `main`, creates the `gold-outreach` webhook inactive with the placeholder URL `https://crm.example.com/api/campaigns`, and opens three maintenance proposed changes: Paris router 1, Brussels switch 1 and New York router 1. It waits for each pipeline and reports the expected redundancy check result: passed for Paris and New York, failed for Brussels.
 
 ## Architecture takeaways
 
 ### Key design decisions
 
-1. **Schema as Foundation**: Well-designed schema enables everything else
-2. **Automation through Generators**: Complex provisioning made straightforward
+1. **Schema as Foundation**: The schema defines the data and relationships used by every component
+2. **Automation through Generators**: Generators apply the provisioning rules
 3. **Resource Management**: Centralized pools prevent conflicts
 4. **Branch-Based Workflows**: Safe testing and rollback capabilities
-5. **User-Friendly Abstractions**: Hide complexity behind clear choices
-6. **Deployment Automation**: Semaphore bridges the gap between source of truth and network devices, using dynamic inventory and artifact-based configuration delivery
-7. **Business Context in the Same Graph**: customers and tiers link to the same services and devices, so one stored query serves the pages, a merge-blocking check, an artifact and a webhook
+5. **User-Friendly Abstractions**: Forms present clear service choices
+6. **Deployment Automation**: Semaphore uses dynamic inventory and configuration artifacts to deploy changes from the source of truth to network devices
+7. **Business Context in the Same Graph**: Customers and tiers link to the same services and devices, so one stored query provides data to the pages, a merge-blocking check, an artifact and a webhook
 
 ### Extending the demo
 

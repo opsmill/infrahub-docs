@@ -1,34 +1,34 @@
 ---
 title: How to Install the Service Catalog Demo
-description: Set up the Service Catalog demo environment with Infrahub and Streamlit to enable self-service network provisioning.
+description: Set up the Service Catalog demo environment with Infrahub and Streamlit for self-service network provisioning.
 ---
 
 import ReferenceLink from "../../src/components/Card";
 
-This guide walks you through installing the Service Catalog demo, which demonstrates how to build a self-service portal on top of Infrahub's source of truth system. By the end of this guide, you'll have a working environment where users can request network services through a web interface.
+This guide explains how to install the Service Catalog demo, a self-service portal built on Infrahub's source of truth. By the end of the guide, you can request network services through a web interface.
 
 <ReferenceLink title="Need help or have questions? Join our Discord community for support!" url="https://discord.gg/opsmill" openInNewTab/>
 
 ## What you'll achieve
 
-After completing this installation:
+After completing this installation, you will have:
 
-- **Infrahub instance** running with network infrastructure data
-- **Service Catalog portal** accessible for requesting services
-- **Demo data** loaded including locations, devices, and network resources
-- **Git integration** configured for infrastructure as code workflows
-- **Semaphore automation** ready to deploy configurations to network devices
+- A running **Infrahub instance** with network infrastructure data
+- A **Service Catalog portal** for requesting services
+- Loaded **demo data**, including locations, devices and network resources
+- Configured **Git integration** for infrastructure-as-code workflows
+- **Semaphore automation** for deploying configurations to network devices
 
 ## Prerequisites
 
-Before you get started, make sure you have these tools installed:
+Before you begin, install these tools:
 
 ### Required software
 
 - 🐳 **Docker**: Container runtime for running Infrahub and its dependencies
     - [Docker Desktop](https://docs.docker.com/desktop/) for local development
     - Or Docker Engine on a Linux VM for server deployments
-    - Minimum 4GB RAM allocated to Docker
+    - At least 4 GB of RAM allocated to Docker
 
 - 🐍 **uv**: Fast Python package and project manager
     - Install via the [official installation guide](https://docs.astral.sh/uv/getting-started/installation/)
@@ -46,7 +46,7 @@ Before you get started, make sure you have these tools installed:
 
 ### Step 1: Clone the repository
 
-First, download the demo code from GitHub. This repository contains all the necessary configuration files, schemas, and demo data.
+Download the demo code from GitHub. This repository contains the configuration files, schemas and demo data.
 
 ```shell
 git clone https://github.com/opsmill/infrahub-demo-service-catalog.git
@@ -74,12 +74,12 @@ export INFRAHUB_API_TOKEN="06438eb2-8019-4776-878c-0941b1f1d1ec"
 #### Understanding the variables
 
 - **`INFRAHUB_ADDRESS`**: The URL where Infrahub's API is accessible
-    - Default uses `localhost:8000` for local development
-    - Change this if running Infrahub on a different host or port
+    - The default is `localhost:8000` for local development
+    - Change this if you run Infrahub on a different host or port
 
 - **`INFRAHUB_API_TOKEN`**: Authentication token for API access
-    - The demo uses a pre-configured token for convenience
-    - In production, use secure token generation and storage
+    - The demo uses a token configured in advance
+    - In production, generate and store tokens securely
 
 ### Step 3: Install Python dependencies
 
@@ -97,12 +97,12 @@ This command:
 - Sets up development tools (pytest, ruff, mypy)
 
 :::note First time using uv?
-uv automatically manages virtual environments. All subsequent commands should be run with `uv run` prefix to ensure they use the correct environment.
+uv automatically manages virtual environments. Run all subsequent commands with the `uv run` prefix so that they use the correct environment.
 :::
 
 ### Step 4: Start the application stack
 
-Launch Infrahub and the Service Catalog using Docker Compose. This single command starts multiple services.
+Launch Infrahub and the Service Catalog using Docker Compose. This command starts several services.
 
 ```shell
 uv run invoke start
@@ -111,7 +111,7 @@ uv run invoke start
 :::important Why Use Invoke?
 The `invoke start` command is a wrapper that:
 
-- Ensures the correct Docker Compose configuration is used
+- Uses the correct Docker Compose configuration
 - Mounts the `service_catalog` module into the Infrahub container
 - Starts Infrahub, the Streamlit application, and Semaphore
 - Sets up networking between containers
@@ -132,7 +132,7 @@ This command launches:
 
 ### Step 5: Initialize the demo environment
 
-Once Infrahub is up and running, initialize the demo by loading the repository, permissions, and seeding Semaphore.
+Once Infrahub is running, initialize the demo by loading the repository and permissions, then seeding Semaphore.
 
 ```shell
 uv run invoke init
@@ -146,7 +146,7 @@ This single command performs three things:
 
 #### What the repository provides
 
-Once Infrahub imports the repository, it picks up:
+Once Infrahub imports the repository, it loads:
 
 - **Generator Scripts**: Python code that automates service provisioning
 - **Configuration Templates**: Jinja2 templates for device configurations
@@ -171,7 +171,7 @@ The schema uses a hierarchical structure:
 - Everything is version-controlled and auditable
 :::
 
-Infrahub also loads three service tiers (Gold, Silver, Bronze), four customers, friendly device names such as "Paris edge router 1", and a list price for each device type from the repository. The upstream circuits of the cost of service come with Step 6. After `invoke init` there are no services yet: you create them by ordering through the portal, or by running Step 6.
+Infrahub also loads three service tiers (Gold, Silver, Bronze), four customers, friendly device names such as "Paris edge router 1", and a list price for each device type from the repository. Step 6 adds the upstream circuits used to calculate the cost of service. After `invoke init` there are no services yet: you create them by ordering through the portal or by running Step 6.
 
 ### Step 6: Seed the business impact demo (optional)
 
@@ -183,7 +183,7 @@ uv run invoke seed
 
 The command uses the `INFRAHUB_ADDRESS` and `INFRAHUB_API_TOKEN` variables from Step 2 and takes a few minutes. It runs these steps in order:
 
-1. Waits until Infrahub has imported the repository: the tiers, the customers, the `business_impact_services` query and the generator definition, with the repository in sync. When the last import of the repository failed, it asks Infrahub to import the last commit again. It then sets the description that the Infrahub web interface shows for the Gold outage guard check, the generator, the artifact definitions and the stored queries. It then loads the circuit schema, the **Circuit** item of the **Device Management** menu, and an upstream circuit with a monthly cost for each edge router, for the cost of service. A repository import that runs while the circuit schema loads can fail, so after the schema load it waits again until the repository is in sync
+1. Waits until Infrahub has imported the repository and the repository is in sync. This import includes the tiers, customers, `business_impact_services` query and generator definition. If the last repository import failed, the command asks Infrahub to import the last commit again. It then sets the descriptions that the Infrahub web interface shows for the redundancy check, generator, artifact definitions and stored queries. Next, it loads the circuit schema, the **Circuit** item of the **Device Management** menu, and an upstream circuit with a monthly cost for each edge router. These circuits provide data for the cost of service. A repository import that runs while the circuit schema loads can fail, so the command waits again until the repository is in sync
 2. Creates twelve Dedicated Internet services in Paris and Brussels on `main`, each with a customer and a tier, and runs the provisioning generator for each one. It then gives the three Paris Gold services a second path through the other Paris switch and edge router, generates the "Cost of service" artifact, and creates the `gold-outreach` webhook, inactive, with a placeholder CRM URL
 3. Opens three maintenance proposed changes: "Paris router 1 maintenance", "Brussels switch 1 maintenance" and "New York router 1 maintenance"
 4. Waits for each proposed change pipeline to finish
@@ -196,7 +196,7 @@ Infrahub imports the repository from the committed `main` branch of your checkou
 
 ## Verify your installation
 
-Confirm everything is working by accessing both interfaces:
+Confirm that everything works by accessing all three interfaces:
 
 ### Infrahub web UI
 
@@ -233,7 +233,7 @@ Confirm everything is working by accessing both interfaces:
 
 ### Services won't start
 
-- Ensure Docker is running and has sufficient resources
+- Confirm that Docker is running and has enough resources
 - Check for port conflicts (3000, 8000, 8501, 5432, 6379)
 - Run `uv run invoke destroy` then `uv run invoke start` to reset
 
@@ -251,7 +251,7 @@ Confirm everything is working by accessing both interfaces:
 
 - Verify environment variables are set correctly
 - Check firewall rules if running on a remote server
-- Ensure all containers are running: `docker compose ps`
+- Confirm that all containers are running: `docker compose ps`
 
 ## Next steps
 
