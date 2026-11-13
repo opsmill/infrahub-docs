@@ -20,6 +20,7 @@ Before installing Infrahub Collect, ensure you have:
 
 - Administrative or sudo access on your system
 - kubectl configured with permissions to read pod logs and execute commands in pods (`pods/log` and `pods/exec`) in the Infrahub namespace
+- To include traces from the deployment's Tempo (`--include-traces` without `--traces-tempo-url`), `list` and `get` on `services`, `get` and `list` on `pods`, and `create` on `pods/portforward` in the Infrahub namespace
 
 **If building from source:**
 

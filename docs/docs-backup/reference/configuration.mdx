@@ -58,6 +58,8 @@ Both rules combine as a union, and the most recent backup at each location alway
 | Variable | Description | Default | Example |
 |----------|-------------|---------|---------|
 | `INFRAHUB_BENCHMARK_IMAGE` | Container image used by the opt-in `--benchmark` run | `registry.opsmill.io/opsmill/bench` | `registry.example.com/opsmill/bench` |
+| `INFRAHUB_TRACES_TEMPO_TOKEN` | Token of the trace backend given with `--traces-tempo-url`, sent as a bearer token; never written to the bundle or the output | unset | `glc_...` |
+| `INFRAHUB_TRACES_API_TOKEN` | Infrahub API token with the `super_admin` permission, used only to read the trace sampling ratio; never written to the bundle or the output | unset | `06438eb2-...` |
 
 ## Command-line flag reference
 
@@ -86,6 +88,13 @@ Both rules combine as a union, and the most recent backup at each location alway
 | `--include-backup` | `INFRAHUB_INCLUDE_BACKUP` | Also create a backup during collection |
 | `--include-queries` | `INFRAHUB_INCLUDE_QUERIES` | Include database query logs in the bundle |
 | `--benchmark` | `INFRAHUB_BENCHMARK` | Run the OpsMill benchmark and include its results |
+| `--include-traces` | `INFRAHUB_INCLUDE_TRACES` | Include the traces of slow requests from Tempo |
+| `--traces-since` | `INFRAHUB_TRACES_SINCE` | Period before now to read traces from (default `2h`) |
+| `--traces-start` | `INFRAHUB_TRACES_START` | Start of an absolute traces window, in RFC 3339 |
+| `--traces-end` | `INFRAHUB_TRACES_END` | End of an absolute traces window, in RFC 3339 |
+| `--traces-min-duration` | `INFRAHUB_TRACES_MIN_DURATION` | Shortest trace duration kept (default `1s`) |
+| `--traces-max-size` | `INFRAHUB_TRACES_MAX_SIZE` | Size limit of the traces, in megabytes (default `100`) |
+| `--traces-tempo-url` | `INFRAHUB_TRACES_TEMPO_URL` | Tempo-compatible backend to read instead of the deployment's Tempo |
 
 ## Auto-detection behavior
 

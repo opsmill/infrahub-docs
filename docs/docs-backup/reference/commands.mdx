@@ -331,6 +331,18 @@ infrahub-collect create [flags]
 | `--include-backup` | Also create a backup using the standard backup behavior | `false` | `INFRAHUB_INCLUDE_BACKUP` |
 | `--include-queries` | Include database query logs (may contain customer data) | `false` | `INFRAHUB_INCLUDE_QUERIES` |
 | `--benchmark` | Run the OpsMill benchmark and include its results (requires image download; skipped with a warning if unavailable) | `false` | `INFRAHUB_BENCHMARK` |
+| `--include-traces` | Include the traces of slow requests from Tempo; personal data is removed | `false` | `INFRAHUB_INCLUDE_TRACES` |
+| `--traces-since <duration>` | Read the traces of this period before now, such as `30m` or `2h`; not combined with `--traces-start` and `--traces-end` | `2h` | `INFRAHUB_TRACES_SINCE` |
+| `--traces-start <time>` | Start of an absolute window, in RFC 3339; given with `--traces-end` | unset | `INFRAHUB_TRACES_START` |
+| `--traces-end <time>` | End of an absolute window, in RFC 3339; given with `--traces-start` | unset | `INFRAHUB_TRACES_END` |
+| `--traces-min-duration <duration>` | Read only the traces that lasted longer than this duration | `1s` | `INFRAHUB_TRACES_MIN_DURATION` |
+| `--traces-max-size <n>` | Size limit of the traces, in megabytes of uncompressed JSON | `100` | `INFRAHUB_TRACES_MAX_SIZE` |
+| `--traces-tempo-url <url>` | Read the traces from this Tempo-compatible backend instead of the deployment's Tempo | unset | `INFRAHUB_TRACES_TEMPO_URL` |
+
+The `--traces-*` options require `--include-traces`. The two tokens of the traces collector have no flag, so they never appear on a command line. Set them as environment variables, or answer the prompt that asks for them in a terminal:
+
+- `INFRAHUB_TRACES_TEMPO_TOKEN`: token of the backend given with `--traces-tempo-url`, sent as a bearer token.
+- `INFRAHUB_TRACES_API_TOKEN`: Infrahub API token of a user with the `super_admin` permission, used only to read the trace sampling ratio.
 
 **Examples:**
 
@@ -349,6 +361,9 @@ infrahub-collect create --include-backup
 
 # Performance investigation with benchmark
 infrahub-collect create --benchmark
+
+# Slowness investigation with the traces of the last 30 minutes
+infrahub-collect create --include-traces --traces-since=30m
 ```
 
 **Output:**
@@ -369,6 +384,7 @@ A single archive named `support_bundle_<timestamp>.tar.gz` in the output directo
 | Container metrics | Resource usage via `docker compose stats` or `kubectl top` |
 | Backup (opt-in) | Backup produced by the standard backup behavior (`--include-backup`) |
 | Benchmark (opt-in) | OpsMill benchmark results (`--benchmark`) |
+| Traces (opt-in) | Traces of slow requests from Tempo, with personal data removed, and the trace sampling ratio (`--include-traces`) |
 
 ### Environment and utility commands
 

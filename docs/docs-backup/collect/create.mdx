@@ -24,6 +24,7 @@ Before collecting a bundle:
 - The `infrahub-collect` binary is installed ([installation guide](./install.mdx))
 - `kubectl` is configured with access to the cluster running Infrahub
 - Your role can read pod logs and execute commands in pods (`pods/log` and `pods/exec`); no write or scale permissions are needed
+- To include traces from the deployment's Tempo (`--include-traces` without `--traces-tempo-url`), your role can also find the Tempo service and forward a port to its pod: `list` and `get` on `services`, `get` and `list` on `pods`, and `create` on `pods/portforward`
 
 </TabItem>
 </Tabs>
@@ -131,7 +132,7 @@ The manifest records what was attempted and what succeeded:
 
 ```json
 {
-  "manifest_version": 2026070200,
+  "manifest_version": 2026110500,
   "collect_id": "20260702_141530",
   "created_at": "2026-07-02T14:15:30Z",
   "tool_version": "1.2.0",
@@ -166,6 +167,7 @@ The bundle layout is identical on Docker Compose and Kubernetes. Inside the arch
 - `task-manager/` - Work pools, work queues, recent flow runs, the pending and running flow and task runs, events, and automations
 - `server/` - Version, installed packages, API information, configuration, schema, worker schema-sync status (`infrahub_status.json`), environment variables
 - `metrics/` - Container resource metrics
+- `traces/` - Traces of slow requests, one OTLP JSON file per trace, slowest first (only with `--include-traces`)
 
 Each file holds the output of the command that produced it and nothing else, so a `.json` file always parses. When a command fails, its file is absent and a sibling `<name>.err.txt` records what ran, how it failed, and what the command reported — for example `task-manager/flow-runs.err.txt` in place of `flow-runs.json`. The manifest lists the same failure as a reason on the collector.
 
@@ -216,6 +218,71 @@ infrahub-collect create
 
 The effective limit is recorded in the manifest, so support knows whether logs were truncated.
 
+### Include the traces of slow requests
+
+When Infrahub is slow, the traces of the slow requests show which component and which database query took the time. If your deployment sends traces to Tempo, for example with the Infrahub observability stack, add them to the bundle:
+
+```bash
+infrahub-collect create --include-traces
+```
+
+By default, the collector reads the traces of the last 2 hours that lasted longer than 1 second. Change the window and the minimum duration as needed:
+
+```bash
+# A slowness that is still going on: the last 30 minutes
+infrahub-collect create --include-traces --traces-since=30m
+
+# A slowness that ended: an absolute window, in RFC 3339
+infrahub-collect create --include-traces \
+  --traces-start=2026-11-04T14:00:00Z --traces-end=2026-11-04T15:00:00Z
+
+# Only the traces longer than 5 seconds
+infrahub-collect create --include-traces --traces-min-duration=5s
+```
+
+The collector writes one file per trace to `traces/`, numbered from `0001` for the slowest trace. It stops when the files reach the size limit, 100 MB by default (`--traces-max-size`, in megabytes of uncompressed JSON), or after 5 minutes of fetching. Because the slowest traces are written first, the traces left out are always faster than the traces kept. The `traces` entry of `bundle_information.json` records the window, the minimum duration, and how many traces were found, written and left out.
+
+**Personal data is removed.** The collector keeps only these fields of each trace:
+
+- On every span: the trace, span and parent span IDs, the span name and kind, the start and end times, and the status code.
+- On the process that sent the span: `service.name`, `service.version` and `worker.id`.
+- On database query spans (`execute_db_query_with_metadata`): `query_name` and `rows`.
+- On GraphQL spans (`execute_graphql`): `type`, `operation`, `name` and `branch`.
+- On HTTP server spans: `http.method`, `http.route` and `http.status_code`.
+
+Everything else is removed before the file is written, including the text of database queries, URLs, client IP addresses, user agents, exception messages and span events.
+
+**Where the collector finds Tempo.** The collector sends its requests from the machine where it runs, so it works while the Infrahub containers or pods are down:
+
+- On Docker Compose, it reads the published port 3200 of the `infrahub-tempo` service of the project. With a remote Docker context, this port is on the remote host; use `--traces-tempo-url` instead.
+- On Kubernetes, it finds the service labelled `app.kubernetes.io/name=tempo` in the Infrahub namespace and forwards a local port to its port 3100 for the duration of the collection. The `infrahub-observability` Helm chart creates this service.
+
+The collector works with Tempo 2.5 and later.
+
+When no Tempo is found, when Tempo does not answer the search within 60 seconds, or when your Kubernetes role lacks a permission, the `traces` entry is `skipped` and the reason names what is missing.
+
+**Your own trace backend.** To read the traces from another Tempo-compatible backend, give its URL. If the backend needs a token, set it in your shell; the collector sends it as a bearer token and never writes it to the bundle or the output:
+
+```bash
+export INFRAHUB_TRACES_TEMPO_TOKEN=<token>
+infrahub-collect create --include-traces --traces-tempo-url=https://tempo.example.com
+```
+
+When the variable is not set and the command runs in a terminal, the collector asks for the token without showing what you type. An empty answer means no token.
+
+**The trace sampling ratio.** Infrahub records a trace for only a share of the requests. To let support know that share, give an Infrahub API token of a user with the `super_admin` permission. The collector uses it only to read the sampling ratio (Infrahub 1.12 or later) and records the ratio in the bundle:
+
+```bash
+export INFRAHUB_TRACES_API_TOKEN=<token>
+infrahub-collect create --include-traces
+```
+
+Without the variable, the collector asks for the token in a terminal; leave the answer empty to skip. If the slowness can be reproduced, a super admin can raise the ratio for a limited time with `PUT /api/troubleshooting/trace-sample-ratio` before reproducing it, and remove the temporary ratio with `DELETE` on the same endpoint after the bundle is created.
+
+:::note
+Tempo can take about a minute before a new trace appears in its search. If you create the bundle right after the slowness, wait a minute first.
+:::
+
 ### Run a performance benchmark
 
 For performance investigations, support may ask you to include a benchmark run:
@@ -241,6 +308,8 @@ On Docker Compose, confirm the project is running with `docker compose ls`; the 
 ### Permission denied on Kubernetes
 
 Log collection needs the `pods/log` permission and the status collectors need `pods/exec`. If your role lacks one of them, the affected collectors are recorded as failed in the manifest. Ask your cluster administrator for read access to both — collection needs no write or scale permissions.
+
+With `--include-traces`, the collector finds the deployment's Tempo and forwards a port to it, which needs `list` and `get` on `services`, `get` and `list` on `pods`, and `create` on `pods/portforward`. `kubectl port-forward` reads the service and the pod behind it before it opens the port. Without these permissions, the `traces` entry is `skipped` and the reason names what is missing. With `--traces-tempo-url`, the collector reads a URL that your machine reaches and needs none of them.
 
 ### Docker or kubectl not found
 
