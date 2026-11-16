@@ -53,6 +53,57 @@ Both rules combine as a union, and the most recent backup at each location alway
 |----------|-------------|---------|---------|
 | `PREFECT_API_DATABASE_CONNECTION_URL` | PostgreSQL connection string | Auto-detect | `postgresql://user:pass@localhost/prefect` |
 
+### External database configuration
+
+These apply on Kubernetes when a database resolves as external — running outside the cluster rather
+than as a deployment container. For a deployment whose databases are all internal they are inert,
+so no existing configuration needs to change. See [Prepare an external database for backup and
+restore](../backup/external-databases.mdx).
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `INFRAHUB_NEO4J_ADDRESS` | Override the Neo4j host list as `host[:port][,host[:port]...]` | Discovered from the deployment | `neo4j-a.example.internal,neo4j-b.example.internal` |
+| `INFRAHUB_NEO4J_BACKUP_PORT` | Port the Neo4j backup service listens on. Not the client port | `6362` | `6362` |
+| `INFRAHUB_POSTGRES_ADDRESS` | Override the PostgreSQL endpoint as `host[:port]` | Discovered from the deployment | `pg.example.internal:5432` |
+| `INFRAHUB_ALLOW_EXTERNAL_RESTORE` | Authorize a destructive restore into a database the deployment does not manage | `false` | `true` |
+| `INFRAHUB_EXTERNAL_DB_INSECURE_TLS` | Do not protect connections to an external database server | `false` | `true` |
+| `INFRAHUB_EXTERNAL_DB_TIMEOUT` | Bound on any single operation against an external database. Needs a unit | `2h` | `4h` |
+| `INFRAHUB_EXTERNAL_DB_SCRATCH_SIZE` | Scratch space for the transient backup workload | Derived from the database size | `200Gi` |
+| `INFRAHUB_EXTERNAL_DB_IMAGE_PULL_SECRETS` | Comma-separated secrets in the deployment namespace holding registry credentials for the `infrahub-backup` image the transient workload runs | unset | `my-registry-credentials` |
+| `INFRAHUB_EXTERNAL_DB_SERVICE_ACCOUNT` | Service account the transient workload runs under | unset | `backup-runner` |
+| `INFRAHUB_EXTERNAL_DB_NODE_SELECTOR` | Comma-separated `key=value` node labels the transient workload must be scheduled onto | unset | `workload=maintenance` |
+| `INFRAHUB_EXTERNAL_DB_TOLERATIONS` | Comma-separated taints the transient workload tolerates, as `key=value:Effect`, `key:Effect` or a bare `key` | unset | `maintenance=true:NoSchedule` |
+| `INFRAHUB_EXTERNAL_DB_PRIORITY_CLASS` | PriorityClass the transient workload is admitted under | unset | `backup-priority` |
+
+:::warning
+There is deliberately no environment variable for the transient workload's image.
+`--external-db-image` is the only flag in these tools with no environment equivalent: the tool can
+create workloads in your namespace, so an image settable from ambient environment would turn that
+permission into a way to run arbitrary code there. The placement
+variables above are bound, because they say where a pod may run and which credentials fetch its
+image, never what it runs.
+
+`INFRAHUB_EXTERNAL_DB_TIMEOUT` needs a unit — `4h`, `90m`, `1h30m`. A bare number is refused and
+the bound is left unchanged, rather than being read as nanoseconds. Values below 30 seconds are
+raised to that floor.
+:::
+
+### Settings read from the deployment
+
+`infrahub-backup` reads these out of the Infrahub components still running in the namespace to
+discover an external endpoint. You do not set them for the tool — they are Infrahub's own settings,
+listed here so you can see where a reported endpoint came from.
+
+| Variable | Used for |
+|----------|----------|
+| `INFRAHUB_DB_ADDRESS` | Neo4j host list, as comma-separated `host[:port]` |
+| `INFRAHUB_DB_PORT` | Neo4j client port. Not the backup port |
+| `INFRAHUB_DB_PROTOCOL` | `bolt` or `neo4j` |
+| `INFRAHUB_DB_TLS_ENABLED` | Whether the deployment encrypts its own database connections |
+| `INFRAHUB_DB_TLS_INSECURE` | Whether the deployment verifies its own database certificate. Does not confer `--external-db-insecure-tls` |
+| `INFRAHUB_DB_TLS_CA_FILE` | Certificate authority the tool carries into the transient workload |
+| `PREFECT_API_DATABASE_CONNECTION_URL` | PostgreSQL host, port, database, user, password and `sslrootcert` |
+
 ### Collect configuration
 
 | Variable | Description | Default | Example |
@@ -80,6 +131,46 @@ Both rules combine as a union, and the most recent backup at each location alway
 | `--retention-days` | Prune backups older than N days after a successful backup |
 | `--retention-count` | Keep only the N most recent backups after a successful backup |
 
+### External database flags
+
+Available on both `create` and `restore`, and inert unless a database resolves as external. Every
+one has an environment override except `--external-db-image`.
+
+| Flag | Environment Override | Description |
+|------|---------------------|-------------|
+| `--neo4j-address` | `INFRAHUB_NEO4J_ADDRESS` | Override the Neo4j host list as `host[:port][,host[:port]...]` |
+| `--neo4j-backup-port` | `INFRAHUB_NEO4J_BACKUP_PORT` | Port the Neo4j backup service listens on, default `6362`. Not the client port |
+| `--postgres-address` | `INFRAHUB_POSTGRES_ADDRESS` | Override the PostgreSQL endpoint as `host[:port]` |
+| `--allow-external-restore` | `INFRAHUB_ALLOW_EXTERNAL_RESTORE` | Authorize a destructive restore into a database the deployment does not manage |
+| `--external-db-insecure-tls` | `INFRAHUB_EXTERNAL_DB_INSECURE_TLS` | Skip certificate verification, and accept a channel with no encryption where the deployment records TLS as disabled |
+| `--external-db-timeout` | `INFRAHUB_EXTERNAL_DB_TIMEOUT` | Bound on any single operation against an external database, default `2h` |
+| `--external-db-scratch-size` | `INFRAHUB_EXTERNAL_DB_SCRATCH_SIZE` | Scratch space for the transient backup workload, such as `200Gi` |
+| `--external-db-image` | none, by design | Image the transient workload runs for both databases. Default `registry.opsmill.io/opsmill/infrahub-backup:<version>`, the version of the binary you run. A build that is not a release has no default and requires this flag |
+| `--external-db-image-pull-secrets` | `INFRAHUB_EXTERNAL_DB_IMAGE_PULL_SECRETS` | Secrets in the deployment namespace holding registry credentials for the `infrahub-backup` image |
+| `--external-db-service-account` | `INFRAHUB_EXTERNAL_DB_SERVICE_ACCOUNT` | Service account the transient workload runs under. It mounts no service-account token |
+| `--external-db-node-selector` | `INFRAHUB_EXTERNAL_DB_NODE_SELECTOR` | Node labels the transient workload must be scheduled onto |
+| `--external-db-tolerations` | `INFRAHUB_EXTERNAL_DB_TOLERATIONS` | Taints the transient workload tolerates |
+| `--external-db-priority-class` | `INFRAHUB_EXTERNAL_DB_PRIORITY_CLASS` | PriorityClass the transient workload is admitted under |
+
+#### External restore authorization
+
+Restoring into a database the deployment does not manage overwrites data in a system Infrahub does
+not own, so it carries its own authorization, separate from every other gate:
+
+- `--force` does **not** confer it. `--force` skips the running-tasks consistency check and
+  nothing else.
+- Enabling scheduled restore does **not** confer it.
+- For an unattended restore, set `INFRAHUB_ALLOW_EXTERNAL_RESTORE=true` in the schedule's
+  configuration. The flag form exists for interactive use, and the tool reports which of the two
+  channels supplied the authorization.
+- A value that is not a boolean leaves external restore unauthorized, with a warning.
+
+Without it, an external restore exits non-zero and the database is untouched.
+
+There is no TLS policy flag. `--external-db-insecure-tls` is the only opt-out from verifying an
+external database server, and `--external-db-tls-policy` does not exist — an earlier plan named it,
+but the channel it would have configured takes no policy name.
+
 ### Collect command flags
 
 | Flag | Environment Override | Description |
@@ -97,6 +188,11 @@ Both rules combine as a union, and the most recent backup at each location alway
 | `--traces-tempo-url` | `INFRAHUB_TRACES_TEMPO_URL` | Tempo-compatible backend to read instead of the deployment's Tempo |
 
 ## Auto-detection behavior
+
+When you set `--project` (`INFRAHUB_PROJECT`) or `--k8s-namespace` (`INFRAHUB_K8S_NAMESPACE`), the
+command acts only on that deployment. If it cannot reach it, the command fails and does not look for
+another deployment on the same host. If you set both, the command tries the Kubernetes namespace
+first and then the Docker Compose project, and fails only when it reaches neither.
 
 ### Docker Compose project detection
 

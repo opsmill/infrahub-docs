@@ -1,0 +1,139 @@
+---
+title: Capture an external Neo4j database directly to cloud storage
+---
+
+If your Neo4j servers cannot fetch a staged artifact from an object store, `infrahub-backup
+restore` has no way to seed them, and the supported round trip does not close. Neo4j Enterprise can
+instead write a backup straight to cloud storage itself, which gives you an artifact in your own
+bucket without any of the tool's machinery.
+
+This is a manual procedure. `infrahub-backup` does not perform it, does not schedule it, and does
+not know the artifact exists. Use it when you need a backup in your bucket and cannot meet the
+restore prerequisites in
+[Prepare an external database for backup and restore](./external-databases.mdx); use
+`infrahub-backup create` whenever you can.
+
+## What you take on
+
+Everything `infrahub-backup` normally does for you becomes yours to do:
+
+| Concern | With `infrahub-backup create` | Direct to cloud storage |
+|---------|-------------------------------|-------------------------|
+| Artifact format | Single archive with metadata and checksums | Vendor artifacts, one per database, unrelated to each other |
+| Restore | `infrahub-backup restore` finds and validates the archive | You drive the vendor restore yourself |
+| Both databases | Neo4j and PostgreSQL captured in one coordinated run | Two independent runs you sequence |
+| Storage efficiency and encryption | The `plakar` backend removes repeated blocks and encrypts them | Whatever your bucket provides |
+| Retention | `--retention-days` and `--retention-count` prune archives | Bucket lifecycle rules, written by you |
+| Completeness | Partial captures are detected and removed | You read the command output and judge |
+
+Two of those deserve their own warning.
+
+:::warning
+The artifacts this procedure produces are **not** restorable with `infrahub-backup restore`. It
+looks for an Infrahub backup archive with its metadata, and finds neither. Plan the restore before
+you rely on the backup.
+:::
+
+:::warning
+Your two databases are captured by two separate commands, so their recovery points differ by
+however long you leave between them. A restore that mixes recovery points leaves Infrahub's graph
+and its task history disagreeing. Quiesce Infrahub around both captures, or accept and record the
+gap.
+:::
+
+## Prerequisites
+
+- Neo4j Enterprise 2025.03 or later on the server. Writing a backup directly to cloud storage was
+  added in that release.
+- A backup client machine on the same network as the database, with a matching Neo4j installation
+  so `neo4j-admin` is available, and with local disk at least the size of the database. Writing to
+  cloud storage still stages through local disk. The `neo4j-admin` in the `infrahub-backup`
+  container image cannot write to cloud storage, because the image leaves out the S3, Azure and
+  Google Cloud client libraries. Use a full Neo4j installation for this procedure.
+- The Neo4j backup service listening on a non-loopback address. This prerequisite is the same one
+  the supported path needs — see
+  [Step 1 of the preparation guide](./external-databases.mdx#step-1-expose-the-neo4j-backup-service-on-a-non-loopback-address).
+- Cloud storage credentials on the backup client, and a PostgreSQL client at least as new as your
+  task manager database server.
+
+## Step 1: Capture Neo4j to your bucket
+
+From the backup client, run the vendor backup command with a cloud destination. Pass every cluster
+member so the capture can fall back when one is unreachable:
+
+```bash
+neo4j-admin database backup \
+  --from=neo4j-a.example.internal:6362,neo4j-b.example.internal:6362 \
+  --to-path=s3://my-infrahub-backups/manual \
+  neo4j
+```
+
+Check the vendor documentation for your release before you script this. The flags and the
+supported destination schemes belong to Neo4j, not to Infrahub, and they change between releases.
+
+## Step 2: Capture the task manager database
+
+Infrahub's task history lives in PostgreSQL and is not covered by the command above. Take a
+custom-format dump, which restores into the same or a later major version:
+
+```bash
+pg_dump --format=custom --no-owner \
+  --host task-manager-db.example.internal \
+  --username prefect \
+  --dbname prefect \
+  --file prefect-$(date -u +%Y%m%dT%H%M%SZ).dump
+```
+
+Upload the dump beside the Neo4j artifact, using whichever client your storage provider supports.
+
+## Step 3: Verify what you captured
+
+The backup command's exit status is not enough. Exit code `1` means either that the backup failed
+or that it succeeded while some servers were unreachable, and there is no exit code that
+separates the two. Passing several members makes the second case more likely, not less.
+
+Read the command's own output for servers it could not reach, then confirm the objects landed:
+
+```bash
+aws s3 ls s3://my-infrahub-backups/manual/ --recursive --human-readable
+```
+
+Record the timestamp of each artifact and which endpoint served it. Nothing else does this for
+you, and a recovery point you cannot state is not a recovery point.
+
+## Step 4: Plan and rehearse the restore
+
+Decide the restore route now, while the databases are healthy, and rehearse it against a
+disposable database:
+
+- If your servers can reach the bucket by the time you restore, seed from the artifact with
+  `CREATE OR REPLACE DATABASE ... OPTIONS { existingData: 'use', seedURI: '...' }`. That is the
+  path `infrahub-backup restore` automates, so at that point you no longer need this procedure.
+- If they cannot, restore on the server itself with the vendor restore command, which needs
+  filesystem access to the server's store directory. `dbms.recreateDatabase()` is a further
+  Cypher-level route the vendor documents for both standalone and clustered servers.
+- Restore the PostgreSQL dump with `pg_restore` against your task manager database.
+
+:::warning
+Whichever route you take, confirm the database came online. A seed is downloaded and validated
+when the database starts, not when the statement returns, so a failed fetch leaves the database
+offline with a `statusMessage` of `Unable to start database` rather than failing the statement.
+Check `SHOW DATABASES` for `currentStatus` and `statusMessage` before you call the restore done.
+:::
+
+## Returning to the supported path
+
+This procedure is a stopgap, and the gap it covers is narrow: your Neo4j servers cannot reach an
+object store, or lack the provider tooling and credentials to fetch from one. Once either is
+arranged, `infrahub-backup create` and `infrahub-backup restore` handle the whole round trip, with
+metadata, checksums, retention and a restore that verifies the database came online. Revisit the
+prerequisites in
+[Prepare an external database for backup and restore](./external-databases.mdx) when your database
+estate changes.
+
+## Related resources
+
+- [Prepare an external database for backup and restore](./external-databases.mdx)
+- [Back up your Infrahub instance](./create.mdx)
+- [Manage backup retention](./retention.mdx)
+- [Configuration reference](../reference/configuration.mdx)

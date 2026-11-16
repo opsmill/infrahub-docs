@@ -1,0 +1,513 @@
+---
+title: Prepare an external database for backup and restore
+---
+
+Infrahub deployments on Kubernetes often point at a Neo4j or PostgreSQL database that runs outside
+the cluster — a managed service, or a server the deployment only reaches over the network. Backing
+up such a database needs one-time changes on the database side, because `infrahub-backup` cannot
+reach the storage of a server it does not host. This guide covers each change, and how to confirm
+it took effect before you depend on it for recovery.
+
+Work through the steps that apply to you. If your Neo4j and PostgreSQL databases both run inside
+the deployment, none of this applies and nothing here changes how your backups behave.
+
+## Prerequisites
+
+- Infrahub is deployed on Kubernetes. Docker Compose deployments with external databases are not
+  supported yet.
+- Your external Neo4j server runs Neo4j Enterprise. Community Edition cannot be captured over the
+  network — its backup mechanism requires the database to be stopped and its store directory to be
+  directly accessible — so `infrahub-backup` refuses the capture rather than producing a partial
+  one. Keep Community databases inside the deployment.
+- If you run `infrahub-backup` as a pod in the Infrahub namespace, the Job and Secret permissions
+  below do not apply: see
+  [Run `infrahub-backup` as a pod in the Infrahub namespace](#run-infrahub-backup-as-a-pod-in-the-infrahub-namespace).
+- Your Kubernetes credentials can create and remove a Job in the Infrahub namespace. The namespace
+  must grant `create`, `get` and `delete` on `jobs`; `get`, `list`, `watch` and `delete` on `pods`;
+  and `create` on `pods/exec`. The `watch` verb is what the readiness wait needs: the tool waits
+  for the Job's pod with `kubectl wait`, which opens a watch. The Job has a deadline and a
+  time-to-live (TTL), so the cluster removes it and its pod if the CLI terminates unexpectedly.
+- Permissions on `secrets` are needed only in some cases. When the Infrahub server (for Neo4j) or
+  the task manager (for PostgreSQL) takes the database username and password from Secret keys, the
+  Job reads the same Secret keys and the tool creates no secret. In every other case, the tool
+  stores the credentials in a secret of its own, owned by the Job, and the namespace must also
+  grant `create`, `list` and `delete` on `secrets`. Those other cases are:
+  - you supply the credentials in the environment of `infrahub-backup`
+  - the pod specification states the username or the password as a plain value
+  - the PostgreSQL username and password exist only inside the task manager's connection URL,
+    which is how the Prefect server chart renders them unless you set
+    `externalDatabase.usernameSecretKey` and `externalDatabase.passwordSecretKey`
+
+  The log states which case applies to each database.
+- Administrative access to the Neo4j server configuration, and the ability to restart it.
+- An S3-compatible bucket, if you intend to restore. Restore stages the artifact there for the
+  database to fetch.
+
+:::info
+`infrahub-backup` discovers the external endpoint from the environment of the Infrahub components
+still running in the namespace, so you do not normally supply the host list or the credentials.
+The one value it cannot discover is the Neo4j backup service port, because Infrahub never uses it.
+:::
+
+## Step 1: Expose the Neo4j backup service on a non-loopback address
+
+Neo4j enables its backup service by default, but binds it to `127.0.0.1:6362`. A backup taken from
+anywhere other than the database host itself therefore fails to connect until you change the
+server configuration. This is a configuration change and a restart, not only a firewall rule.
+
+To let the Infrahub namespace reach the service, set a non-loopback listen address in `neo4j.conf`
+on every server you want to back up from:
+
+```ini
+server.backup.enabled=true
+server.backup.listen_address=0.0.0.0:6362
+```
+
+Restart the server, then allow traffic from the Infrahub namespace to port `6362`.
+
+:::warning
+Port `6362` is the backup service, not the client port. Bolt traffic uses `7687`, and pointing the
+backup at `7687` fails even though Infrahub connects there successfully. `infrahub-backup` defaults
+to `6362`; use `--neo4j-backup-port` only if your server listens elsewhere.
+:::
+
+If your Neo4j deployment is clustered, list every member so the capture can fall back when one is
+down or does not host the database:
+
+```bash
+infrahub-backup create \
+  --k8s-namespace infrahub \
+  --neo4j-address "neo4j-a.example.internal,neo4j-b.example.internal,neo4j-c.example.internal"
+```
+
+Members without an explicit port use the discovered client port, and the backup port applies to
+all of them. Omit `--neo4j-address` to use the host list the deployment already carries.
+
+## Step 2: Give each Neo4j server a route to the artifact store
+
+Restore reverses the direction data travels. A capture pulls: a transient pod in your namespace
+runs the vendor backup client against the server, and the bytes come back through the pod. A
+restore pushes nothing — there is no remote equivalent of a local restore command — so
+`infrahub-backup` stages the artifact in your object store and asks the server to fetch it:
+
+```cypher
+CREATE OR REPLACE DATABASE neo4j OPTIONS { existingData: 'use', seedURI: 's3://...' }
+```
+
+Three consequences follow, and all three land on the database host rather than on the machine
+running `infrahub-backup`:
+
+- **The Neo4j servers need network egress to the object store.** The tool proves that an
+  independent reader can address the staged object, which is the closest check it can make from
+  the namespace. It cannot verify the route from the database host, and does not claim to.
+- **The servers need credentials for the object store, configured server-side.** The seed provider
+  is built into the server and uses the cloud vendor's own SDK, so the credentials live in your
+  server configuration rather than travelling inside a Cypher statement. On a Neo4j 5.26 or 2025.x
+  server the built-in providers are `S3SeedProvider` and `CloudSeedProvider`, which you can confirm
+  with `CALL dbms.listConfig('dbms.databases.seed_from_uri_providers')`.
+- **The servers also need a region, not only credentials.** The AWS SDK resolves one from
+  `AWS_REGION`, the `aws.region` system property, or a profile — and if it resolves none, the
+  `CREATE DATABASE` statement still *succeeds* and the database then sits `offline` with a
+  `statusMessage` reading `Unable to load region from any of the providers in the chain …`. This is
+  the most common way a seed that looks accepted turns out not to have loaded, so set the region
+  explicitly rather than relying on instance metadata.
+- **Only object stores work without further server configuration.** The `s3`, `gs` and `azb`
+  schemes are built in. Any other scheme — including HTTP and local files — requires
+  `dbms.databases.seed_from_uri_providers` to be configured on every server, which
+  `infrahub-backup` cannot see, so it refuses such a URI before the destructive step rather than
+  after it.
+
+Point the tool at the bucket you want it to stage into:
+
+```bash
+infrahub-backup restore \
+  --k8s-namespace infrahub \
+  --allow-external-restore \
+  --s3-bucket my-infrahub-backups \
+  --s3-region us-east-1
+```
+
+S3-compatible stores work, not only AWS. For a self-hosted store such as MinIO, add
+`--s3-endpoint` so the tool stages there, and point the servers' own fetch at the same place with
+`AWS_ENDPOINT_URL_S3` (alongside `AWS_REGION`, `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`) in
+each Neo4j server's environment. The built-in `s3` provider honours that endpoint, so you do not
+need an AWS account to use restore.
+
+The staged copy is written below your archives, at `seed/<artifact name>/` beneath the configured
+`--s3-prefix`. Retention only recognizes archive keys, so a staged seed is never a pruning
+candidate. Each artifact gets a folder of its own because a Neo4j server reads the other backup
+files beside a seed as one backup chain and refuses the seed when they do not form one. A restore
+that fails leaves its staged copy in place so you can inspect it; delete it by hand once you no
+longer need it.
+
+:::warning
+Confirm both prerequisites with whoever administers your database before you rely on
+`infrahub-backup restore` for recovery, and rehearse a restore into a disposable database first.
+A server that cannot fetch the artifact fails the restore after the destructive step, not before
+it. If you cannot meet these prerequisites, see
+[Capture an external Neo4j database directly to cloud storage](./external-database-direct-to-cloud.mdx).
+:::
+
+## Step 3: Choose the client TLS policy
+
+Connections to an external database server are encrypted and the server's certificate is verified,
+by default, for both databases. You do not name a policy: the choice is between verifying and
+opting out.
+
+`infrahub-backup` carries your deployment's own trust anchor into the transient workload, so a
+privately issued certificate verifies without any action from you:
+
+- For Neo4j, it reads the certificate authority named by `INFRAHUB_DB_TLS_CA_FILE` out of the
+  Infrahub server container and installs it where the client looks.
+- For PostgreSQL, it reads the `sslrootcert` named by the task manager connection URL. Where the
+  deployment names none, the client falls back to the trust store in the `infrahub-backup` image,
+  which is what lets a publicly issued certificate verify.
+
+If verification cannot succeed — the certificate is issued by an authority your deployment does not
+record, or the server offers no TLS at all — opt out explicitly:
+
+```bash
+infrahub-backup create --k8s-namespace infrahub --external-db-insecure-tls
+```
+
+:::warning
+`--external-db-insecure-tls` is wider than skipping certificate verification. It also accepts a
+channel with no encryption at all where the deployment records TLS as disabled, which means your
+database password leaves the cluster in clear text. Treat it as a temporary measure while you fix
+the trust chain, not as a setting.
+
+An external Neo4j server with TLS disabled **requires** this flag. A discovered
+`INFRAHUB_DB_TLS_INSECURE` in your deployment does not confer the opt-out either — the decision has
+to be made about this tool, deliberately.
+:::
+
+Neo4j's backup protocol is separate from this. It authenticates through the server's own backup SSL
+policy rather than through `INFRAHUB_DB_TLS_CA_FILE`, so configure that policy on the server if you
+require TLS on port `6362`.
+
+## Step 4: Authorize a destructive restore
+
+Restoring into a database the deployment does not manage overwrites data in a system Infrahub does
+not own, so it needs its own authorization. Grant it on the command line:
+
+```bash
+infrahub-backup restore --k8s-namespace infrahub --allow-external-restore
+```
+
+Or in the configuration a scheduled restore reads:
+
+```bash
+export INFRAHUB_ALLOW_EXTERNAL_RESTORE=true
+```
+
+:::warning
+This authorization stands on its own. `--force` does not confer it, and enabling scheduled restore
+does not confer it. Setting `INFRAHUB_ALLOW_EXTERNAL_RESTORE=true` in the configuration of a
+scheduled restore is the only way an unattended destructive restore into an external database can
+happen — so set it deliberately, and review it when you review the schedule.
+:::
+
+## Step 5: Make the `infrahub-backup` image reachable
+
+Capturing an external database runs `neo4j-admin`, `cypher-shell` and the PostgreSQL client in a
+transient pod. That pod runs the `infrahub-backup` image at the version of the binary you run: a
+`2.3.0` binary runs `registry.opsmill.io/opsmill/infrahub-backup:2.3.0`. The image carries the
+database tools at versions it pins, so the pod needs no other image. Unlike the opt-in benchmark in
+`infrahub-collect`, this pull cannot be skipped: without it there is no client to reach the
+database with, and a pull that fails is a failed backup.
+
+If your cluster can pull from `registry.opsmill.io`, you need nothing here. If it cannot, mirror
+the `infrahub-backup` image at your binary's version into a registry the cluster can reach, and
+name it:
+
+```bash
+infrahub-backup create \
+  --k8s-namespace infrahub \
+  --external-db-image registry.example.com/opsmill/infrahub-backup:2.3.0 \
+  --external-db-image-pull-secrets my-registry-credentials
+```
+
+`--external-db-image` accepts no environment variable, by design — the tool can create workloads
+in your namespace, so an image settable from ambient environment would turn that into a way to run
+arbitrary code there. Supply it on the command line.
+
+A build of `infrahub-backup` that is not a release, such as one built from a source checkout, has
+no published image. It refuses to back up or restore an external database until you name one with
+`--external-db-image`, for example an image you built from the repository's `Dockerfile`.
+
+If your namespace admits a pod only under particular placement rules, the remaining flags cover
+them, and each is also settable through the environment:
+
+```bash
+infrahub-backup create \
+  --k8s-namespace infrahub \
+  --external-db-service-account backup-runner \
+  --external-db-node-selector "workload=maintenance" \
+  --external-db-tolerations "maintenance=true:NoSchedule" \
+  --external-db-priority-class backup-priority
+```
+
+The pod mounts no service-account token, so naming an account grants it no cluster access — what
+it carries is registry credentials and whatever your admission rules require.
+
+## Run `infrahub-backup` as a pod in the Infrahub namespace
+
+You can run `infrahub-backup` inside the cluster instead of from your workstation, for example as
+the Job or CronJob that the [backup Helm chart](./kubernetes-backup.mdx) deploys. When that pod
+runs the `infrahub-backup` image, it already carries `neo4j-admin`, `cypher-shell` and the
+PostgreSQL client. In that case `infrahub-backup` runs these tools in its own container and creates
+no Job and no Secret in the namespace.
+To set up the chart for an external database, see
+[Configure the `infrahub-backup` Helm chart](#configure-the-infrahub-backup-helm-chart).
+
+`infrahub-backup` runs the tools in its own container when both of these conditions hold:
+
+- The pod's namespace, which Kubernetes writes to
+  `/var/run/secrets/kubernetes.io/serviceaccount/namespace`, is the namespace you back up or
+  restore (`--k8s-namespace`).
+- Every program the database needs is on the container's `PATH`:
+  - for Neo4j: `neo4j-admin`, `cypher-shell`, `keytool`, `sh`, `tar`, `rm`, `mkdir`, `ls` and
+    `base64`
+  - for PostgreSQL: `pg_dump`, `pg_restore`, `psql`, `sh`, `rm` and `base64`
+- The container's temporary directory (`TMPDIR`, or `/tmp` when it is unset) is a path made only
+  of letters, digits and the characters `/`, `.`, `_`, `-` and `+`. If you point `TMPDIR` at a larger
+  volume, keep its path to those characters.
+
+In every other case, including any run from outside the cluster, `infrahub-backup` uses the
+transient Job. Each run logs one line at the `info` level that names the mode it took and why, for
+example `Running the external database tools in this process, with no transient Job: this pod runs
+in the target namespace "infrahub" and finds neo4j tools on PATH`.
+
+### Permissions in this mode
+
+The pod's service account needs the same permissions as a backup of a deployment whose databases
+run inside it, listed in [Required permissions](./kubernetes-backup.mdx#required-permissions):
+
+- `list` and `get` on `pods`, to find the Infrahub components
+- `create` on `pods/exec`, to read the database address, credentials and certificate authority from
+  the Infrahub components
+- `get` on `pods/log`, to follow the progress of commands run in the Infrahub components
+- `get`, `list` and `patch` on `deployments` and `statefulsets`, to find the Infrahub components'
+  workloads by label
+- `get` and `patch` on `deployments/scale` and `statefulsets/scale`, to stop and restart the
+  Infrahub components around an offline capture or a restore. `kubectl scale` writes to these
+  resources, and `patch` on the workload itself does not cover them
+
+It needs no permission on `jobs` or `secrets`, and no `create`, `delete` or `watch` on `pods`.
+
+### What the pod itself needs
+
+- Network access from the pod to each database: the Neo4j client port (`7687` by default), the
+  Neo4j backup port you exposed in Step 1, and the PostgreSQL port (`5432` by default). If your
+  namespace enforces default-deny egress, add these to the backup pod's egress rules.
+- Free disk space under the pod's temporary directory. The capture writes the artifact there
+  before the run archives it, and the run checks the free space against the same size it would
+  give the Job: the store size with headroom, or `--external-db-scratch-size`. To use a larger
+  volume, mount it in the pod and set `TMPDIR` to its path.
+
+Each run works in a directory of its own under the temporary directory and removes it on every
+exit path, including a failure. The credentials reach the database tools only through their
+environment, never through their command line.
+
+The flags that describe the transient Job — `--external-db-image`,
+`--external-db-image-pull-secrets`, `--external-db-service-account`, `--external-db-node-selector`,
+`--external-db-tolerations` and `--external-db-priority-class` — have no effect in this mode,
+because no Job is created. All other checks are unchanged: the version and edition checks, the
+scratch-size check, the removal of an incomplete capture, and the authorization of a restore.
+
+`infrahub-collect --include-backup` still refuses to capture an external database in this mode.
+
+### Configure the `infrahub-backup` Helm chart
+
+The Job and the CronJob of the `infrahub-backup` Helm chart run in the Infrahub namespace, so they
+always run the database tools in their own container. The chart's `externalDatabase` values set
+the environment variables of `infrahub-backup` for an external database:
+
+- `externalDatabase.neo4jAddress` sets `INFRAHUB_NEO4J_ADDRESS`, the Neo4j hosts to back up from.
+  For a Neo4j cluster, list every member. Empty uses the address the Infrahub server is configured
+  with.
+- `externalDatabase.neo4jBackupPort` sets `INFRAHUB_NEO4J_BACKUP_PORT`, the port you exposed in
+  Step 1. Empty uses `6362`.
+- `externalDatabase.postgresAddress` sets `INFRAHUB_POSTGRES_ADDRESS`. Empty uses the address the
+  task manager is configured with.
+- `externalDatabase.insecureTLS` sets `INFRAHUB_EXTERNAL_DB_INSECURE_TLS`, the opt-out from Step 3.
+  An external Neo4j server with TLS disabled needs it.
+- `externalDatabase.timeout` sets `INFRAHUB_EXTERNAL_DB_TIMEOUT`, the time limit of each operation
+  against the database, such as `4h`. Empty uses the default, 2 hours.
+- `externalDatabase.allowRestore` sets `INFRAHUB_ALLOW_EXTERNAL_RESTORE`, the authorization from
+  Step 4. The chart sets it on the restore containers only.
+- `restore.options.neo4jClusterOnlineTimeout` passes `--neo4j-cluster-online-timeout`: how long a
+  restore waits for the database to come online on every member of a Neo4j cluster.
+
+The chart has no value for the following settings. Set them with the chart's `extraEnv`,
+`extraVolumes` and `extraVolumeMounts` values:
+
+- The scratch size: set `INFRAHUB_EXTERNAL_DB_SCRATCH_SIZE`, such as `20Gi`. A backup of a Neo4j
+  2025 server needs it, because that server does not report the size of its store.
+- A larger volume for the temporary files: mount it with `extraVolumes` and `extraVolumeMounts`, and
+  set `TMPDIR` to its mount path with `extraEnv`. The chart runs the pod as user `1000`, so a
+  `PersistentVolumeClaim` usually also needs `podSecurityContext.fsGroup: 1000` for the pod to write
+  to it.
+
+The chart has no value for `--external-db-image` or for the other flags of the transient Job,
+because its pods never create one.
+
+The pods must run an `infrahub-backup` image that supports external databases. If the chart's
+default image does not, set `image.tag` to a release that does. If you deploy the chart through the
+Infrahub Helm chart, put the values below under the `infrahub-backup:` key, and use an Infrahub
+chart version that pins an `infrahub-backup` chart with the `externalDatabase` values.
+
+To back up an external Neo4j cluster every night:
+
+```yaml
+# backup-values.yaml
+backup:
+  enabled: true
+  mode: "cronjob"
+  schedule: "0 2 * * *"
+  storage:
+    type: "s3"
+    s3:
+      bucket: "my-infrahub-backups"
+      region: "us-east-1"
+      secretName: "backup-s3-credentials"
+
+externalDatabase:
+  neo4jAddress: "neo4j-a.example.internal,neo4j-b.example.internal,neo4j-c.example.internal"
+
+extraEnv:
+  - name: INFRAHUB_EXTERNAL_DB_SCRATCH_SIZE
+    value: "20Gi"
+```
+
+A restore of an external Neo4j database has these further requirements:
+
+- `restore.storage.type` must be `s3`. The restore copies the archive to `seed/<artifact name>/`
+  beneath `restore.storage.s3.prefix` in `restore.storage.s3.bucket`, and the Neo4j servers
+  download it from there.
+- The credentials in `restore.storage.s3.secretName` must be able to write to that bucket. This is
+  also true when `restore.storage.s3.key` names the archive.
+- The Neo4j servers must be able to read from that bucket, as described in Step 2.
+
+To restore one archive into the external database:
+
+```yaml
+# restore-values.yaml
+backup:
+  enabled: false
+
+restore:
+  enabled: true
+  mode: "job"
+  storage:
+    type: "s3"
+    s3:
+      bucket: "my-infrahub-backups"
+      key: "infrahub_backup_20250120_020000.tar.gz"
+      region: "us-east-1"
+      secretName: "backup-s3-credentials"
+
+externalDatabase:
+  allowRestore: true
+```
+
+## Validation
+
+Confirm where the tool resolved each database to, before you run a backup:
+
+```bash
+infrahub-backup environment detect --k8s-namespace infrahub
+```
+
+Each database is reported as internal or external, with the endpoint it resolved to. An endpoint
+you do not recognize means discovery read a setting you did not expect, so correct it with
+`--neo4j-address` or `--postgres-address` rather than proceeding.
+
+Then take a backup and read what it reports:
+
+```bash
+infrahub-backup create --k8s-namespace infrahub
+```
+
+A run that reached every endpoint exits `0`. A run that produced an artifact but could not reach
+every requested endpoint exits non-zero and removes the partial artifact from every location it
+reached, so an incomplete capture never becomes a restore candidate.
+
+Finally, rehearse a restore into a disposable database:
+
+```bash
+infrahub-backup restore --k8s-namespace infrahub --allow-external-restore --backup-id <id>
+```
+
+:::warning
+A `CREATE DATABASE` statement that returns successfully proves nothing about the seed. Neo4j
+downloads and validates the artifact when the database starts, not when the statement returns, so
+a failed fetch leaves the database offline rather than failing the statement. `infrahub-backup`
+polls `SHOW DATABASES` and treats "created but not online" as a failed restore. If you ever drive
+a seed by hand, read `currentStatus` and `statusMessage` yourself — `Unable to start database`
+means the seed failed.
+:::
+
+## Troubleshooting
+
+### The capture cannot connect to the Neo4j backup port
+
+The listener is still on loopback, or the namespace has no route to it. Re-check
+`server.backup.listen_address` on the server, confirm the server was restarted after the change,
+and confirm you are targeting `6362` rather than the client port.
+
+### The capture is refused because the server is Community Edition
+
+This is by design and there is no flag for it. Community's backup mechanism requires the database
+to be stopped and its store directory to be readable, so it cannot be performed over the network.
+Move the database inside the deployment, or move to Enterprise.
+
+### The capture is refused on version compatibility
+
+The database tools in the `infrahub-backup` image are older than the server. A newer client reads
+an older server, so the tool aborts in that direction and only warns in the other. Use an
+`infrahub-backup` release whose image carries tools at least as new as your server, or point
+`--external-db-image` at an image that does.
+
+### The run is refused as a development build
+
+The `infrahub-backup` binary you ran is not a release, so no image was published for its version.
+Nothing was created or stopped. Name an image with `--external-db-image`, or run a released
+`infrahub-backup`.
+
+### The transient pod never becomes ready
+
+In a cluster that mirrors images, this is usually an image pull the registry rejected. Name the
+pull secret with `--external-db-image-pull-secrets`. If your namespace enforces a restricted pod
+security standard, the failure names the security context requirement instead — check the service
+account and priority class your namespace admits pods under. If the pod waits with
+`CreateContainerConfigError` and names a Secret key, the Job reads the database credentials from
+the same Secret as your Infrahub pods, and that Secret no longer holds the key. Restore the key in
+that Secret, then run the command again. Restarting the Infrahub pods does not help: pods that read
+the same key cannot start without it either.
+
+### `infrahub-collect --include-backup` refuses to run
+
+Collection creates no workload in your namespace, and capturing an external database needs a
+transient pod and secret there. Take the backup with `infrahub-backup create`, and re-run the
+collection without `--include-backup` for the diagnostics.
+
+### An operation times out on a large database
+
+Every operation against an external database is time-bound, defaulting to two hours. Raise it with
+`--external-db-timeout 4h` or `INFRAHUB_EXTERNAL_DB_TIMEOUT=4h`. The value needs a unit — a bare
+number is refused rather than read as nanoseconds. Values below 30 seconds are raised to that
+floor.
+
+### The capture runs out of scratch space
+
+The backup client writes the artifact to local disk before it streams out, so the transient pod is
+sized from the database. Override the sizing with `--external-db-scratch-size 200Gi` when the
+derived value is wrong for your data.
+
+## Related resources
+
+- [Back up your Infrahub instance](./create.mdx)
+- [Restore from a backup](./restore.mdx)
+- [Capture an external Neo4j database directly to cloud storage](./external-database-direct-to-cloud.mdx)
+- [Configuration reference](../reference/configuration.mdx)

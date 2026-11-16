@@ -49,6 +49,7 @@ Before configuring backups:
 - Infrahub is deployed on Kubernetes via the Infrahub Helm chart
 - You have access to modify Helm values (directly or through GitOps)
 - For S3 storage: An S3-compatible bucket and credentials
+- If Neo4j or PostgreSQL runs outside the Infrahub namespace: the database is prepared as described in [Prepare an external database for backup and restore](./external-databases.mdx), and the chart values are set as described in [Configure the `infrahub-backup` Helm chart](./external-databases.mdx#configure-the-infrahub-backup-helm-chart)
 
 ## Installation methods
 
@@ -389,8 +390,10 @@ The backup process needs these Kubernetes permissions:
 |----------|-------|---------|
 | `pods` | list, get | Discover Infrahub pods |
 | `pods/exec` | create | Execute backup commands in pods |
-| `deployments` | get, patch | Scale down/up during backup |
-| `statefulsets` | get, patch | Scale down/up during backup |
+| `deployments` | get, list, patch | Find the Infrahub workloads by label |
+| `statefulsets` | get, list, patch | Find the Infrahub workloads by label |
+| `deployments/scale` | get, patch | Scale down/up during backup |
+| `statefulsets/scale` | get, patch | Scale down/up during backup |
 | `pods/log` | get | Monitor backup progress |
 
 ### Network access to the API server

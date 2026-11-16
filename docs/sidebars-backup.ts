@@ -22,6 +22,8 @@ const sidebars: SidebarsConfig = {
         'backup/kubernetes-backup',
         'backup/kubernetes-restore',
         'backup/kubernetes-scheduled-restore',
+        'backup/external-databases',
+        'backup/external-database-direct-to-cloud',
       ],
     },
     {

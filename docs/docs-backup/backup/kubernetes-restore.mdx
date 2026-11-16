@@ -26,6 +26,7 @@ Before restoring:
 - Access to modify Helm values for your Infrahub deployment
 - S3 credentials with read access to the backup bucket
 - Network egress from the restore pod to the Kubernetes API server (see [Network access to the API server](./kubernetes-backup.mdx#network-access-to-the-api-server))
+- If Neo4j or PostgreSQL runs outside the Infrahub namespace: the database is prepared as described in [Prepare an external database for backup and restore](./external-databases.mdx), and the chart values are set as described in [Configure the `infrahub-backup` Helm chart](./external-databases.mdx#configure-the-infrahub-backup-helm-chart). A restore of an external Neo4j database also needs S3 credentials that can write to the bucket
 
 ## Step 1: Identify the backup to restore
 
@@ -316,7 +317,7 @@ With a Neo4j cluster, the restore waits for the restored database to be `online`
 level=error msg="Database neo4j is not online on this server" reason="Neo4j gave no status message" server="neo4j-1:7687" status="store copying"
 ```
 
-- If the status is `store copying` or `starting`, the server was still copying the restored data. Run the restore again with a longer wait, for example `--neo4j-cluster-online-timeout=30m`. With the Helm chart, add the flag to `restore.options.extraArgs`.
+- If the status is `store copying` or `starting`, the server was still copying the restored data. Run the restore again with a longer wait, for example `--neo4j-cluster-online-timeout=30m`. With the Helm chart, set `restore.options.neo4jClusterOnlineTimeout`. If your chart version does not have this value, add the flag to `restore.options.extraArgs`.
 - For any other status, the `reason` field holds the message Neo4j reports for that server, such as `No store found on any of the seeders`.
 
 ### Restore fails because the Neo4j server still holds cluster state for the database
