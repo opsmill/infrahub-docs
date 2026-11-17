@@ -3,12 +3,93 @@
 title: "Public sandboxes"
 slug: /
 sidebar_position: 1
+pagination_prev: null
+pagination_next: null
+displayed_sidebar: null
+hide_table_of_contents: true
 ---
 
-Public sandboxes provide hosted Infrahub demos with shared visitor accounts. Choose a demo to find its application links, logins and walkthrough.
+import { SandboxCatalogue } from '@site/src/components/Sandboxes';
 
-Available sandboxes reset nightly. Visitor changes are temporary.
-
-## Sandboxes
-
-- [Data Center](./demo-dc.mdx) — Explore design-driven data center automation&#58; create network topologies, generate device configurations, and review infrastructure changes through branches and proposed changes. (Available)
+<SandboxCatalogue sandboxes={[
+  {
+    "name": "demo-dc",
+    "title": "Data Center",
+    "description": "Explore design-driven data center automation: create network topologies, generate device configurations, and review infrastructure changes through branches and proposed changes.",
+    "status": "available",
+    "applications": [
+      {
+        "name": "infrahub",
+        "driver": "infrahub-enterprise",
+        "version": "1.11.12",
+        "url": "https://infrahub-demo-dc.opsmill.app"
+      },
+      {
+        "name": "portal",
+        "driver": "generic-app",
+        "version": "1.0.0",
+        "url": "https://portal-demo-dc.opsmill.app"
+      }
+    ],
+    "accounts": [
+      {
+        "username": "admin-guest",
+        "password": "infrahub",
+        "role": "admin-guest"
+      },
+      {
+        "username": "guest",
+        "password": "infrahub",
+        "role": "guest"
+      }
+    ],
+    "walkthroughUrl": "https://docs.infrahub.app/demo-dc/user-walkthrough",
+    "repositoryUrl": "https://github.com/opsmill/infrahub-demo-dc"
+  },
+  {
+    "name": "demo-sp",
+    "title": "Service Provider",
+    "description": "Explore service provider network automation: model a multi-vendor MPLS backbone, provision L3VPN services through a service catalog, and validate the generated configurations with Batfish.",
+    "status": "available",
+    "applications": [
+      {
+        "name": "batfish",
+        "driver": "generic-app",
+        "version": "1.0.0",
+        "url": "https://batfish-demo-sp.opsmill.app"
+      },
+      {
+        "name": "batfish-runner",
+        "driver": "generic-app",
+        "version": "1.0.0",
+        "url": "https://batfish-runner-demo-sp.opsmill.app"
+      },
+      {
+        "name": "infrahub",
+        "driver": "infrahub-enterprise",
+        "version": "1.11.12",
+        "url": "https://infrahub-demo-sp.opsmill.app"
+      },
+      {
+        "name": "portal",
+        "driver": "generic-app",
+        "version": "1.0.0",
+        "url": "https://portal-demo-sp.opsmill.app"
+      }
+    ],
+    "accounts": [
+      {
+        "username": "admin-guest",
+        "password": "infrahub",
+        "role": "admin-guest"
+      },
+      {
+        "username": "guest",
+        "password": "infrahub",
+        "role": "guest"
+      }
+    ],
+    "walkthroughUrl": null,
+    "repositoryUrl": "https://github.com/opsmill/infrahub-demo-sp"
+  }
+]} />

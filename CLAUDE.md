@@ -46,9 +46,9 @@ Each source repository has a `.github/workflows/sync-docs.yml` that deletes and 
 - `opsmill/infrahub-sdk-python`: `docs/docs-python-sdk/`, `docs/sidebars-python-sdk.ts`, `docs/sidebars-infrahubctl.ts` and `docs/sidebar-utils.ts`
 - Every other source repository: `docs/docs-<name>/` and `docs/sidebars-<name>.ts`
 
-The sandbox pipeline generates its MDX pages from Infrahub, retains them in its own repository, and syncs them here on relevant source pushes to `main` and manual runs. Its source is private, so `DOC_SOURCES` sets `isPublic: false`: generated pages have no edit link, and their header GitHub icon links to this aggregation repository. Each demo page links to its public demo repository.
+The sandbox pipeline generates its MDX pages from Infrahub, retains them in its own repository, and syncs them here on relevant source pushes to `main`, after each successful `Sandbox` workflow run on `main`, and on manual runs. Its source is private, so `DOC_SOURCES` sets `isPublic: false`: generated pages have no edit link, and their header GitHub icon links to this aggregation repository. Each demo page links to its public demo repository. The pages import `docs/src/components/Sandboxes/`, which is maintained here: the sync does not copy it.
 
-The section is registered at `/sandboxes` without a navbar item. Source sync runs only when `DOCS_SYNC_ENABLED=true` in the pipeline repository.
+The section is registered at `/sandboxes` without a navbar item: no navigation menu links to it yet, and the product team decides where it goes. Source sync runs only when `DOCS_SYNC_ENABLED=true` in the pipeline repository. Its sync token is the `GH_INFRAHUB_BOT_TOKEN` secret. `.lycheeignore` excludes the sandbox addresses (`*.opsmill.app`): a sandbox under maintenance answers 503, and an API application such as Batfish answers 404 at `/`.
 
 The sync workflows authenticate with a token secret in the source repository, either `GH_INFRAHUB_BOT_TOKEN` or `PAT_TOKEN` depending on the repository.
 

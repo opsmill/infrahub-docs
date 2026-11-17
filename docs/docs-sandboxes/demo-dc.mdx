@@ -3,36 +3,42 @@
 title: "Data Center"
 slug: /demo-dc
 sidebar_position: 2
+pagination_prev: null
+pagination_next: null
 ---
 
-Explore design-driven data center automation&#58; create network topologies, generate device configurations, and review infrastructure changes through branches and proposed changes.
+import { SandboxSummary, ApplicationCards, NextSteps } from '@site/src/components/Sandboxes';
 
-**Status:** Available.
+<SandboxSummary description={"Explore design-driven data center automation: create network topologies, generate device configurations, and review infrastructure changes through branches and proposed changes."} status={"available"} walkthroughUrl={"https://docs.infrahub.app/demo-dc/user-walkthrough"} />
 
 ## Applications
 
-- [infrahub](https://infrahub-demo-dc.infrahub.online)
-- [portal](https://portal-demo-dc.infrahub.online)
+<ApplicationCards applications={[
+  {
+    "name": "infrahub",
+    "driver": "infrahub-enterprise",
+    "version": "1.11.12",
+    "url": "https://infrahub-demo-dc.opsmill.app"
+  },
+  {
+    "name": "portal",
+    "driver": "generic-app",
+    "version": "1.0.0",
+    "url": "https://portal-demo-dc.opsmill.app"
+  }
+]} accounts={[
+  {
+    "username": "admin-guest",
+    "password": "infrahub",
+    "role": "admin-guest"
+  },
+  {
+    "username": "guest",
+    "password": "infrahub",
+    "role": "guest"
+  }
+]} demoTitle={"Data Center"} />
 
-## Visitor accounts
+## Next steps
 
-These logins are shared by visitors.
-
-| Username | Password | Role |
-| --- | --- | --- |
-| admin-guest | <code style={{whiteSpace: 'pre-wrap'}}>infrahub</code> | Admin guest |
-| guest | <code style={{whiteSpace: 'pre-wrap'}}>infrahub</code> | Guest |
-
-## Walkthrough
-
-[Follow the walkthrough](https://docs.infrahub.app/demo-dc/user-walkthrough).
-
-For this hosted sandbox, use the application links and visitor accounts above.
-
-## Source repository
-
-[View the demo source](https://github.com/opsmill/infrahub-demo-dc).
-
-## Next
-
-[All public sandboxes](./index.mdx).
+<NextSteps repositoryUrl={"https://github.com/opsmill/infrahub-demo-dc"} />

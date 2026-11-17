@@ -1,0 +1,353 @@
+/* Colours come from the documentation theme, so the cards follow light and dark mode like the Labs page. */
+.catalogue {
+  padding-bottom: 2rem;
+}
+
+.subtitle {
+  font-size: 1.15rem;
+  max-width: 48rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.note {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.resultsHeader {
+  margin: 1.5rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.resultsHeader p {
+  margin: 0;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.grid,
+.apps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background: var(--main-bg-color);
+  padding: 1.25rem;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+  box-shadow: 1px 0 16px 0 rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.cardTitle a {
+  color: inherit;
+}
+
+.cardTitle a:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+}
+
+.cardDescription {
+  flex-grow: 1;
+  font-size: 0.95rem;
+  color: var(--ifm-color-emphasis-800);
+  margin-bottom: 0.9rem;
+}
+
+.eyebrow {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ifm-color-emphasis-600);
+  margin-bottom: 0.35rem;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.9rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-color);
+  border-radius: 9999px;
+  padding: 0.05rem 0.65rem;
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+/* Amber marks a sandbox under maintenance. */
+.pillMaintenance::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+}
+
+.pillMaintenance {
+  border-color: var(--ifm-color-warning);
+}
+
+.pillMaintenance::before {
+  background: var(--ifm-color-warning);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--ifm-color-primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 9999px;
+  padding: 0.5rem 1.1rem;
+}
+
+.button:hover {
+  background: var(--ifm-color-primary-darker);
+  color: #fff;
+  text-decoration: none;
+}
+
+.buttonSecondary,
+.buttonSecondary:hover {
+  background: var(--ifm-color-emphasis-200);
+  color: var(--ifm-font-color-base);
+}
+
+.detailsLink {
+  font-size: 0.9rem;
+  text-decoration: underline;
+}
+
+.loginBox {
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background: var(--ifm-color-emphasis-100);
+  padding: 1.1rem 1.25rem;
+}
+
+.appsIntro {
+  grid-column: 1 / -1;
+  margin: 1.5rem 0 0.25rem;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ifm-font-color-base);
+  text-wrap: balance; /* When the sentence wraps, both lines get about the same length. */
+}
+
+.cardWide {
+  grid-column: 1 / -1;
+  height: auto;
+}
+
+.appHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.appHeader .cardTitle {
+  margin-bottom: 0;
+}
+
+.subheading {
+  font-size: 1.5rem;
+  text-align: center;
+  margin: 1.25rem 0 0.25rem;
+}
+
+/* The sentence under the "Visitor logins" heading is centred with it. */
+.cardWide .loginCaption {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+/* Inside an application card the logins need no box of their own. */
+.cardWide .loginBox {
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+.roleSummary {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-800);
+  margin: 0 0 0.6rem;
+}
+
+.permissionFirst,
+.permissionSecond {
+  font-size: 0.9rem;
+}
+
+/* The divider above the Can list. */
+.permissionFirst {
+  margin-top: 0.9rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.permissionSecond {
+  margin-top: 0.75rem;
+}
+
+.permissionTitle {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ifm-color-emphasis-700);
+  margin-bottom: 0.25rem;
+}
+
+.permissionTitle::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-right: 0.4rem;
+}
+
+.permissionCan::before {
+  background: var(--ifm-color-success);
+}
+
+.permissionCannot::before {
+  background: var(--ifm-color-danger);
+}
+
+.permissionList {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.loginCaption {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.logins {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+  column-gap: 1rem;
+  margin-bottom: -1rem; /* Takes back the space under the last card. */
+}
+
+.loginCard {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background: var(--main-bg-color);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* Cards that sit side by side share their rows, so a longer text in one card moves the same part of the other card down with it.
+   Without subgrid support the cards are still correct, only not aligned. The six rows are the six parts of a card. */
+@supports (grid-template-rows: subgrid) {
+  .loginCard {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 6;
+    row-gap: 0;
+  }
+}
+
+.loginRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0.15rem 0;
+}
+
+.appTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 1.75rem; /* Same height with or without the logo, so the buttons line up across a row. */
+}
+
+.appLogo {
+  flex-shrink: 0;
+}
+
+.copyButton {
+  margin-left: auto;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--main-bg-color);
+  color: var(--ifm-color-emphasis-800);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.copyButton:hover {
+  border-color: var(--ifm-color-primary);
+  color: var(--ifm-color-primary);
+}
+
+.copyButton:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+.loginRow span {
+  width: 5.5rem;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.9rem;
+}
