@@ -17,7 +17,7 @@ type Props = Omit<DefaultNavbarItemProps, 'href' | 'to'>;
  * - The landing page links to SITE_REPO. Its text is synced from opsmill/infrahub,
  *   but its layout components are maintained in this repository.
  * - Docs pages link to the repository listed for their plugin ID in
- *   docs/doc-sources.ts.
+ *   docs/doc-sources.ts. Private-source sections link to SITE_REPO instead.
  * - Other pages, such as /labs and the 404 page, link to SITE_REPO. The core docs
  *   plugin is mounted at /, so useActivePlugin() matches these pages too; checking
  *   for an active doc tells them apart from real docs pages.
@@ -32,7 +32,8 @@ export default function GitHubRepoNavbarItem(props: Props): ReactNode {
   if (pathname === homePath) {
     repo = SITE_REPO;
   } else if (activePlugin && activeDoc) {
-    repo = DOC_SOURCES[activePlugin.pluginId]?.repo ?? DEFAULT_REPO;
+    const source = DOC_SOURCES[activePlugin.pluginId];
+    repo = source?.isPublic === false ? SITE_REPO : (source?.repo ?? DEFAULT_REPO);
   } else {
     repo = SITE_REPO;
   }
