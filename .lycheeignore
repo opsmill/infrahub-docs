@@ -47,7 +47,7 @@ https://registry.npmjs.org
 
 # Public sandboxes (/sandboxes pages): a sandbox under maintenance answers 503, and an API
 # application such as Batfish has no page at / and answers 404
-^https://[a-z0-9-]+\.opsmill\.app
+^https://[a-z0-9-]+\.opsmill\.app(/|$)
 
 # Telemetry API endpoint listed as a configuration default, not a page
 https://telemetry.opsmill.cloud/infrahub

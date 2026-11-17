@@ -3,8 +3,9 @@ import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './styles.module.css';
 
-// Copied into the documentation site by scripts/build_docs_preview.sh. The generated MDX pages import this module and
-// pass the public catalogue as plain data, so nothing here reads Infrahub or runs metadata as code.
+// Maintained in opsmill/infrahub-sandbox-pipelines (docs/components/Sandboxes), where its tests run. opsmill/infrahub-docs
+// keeps an identical copy at docs/src/components/Sandboxes: the documentation sync stops when the two differ. The generated
+// MDX pages import this module and pass the public catalogue as plain data, so nothing here reads Infrahub or runs metadata as code.
 
 export type Application = { name: string; driver: string; version: string; url: string };
 export type Account = { username: string; password: string; role: 'guest' | 'admin-guest' };
@@ -29,8 +30,9 @@ const INFRAHUB_LOGO = '/img/infrahub-logo.svg';
 // preview and on docs.infrahub.app. A test checks that the page exists in the documentation site.
 const RBAC_DOCS = '/deploy-manage/user-management/permissions-roles/overview';
 
-// What each login may do in Infrahub. Written from shared/rbac.yml and from the actions checked on 2026-10-30 that README.md lists
-// under "Permissions in every sandbox". Change this text whenever the roles in shared/rbac.yml change: a test compares the two.
+// What each login may do in Infrahub. Written from shared/rbac.yml of opsmill/infrahub-sandbox-pipelines and from the actions checked
+// on 2026-10-30 that its README.md lists under "Permissions in every sandbox". Change this text whenever the roles in shared/rbac.yml
+// change: a test of that repository compares the two.
 // A login can still change its own password and create tokens for itself, which Infrahub does not cover with permissions, so
 // the Cannot lists say "other accounts".
 type RoleDetails = { summary: string; can: string[]; cannot: string[] };
