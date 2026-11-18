@@ -14,6 +14,34 @@ import { SandboxCatalogue } from '@site/src/components/Sandboxes';
 
 <SandboxCatalogue sandboxes={[
   {
+    "name": "demo-ai-dc",
+    "title": "AI Data Center",
+    "description": null,
+    "status": "available",
+    "applications": [
+      {
+        "name": "infrahub",
+        "driver": "infrahub-enterprise",
+        "version": "1.12.1",
+        "url": "https://infrahub-demo-ai-dc.opsmill.app"
+      }
+    ],
+    "accounts": [
+      {
+        "username": "admin-guest",
+        "password": "infrahub",
+        "role": "admin-guest"
+      },
+      {
+        "username": "guest",
+        "password": "infrahub",
+        "role": "guest"
+      }
+    ],
+    "walkthroughUrl": "https://docs.infrahub.app/infrahub-solution-ai-dc/solution-ai-dc/demo-guide",
+    "repositoryUrl": "https://github.com/opsmill/infrahub-solution-ai-dc"
+  },
+  {
     "name": "demo-dc",
     "title": "Data Center",
     "description": "Explore design-driven data center automation: create network topologies, generate device configurations, and review infrastructure changes through branches and proposed changes.",
