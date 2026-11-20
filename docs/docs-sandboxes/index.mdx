@@ -16,7 +16,7 @@ import { SandboxCatalogue } from '@site/src/components/Sandboxes';
   {
     "name": "demo-ai-dc",
     "title": "AI Data Center",
-    "description": "Explore design-driven automation for AI data center fabrics: generate fabrics, pods and racks from a few design inputs, add EVPN/VXLAN tenants, and review the generated device configurations through branches and proposed changes.",
+    "description": "The AI Data Center sandbox is a working example of design-driven automation for large data center fabrics. You describe a fabric, its pods and its racks. Generators create the devices, IP addresses and links from that design, and Infrahub renders each device's configuration. It is set up for teams that build and extend large, standardized fabrics, such as AI data centers, and want each new fabric or rack built the same way.",
     "status": "available",
     "applications": [
       {
@@ -44,7 +44,7 @@ import { SandboxCatalogue } from '@site/src/components/Sandboxes';
   {
     "name": "demo-dc",
     "title": "Data Center",
-    "description": "Explore design-driven data center automation: create network topologies, generate device configurations, and review infrastructure changes through branches and proposed changes.",
+    "description": "The Data Center sandbox is a working example of design-driven automation for data center fabrics. You describe a new data center by choosing a design template and a location, and Infrahub generates its devices, interfaces, cabling, IP addresses and device configurations. It is set up for teams that build spine-leaf fabrics and want every new data center built from the same standard designs.",
     "status": "available",
     "applications": [
       {
@@ -78,7 +78,7 @@ import { SandboxCatalogue } from '@site/src/components/Sandboxes';
   {
     "name": "demo-sp",
     "title": "Service Provider",
-    "description": "Explore service provider network automation: model a multi-vendor MPLS backbone, provision L3VPN services through a service catalog, and validate the generated configurations with Batfish.",
+    "description": "The Service Provider sandbox contains an MPLS backbone and the customer services that run over it. It has two applications, which you open in separate browser tabs: the [service portal](https://portal-demo-sp.opsmill.app), where you request an L3VPN or SD-WAN service or add a PE router by filling in a form, and [Infrahub](https://infrahub-demo-sp.opsmill.app), where you view what each request created and review it before it is merged. It is set up for teams that run an MPLS backbone and deliver customer services over it.",
     "status": "available",
     "applications": [
       {
@@ -106,7 +106,7 @@ import { SandboxCatalogue } from '@site/src/components/Sandboxes';
         "role": "guest"
       }
     ],
-    "walkthroughUrl": null,
+    "walkthroughUrl": "https://docs.infrahub.app/infrahub-demo-sp/",
     "repositoryUrl": "https://github.com/opsmill/infrahub-demo-sp"
   }
 ]} />
