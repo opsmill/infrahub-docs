@@ -194,6 +194,31 @@ You can run it again. It creates only the services, second paths, webhook and pr
 Infrahub imports the repository from the committed `main` branch of your checkout. A feature that is not on `main` yet, such as a branch that has not been merged, is not imported, and `invoke seed` then waits until it times out.
 :::
 
+### Build the demo on an Infrahub that already runs
+
+To load the demo into an empty Infrahub that runs elsewhere, for example a public sandbox, point the variables at it and run `sandbox-setup`:
+
+```shell
+export INFRAHUB_ADDRESS=https://infrahub.example.com
+export INFRAHUB_API_TOKEN=<token>
+export SEMAPHORE_URL=https://semaphore.example.com
+export SEMAPHORE_ADMIN_PASSWORD=<password>
+uv run invoke sandbox-setup
+```
+
+`sandbox-setup` starts no container and loads no demo account: the `john` and `emma` accounts of Step 5 belong to the local installation, and a sandbox gets its visitor logins from its pipeline. It registers the repository read-only from GitHub, configures Semaphore, then runs the same steps as Step 6. You can run it again: registering the repository sets its location and ref again, and the other steps create only what is missing.
+
+| Variable | Default | Effect |
+|---|---|---|
+| `INFRAHUB_REPO_URL` | `https://github.com/opsmill/infrahub-demo-service-catalog.git` | Repository to register. Set it to register a fork |
+| `INFRAHUB_REPO_REF` | `main` | Git ref of that repository |
+| `SEMAPHORE_URL` | not set | Semaphore to configure. Without it, Semaphore is left out |
+| `SEMAPHORE_ADMIN` | `admin` | Semaphore administrator login |
+| `SEMAPHORE_ADMIN_PASSWORD` | not set | Semaphore administrator password. Required when `SEMAPHORE_URL` is set. `invoke init` uses `semaphore` for the local container |
+| `SEMAPHORE_PLAYBOOK_PATH` | `/opt/semaphore/playbooks` | Folder of the playbooks in the Semaphore container |
+
+Run Semaphore from its published image, described above: it holds the playbooks. The playbooks read the Infrahub address and token from the `INFRAHUB_ADDRESS` and `INFRAHUB_API_TOKEN` variables that Semaphore passes to them. The image does not set these: set both variables on the Semaphore container, and set `SEMAPHORE_FORWARDED_ENV_VARS` to `["INFRAHUB_ADDRESS","INFRAHUB_API_TOKEN"]`, as `docker-compose.override.yml` does for the local container.
+
 ## Verify your installation
 
 Confirm that everything works by accessing all three interfaces:
