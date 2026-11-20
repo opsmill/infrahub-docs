@@ -5,29 +5,143 @@ slug: /demo-dc
 sidebar_position: 3
 pagination_prev: null
 pagination_next: null
-description: "The Data Center sandbox is a working example of design-driven automation for data center fabrics. You describe a new data center by choosing a design template and a location, and Infrahub generates its devices, interfaces, cabling, IP addresses and device configurations. It is set up for teams that build spine-leaf fabrics and want every new data center built from the same standard designs."
+description: "The Data Center sandbox is a working example of design-driven automation for data center fabrics."
 ---
 
-import { SandboxSummary, ApplicationCards, NextSteps } from '@site/src/components/Sandboxes';
+import { SandboxIntro, SandboxBlocks, SandboxLogin, SandboxNextSteps } from '@site/src/components/Sandboxes';
 
-<SandboxSummary description={"The Data Center sandbox is a working example of design-driven automation for data center fabrics. You describe a new data center by choosing a design template and a location, and Infrahub generates its devices, interfaces, cabling, IP addresses and device configurations. It is set up for teams that build spine-leaf fabrics and want every new data center built from the same standard designs."} status={"available"} walkthroughUrl={"https://docs.infrahub.app/demo-dc/user-walkthrough"} />
-
-## Applications
-
-<ApplicationCards applications={[
+<SandboxIntro description={[
   {
-    "name": "infrahub",
-    "driver": "infrahub-enterprise",
-    "version": "1.11.12",
-    "url": "https://infrahub-demo-dc.opsmill.app"
+    "text": "The Data Center sandbox is a working example of design-driven automation for data center fabrics. You describe a new data center by choosing a design template and a location, and Infrahub generates its devices, interfaces, cabling, IP addresses and device configurations. It is set up for teams that build spine-leaf fabrics and want every new data center built from the same standard designs."
+  }
+]} status={"available"} buttons={[
+  {
+    "label": "Open the Data Center sandbox",
+    "compact": "Open sandbox",
+    "url": "https://infrahub-demo-dc.opsmill.app",
+    "primary": true
   },
   {
-    "name": "portal",
-    "driver": "generic-app",
-    "version": "1.0.0",
-    "url": "https://portal-demo-dc.opsmill.app"
+    "label": "Open the portal",
+    "compact": "Open the portal",
+    "url": "https://portal-demo-dc.opsmill.app",
+    "primary": false
   }
-]} accounts={[
+]} />
+
+## What's in the sandbox
+
+<SandboxBlocks blocks={[
+  {
+    "p": [
+      {
+        "text": "The sandbox contains example locations, providers and data center designs for Arista, Cisco, Juniper and SONiC devices. It also has a "
+      },
+      {
+        "text": "service portal",
+        "href": "https://portal-demo-dc.opsmill.app"
+      },
+      {
+        "text": " where you request a new data center by filling in a form, and view the racks of existing data centers."
+      }
+    ]
+  },
+  {
+    "p": [
+      {
+        "text": "The demo follows "
+      },
+      {
+        "text": "design-driven automation",
+        "href": "/demo-dc/concepts#design-driven-automation"
+      },
+      {
+        "text": ": you describe a data center as a design, such as a number of spines and leaf switches, and a Generator creates the devices, interfaces, links and IP addresses that the design describes. Designs are "
+      },
+      {
+        "text": "built from reusable parts",
+        "href": "/demo-dc/concepts#composable-topologies"
+      },
+      {
+        "text": ", such as device templates and address pools, so a new data center reuses the same standards. From the generated data, Infrahub renders "
+      },
+      {
+        "text": "device configurations, a cabling plan and a Containerlab topology",
+        "href": "/demo-dc/user-walkthrough#step-7-review-validations-and-artifacts"
+      },
+      {
+        "text": " as artifacts."
+      }
+    ]
+  }
+]} />
+
+![When you submit the Create DC form in the service portal, the portal creates a branch and, on it, a TopologyDataCenter, dc-arista in this example, with the strategy ospf-ibgp. It references the DesignTopology PHYSICAL DC ARISTA S, which contains 2 spines, 4 leaf switches, 2 firewalls, 2 OOB switches and 2 console servers. On the branch, the Generator creates these 12 devices and connects each spine to each leaf switch. It creates the building dc-arista with Pod-1, Row-1 and one rack per leaf switch: Rack-1 and Rack-2 each hold a leaf switch, a spine, a console server and an OOB switch, and Rack-3 and Rack-4 each hold a leaf switch. The two firewalls are in the building, not in a rack.](./img/demo-dc.svg)
+
+## What to try
+
+<SandboxBlocks blocks={[
+  {
+    "p": [
+      {
+        "text": "Open the sandbox to:"
+      }
+    ]
+  },
+  {
+    "ul": [
+      [
+        {
+          "text": "Request a new data center in the service portal, by choosing a design and a location"
+        }
+      ],
+      [
+        {
+          "text": "Review the new data center as a Proposed Change, Infrahub's equivalent of a pull request, with its devices, configurations and check results"
+        }
+      ],
+      [
+        {
+          "text": "Merge the Proposed Change and view the device configurations"
+        }
+      ]
+    ]
+  },
+  {
+    "p": [
+      {
+        "text": "When you submit the form, the portal creates a branch, loads the design, waits for the Generator and opens the Proposed Change, as the "
+      },
+      {
+        "text": "service catalog guide",
+        "href": "/demo-dc/service-catalog#step-6-understand-the-behind-the-scenes-workflow"
+      },
+      {
+        "text": " describes. The "
+      },
+      {
+        "text": "user walkthrough",
+        "href": "/demo-dc/user-walkthrough"
+      },
+      {
+        "text": " covers the same workflow on a local copy, from the command line; in the sandbox, follow it from "
+      },
+      {
+        "text": "Review generated infrastructure",
+        "href": "/demo-dc/user-walkthrough#step-5-review-generated-infrastructure"
+      },
+      {
+        "text": "."
+      }
+    ]
+  }
+]} />
+
+![When you submit the Create VPN form in the service portal, the portal creates a branch and, on it, a ServiceNetworkSegment, web-tier in this example, with the VLAN ID 100, the deployment dc-arista and the segment type l2_only, one of the three segment types l2_only, l3_gateway and l3_vrf. The Generator links each segment to Ethernet1 to Ethernet48 on each of the four leaf switches, 192 interfaces. The example has three segments: web-tier with VLAN 100 and the type l2_only, dmz with VLAN 200 and the type l3_gateway, and database with VLAN 300 and the type l3_vrf. In the configuration of each leaf switch, each segment adds its VLAN, the VLAN on the customer ports, a VXLAN mapping of the VLAN to a VNI, here 10100, 10200 and 10300, and a BGP EVPN block with its route distinguisher and route target. A segment of the type l3_gateway or l3_vrf with a prefix also adds a gateway interface on the first address of the prefix: database, with the prefix 172.25.9.0/24, adds the interface Vlan300 with the virtual address 172.25.9.1/24. dmz has no prefix, so it adds no gateway.](./img/demo-dc-try.svg)
+
+## Log in
+
+<SandboxLogin accounts={[
   {
     "username": "admin-guest",
     "password": "infrahub",
@@ -38,8 +152,72 @@ import { SandboxSummary, ApplicationCards, NextSteps } from '@site/src/component
     "password": "infrahub",
     "role": "guest"
   }
-]} demoTitle={"Data Center"} />
+]} />
 
 ## Next steps
 
-<NextSteps repositoryUrl={"https://github.com/opsmill/infrahub-demo-dc"} />
+<SandboxNextSteps blocks={[
+  {
+    "ul": [
+      [
+        {
+          "text": "Run the demo yourself: clone the "
+        },
+        {
+          "text": "infrahub-demo-dc repository",
+          "href": "https://github.com/opsmill/infrahub-demo-dc"
+        },
+        {
+          "text": " and follow the "
+        },
+        {
+          "text": "installation guide",
+          "href": "/demo-dc/install"
+        },
+        {
+          "text": " to run Infrahub in Docker on your machine with the same designs. On your own copy, you can change the schema, the designs and the Generators, and "
+        },
+        {
+          "text": "deploy the generated configurations to a virtual lab",
+          "href": "/demo-dc/containerlab-deployment"
+        },
+        {
+          "text": " with Containerlab."
+        }
+      ],
+      [
+        {
+          "text": "Read more: the "
+        },
+        {
+          "text": "Data Center demo documentation",
+          "href": "/demo-dc/"
+        },
+        {
+          "text": " explains how the demo is built, and the Infrahub documentation explains the features it uses: "
+        },
+        {
+          "text": "Generators",
+          "href": "/generators/overview"
+        },
+        {
+          "text": ", "
+        },
+        {
+          "text": "Proposed Changes",
+          "href": "/proposed-changes/overview"
+        },
+        {
+          "text": " and "
+        },
+        {
+          "text": "artifacts",
+          "href": "/artifacts/overview"
+        },
+        {
+          "text": "."
+        }
+      ]
+    ]
+  }
+]} repositoryUrl={"https://github.com/opsmill/infrahub-demo-dc"} />

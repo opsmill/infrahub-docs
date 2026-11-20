@@ -5,23 +5,130 @@ slug: /demo-ai-dc
 sidebar_position: 2
 pagination_prev: null
 pagination_next: null
-description: "The AI Data Center sandbox is a working example of design-driven automation for large data center fabrics. You describe a fabric, its pods and its racks. Generators create the devices, IP addresses and links from that design, and Infrahub renders each device's configuration. It is set up for teams that build and extend large, standardized fabrics, such as AI data centers, and want each new fabric or rack built the same way."
+description: "The AI Data Center sandbox is a working example of design-driven automation for large data center fabrics."
 ---
 
-import { SandboxSummary, ApplicationCards, NextSteps } from '@site/src/components/Sandboxes';
+import { SandboxIntro, SandboxBlocks, SandboxLogin, SandboxNextSteps } from '@site/src/components/Sandboxes';
 
-<SandboxSummary description={"The AI Data Center sandbox is a working example of design-driven automation for large data center fabrics. You describe a fabric, its pods and its racks. Generators create the devices, IP addresses and links from that design, and Infrahub renders each device's configuration. It is set up for teams that build and extend large, standardized fabrics, such as AI data centers, and want each new fabric or rack built the same way."} status={"available"} walkthroughUrl={"https://docs.infrahub.app/infrahub-solution-ai-dc/solution-ai-dc/demo-guide"} />
-
-## Applications
-
-<ApplicationCards applications={[
+<SandboxIntro description={[
   {
-    "name": "infrahub",
-    "driver": "infrahub-enterprise",
-    "version": "1.12.1",
-    "url": "https://infrahub-demo-ai-dc.opsmill.app"
+    "text": "The AI Data Center sandbox is a working example of design-driven automation for large data center fabrics. You describe a fabric, its pods and its racks. Generators create the devices, IP addresses and links from that design, and Infrahub renders each device's configuration. It is set up for teams that build and extend large, standardized fabrics, such as AI data centers, and want each new fabric or rack built the same way."
   }
-]} accounts={[
+]} status={"available"} buttons={[
+  {
+    "label": "Open the AI Data Center sandbox",
+    "compact": "Open sandbox",
+    "url": "https://infrahub-demo-ai-dc.opsmill.app",
+    "primary": true
+  }
+]} />
+
+## What's in the sandbox
+
+<SandboxBlocks blocks={[
+  {
+    "p": [
+      {
+        "text": "The sandbox contains the designs of four fabrics, one for each vendor: Cisco, Arista, Dell and Juniper. Each fabric contains pods, each pod contains racks, and per-vendor device templates describe the interfaces of each device role. An IP supernet and the overlay resource pools are ready for allocation. No devices exist until you run a Generator."
+      }
+    ]
+  },
+  {
+    "p": [
+      {
+        "text": "The demo follows "
+      },
+      {
+        "text": "design-driven automation",
+        "href": "/infrahub-solution-ai-dc/solution-ai-dc/design-driven-automation"
+      },
+      {
+        "text": ": you describe what the fabric should look like, and Generators create it. The design stays in Infrahub as data you can query and review, so when you add a rack later, its Generator creates only that rack's leaf switches and links."
+      }
+    ]
+  },
+  {
+    "p": [
+      {
+        "text": "Each level has its own Generator",
+        "href": "/infrahub-solution-ai-dc/solution-ai-dc/modular-generator-architecture"
+      },
+      {
+        "text": ": one for the fabric's super spines, one for each pod's spines and one for each rack's leaf switches. When one level finishes, Infrahub starts the Generator for the level below, so running the fabric Generator builds the whole data center. Infrahub renders "
+      },
+      {
+        "text": "each device's configuration from its vendor's template",
+        "href": "/infrahub-solution-ai-dc/solution-ai-dc/multivendor-config"
+      },
+      {
+        "text": ". You can then add "
+      },
+      {
+        "text": "EVPN/VXLAN tenants",
+        "href": "/infrahub-solution-ai-dc/solution-ai-dc/evpn-vxlan-overlay"
+      },
+      {
+        "text": " to the built fabric, and the Overlay Generator creates their network services."
+      }
+    ]
+  }
+]} />
+
+![In Infrahub, the NetworkFabric Fabric-A contains the NetworkPods Pod-A1 to Pod-A3, which reference the LocationRacks Rack-A2-1 to Rack-A3-4. Fabric-A sets 6 super spines, each pod 4 spines, except Pod-A1, which has the role fabric, and each rack 1 or 2 leaf switches. When you run the Generators, the Fabric Generator creates 6 super spines, the Pod Generator creates 8 spines and the Rack Generator creates 11 leaf switches in the 8 racks, connected as a fabric.](./img/demo-ai-dc.svg)
+
+## What to try
+
+<SandboxBlocks blocks={[
+  {
+    "p": [
+      {
+        "text": "Open the sandbox to:"
+      }
+    ]
+  },
+  {
+    "ul": [
+      [
+        {
+          "text": "Run the Generator for Fabric-A and view the 25 devices it creates"
+        }
+      ],
+      [
+        {
+          "text": "Review the new fabric as a Proposed Change, Infrahub's equivalent of a pull request, with its device configurations and cabling plan"
+        }
+      ],
+      [
+        {
+          "text": "Add a rack to a pod and review only the devices and links it adds"
+        }
+      ],
+      [
+        {
+          "text": "Add a tenant and view the EVPN/VXLAN configuration generated for the leaf and spine switches"
+        }
+      ]
+    ]
+  },
+  {
+    "p": [
+      {
+        "text": "The "
+      },
+      {
+        "text": "demo guide",
+        "href": "/infrahub-solution-ai-dc/solution-ai-dc/demo-guide#running-the-generators"
+      },
+      {
+        "text": " describes each of these steps. Start at \"Running the Generators\": the sections before it set up a local copy, and the sandbox already has the design data loaded."
+      }
+    ]
+  }
+]} />
+
+## Log in
+
+<SandboxLogin accounts={[
   {
     "username": "admin-guest",
     "password": "infrahub",
@@ -32,8 +139,65 @@ import { SandboxSummary, ApplicationCards, NextSteps } from '@site/src/component
     "password": "infrahub",
     "role": "guest"
   }
-]} demoTitle={"AI Data Center"} />
+]} />
 
 ## Next steps
 
-<NextSteps repositoryUrl={"https://github.com/opsmill/infrahub-solution-ai-dc"} />
+<SandboxNextSteps blocks={[
+  {
+    "ul": [
+      [
+        {
+          "text": "Run the demo yourself: clone the "
+        },
+        {
+          "text": "infrahub-solution-ai-dc repository",
+          "href": "https://github.com/opsmill/infrahub-solution-ai-dc"
+        },
+        {
+          "text": " and follow "
+        },
+        {
+          "text": "Installation and setup",
+          "href": "/infrahub-solution-ai-dc/solution-ai-dc/installation-setup#getting-started"
+        },
+        {
+          "text": " to run Infrahub in Docker on your machine with the same designs. On your own copy, you can change the schema, the Generators and the data."
+        }
+      ],
+      [
+        {
+          "text": "Read more: the "
+        },
+        {
+          "text": "AI Data Center reference design",
+          "href": "/infrahub-solution-ai-dc/solution-ai-dc/overview"
+        },
+        {
+          "text": " explains the patterns behind the demo, and the Infrahub documentation explains the features it uses: "
+        },
+        {
+          "text": "Generators",
+          "href": "/generators/overview"
+        },
+        {
+          "text": ", "
+        },
+        {
+          "text": "Proposed Changes",
+          "href": "/proposed-changes/overview"
+        },
+        {
+          "text": " and "
+        },
+        {
+          "text": "Resource Manager",
+          "href": "/resource-manager/overview"
+        },
+        {
+          "text": "."
+        }
+      ]
+    ]
+  }
+]} repositoryUrl={"https://github.com/opsmill/infrahub-solution-ai-dc"} />

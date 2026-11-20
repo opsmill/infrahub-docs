@@ -5,29 +5,153 @@ slug: /demo-sp
 sidebar_position: 4
 pagination_prev: null
 pagination_next: null
-description: "The Service Provider sandbox contains an MPLS backbone and the customer services that run over it. It has two applications, which you open in separate browser tabs: the [service portal](https://portal-demo-sp.opsmill.app), where you request an L3VPN or SD-WAN service or add a PE router by filling in a form, and [Infrahub](https://infrahub-demo-sp.opsmill.app), where you view what each request created and review it before it is merged. It is set up for teams that run an MPLS backbone and deliver customer services over it."
+description: "The Service Provider sandbox contains an MPLS backbone and the customer services that run over it."
 ---
 
-import { SandboxSummary, ApplicationCards, NextSteps } from '@site/src/components/Sandboxes';
+import { SandboxIntro, SandboxBlocks, SandboxLogin, SandboxNextSteps } from '@site/src/components/Sandboxes';
 
-<SandboxSummary description={"The Service Provider sandbox contains an MPLS backbone and the customer services that run over it. It has two applications, which you open in separate browser tabs: the [service portal](https://portal-demo-sp.opsmill.app), where you request an L3VPN or SD-WAN service or add a PE router by filling in a form, and [Infrahub](https://infrahub-demo-sp.opsmill.app), where you view what each request created and review it before it is merged. It is set up for teams that run an MPLS backbone and deliver customer services over it."} status={"available"} walkthroughUrl={"https://docs.infrahub.app/infrahub-demo-sp/"} />
-
-## Applications
-
-<ApplicationCards applications={[
+<SandboxIntro description={[
   {
-    "name": "infrahub",
-    "driver": "infrahub-enterprise",
-    "version": "1.11.12",
-    "url": "https://infrahub-demo-sp.opsmill.app"
+    "text": "The Service Provider sandbox contains an MPLS backbone and the customer services that run over it. It has two applications, which you open in separate browser tabs: the "
   },
   {
-    "name": "portal",
-    "driver": "generic-app",
-    "version": "1.0.0",
-    "url": "https://portal-demo-sp.opsmill.app"
+    "text": "service portal",
+    "href": "https://portal-demo-sp.opsmill.app"
+  },
+  {
+    "text": ", where you request an L3VPN or SD-WAN service or add a PE router by filling in a form, and "
+  },
+  {
+    "text": "Infrahub",
+    "href": "https://infrahub-demo-sp.opsmill.app"
+  },
+  {
+    "text": ", where you view what each request created and review it before it is merged. It is set up for teams that run an MPLS backbone and deliver customer services over it."
   }
-]} accounts={[
+]} status={"available"} buttons={[
+  {
+    "label": "Open the Service Provider sandbox",
+    "compact": "Open sandbox",
+    "url": "https://infrahub-demo-sp.opsmill.app",
+    "primary": true
+  },
+  {
+    "label": "Open the portal",
+    "compact": "Open the portal",
+    "url": "https://portal-demo-sp.opsmill.app",
+    "primary": false
+  }
+]} />
+
+## What's in the sandbox
+
+<SandboxBlocks blocks={[
+  {
+    "p": [
+      {
+        "text": "The sandbox contains "
+      },
+      {
+        "text": "an MPLS backbone",
+        "href": "/infrahub-demo-sp/#architecture-at-a-glance"
+      },
+      {
+        "text": " of PE routers running IS-IS, LDP and iBGP, customer edge routers, and example L3VPN and SD-WAN services."
+      }
+    ]
+  },
+  {
+    "p": [
+      {
+        "text": "When you request an L3VPN in the portal, the portal creates a branch, the service and a Proposed Change, Infrahub's equivalent of a pull request, in Infrahub. A Generator then creates "
+      },
+      {
+        "text": "the VRF, route targets, interfaces, IP addresses and BGP sessions",
+        "href": "/infrahub-demo-sp/services/l3vpn#generator-what-it-creates"
+      },
+      {
+        "text": " for each site, and Infrahub renders "
+      },
+      {
+        "text": "the configuration of each PE router",
+        "href": "/infrahub-demo-sp/services/l3vpn#per-vendor-configuration"
+      },
+      {
+        "text": " from the same service. "
+      },
+      {
+        "text": "SD-WAN services",
+        "href": "/infrahub-demo-sp/services/sdwan"
+      },
+      {
+        "text": " and "
+      },
+      {
+        "text": "new PE routers",
+        "href": "/infrahub-demo-sp/backbone/add-pe#user-flow"
+      },
+      {
+        "text": " follow the same pattern."
+      }
+    ]
+  }
+]} />
+
+![An MPLS backbone in AS 65000 of eight PE routers, from pe-01 in London to pe-08 in Zurich. Two customers each have a customer edge router in London and one in Zurich: markets-trading in AS 65100, joined by the L3VPN trading-floor-vpn, and investment-banking in AS 65101, joined by the L3VPN ib-advisory-vpn. The SD-WAN treasury-branch-sdwan joins a hub in London to spokes in Frankfurt and Amsterdam.](./img/demo-sp.svg)
+
+## What to try
+
+<SandboxBlocks blocks={[
+  {
+    "p": [
+      {
+        "text": "Open the sandbox to:"
+      }
+    ]
+  },
+  {
+    "ul": [
+      [
+        {
+          "text": "Request an L3VPN in the service portal and choose its sites"
+        }
+      ],
+      [
+        {
+          "text": "Open the Proposed Change in Infrahub and review the VRF, interfaces and PE router configurations the request created"
+        }
+      ],
+      [
+        {
+          "text": "Merge the Proposed Change"
+        }
+      ],
+      [
+        {
+          "text": "Add a PE router to the backbone and review it the same way"
+        }
+      ]
+    ]
+  },
+  {
+    "p": [
+      {
+        "text": "The "
+      },
+      {
+        "text": "L3VPN service",
+        "href": "/infrahub-demo-sp/services/l3vpn#user-flow"
+      },
+      {
+        "text": " page describes each step of a request. The demo's other guides start by setting up a local copy."
+      }
+    ]
+  }
+]} />
+
+## Log in
+
+<SandboxLogin accounts={[
   {
     "username": "admin-guest",
     "password": "infrahub",
@@ -38,8 +162,72 @@ import { SandboxSummary, ApplicationCards, NextSteps } from '@site/src/component
     "password": "infrahub",
     "role": "guest"
   }
-]} demoTitle={"Service Provider"} />
+]} />
 
 ## Next steps
 
-<NextSteps repositoryUrl={"https://github.com/opsmill/infrahub-demo-sp"} />
+<SandboxNextSteps blocks={[
+  {
+    "ul": [
+      [
+        {
+          "text": "Run the demo yourself: clone the "
+        },
+        {
+          "text": "infrahub-demo-sp repository",
+          "href": "https://github.com/opsmill/infrahub-demo-sp"
+        },
+        {
+          "text": " and follow the "
+        },
+        {
+          "text": "quick start",
+          "href": "/infrahub-demo-sp/quickstart"
+        },
+        {
+          "text": " to run Infrahub and the service portal in Docker on your machine. On your own copy, you can change the services and the Generators, and "
+        },
+        {
+          "text": "boot the backbone in a virtual lab",
+          "href": "/infrahub-demo-sp/lab/containerlab"
+        },
+        {
+          "text": " with Containerlab, which needs a Linux host with at least 32 GB of RAM."
+        }
+      ],
+      [
+        {
+          "text": "Read more: the "
+        },
+        {
+          "text": "Service Provider demo documentation",
+          "href": "/infrahub-demo-sp/"
+        },
+        {
+          "text": " explains how the demo is built, and the Infrahub documentation explains the features it uses: "
+        },
+        {
+          "text": "Generators",
+          "href": "/generators/overview"
+        },
+        {
+          "text": ", "
+        },
+        {
+          "text": "Proposed Changes",
+          "href": "/proposed-changes/overview"
+        },
+        {
+          "text": " and "
+        },
+        {
+          "text": "Resource Manager",
+          "href": "/resource-manager/overview"
+        },
+        {
+          "text": "."
+        }
+      ]
+    ]
+  }
+]} repositoryUrl={"https://github.com/opsmill/infrahub-demo-sp"} />
