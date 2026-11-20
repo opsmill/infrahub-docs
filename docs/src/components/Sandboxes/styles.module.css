@@ -351,3 +351,77 @@
   color: var(--ifm-color-emphasis-700);
   font-size: 0.9rem;
 }
+
+/* Comparison of the sandboxes on the overview page */
+.compare {
+  overflow-x: auto;
+  margin: 1rem 0 2rem;
+}
+
+.compare table {
+  display: table;
+  width: 100%;
+  min-width: 720px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.compare thead,
+.compare tr,
+.compare tr:nth-child(2n) {
+  background: transparent;
+  border: none;
+}
+
+.compare th,
+.compare td {
+  border: none;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  padding: 0.85rem 1rem;
+  vertical-align: top;
+  text-align: left;
+}
+
+.compare thead th {
+  background: transparent;
+  font-size: 1.15rem;
+  border-bottom: 2px solid var(--ifm-color-emphasis-300);
+  padding-bottom: 1rem;
+}
+
+.compare tbody th {
+  padding-right: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.compare tbody tr:last-child th,
+.compare tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.compareButtons {
+  display: flex;
+  margin-top: 0.6rem;
+  font-size: 1rem;
+}
+
+.compareButtons :global(.button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  flex: 1 1 100%;
+  white-space: nowrap;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.compareExtra {
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 400;
+}
