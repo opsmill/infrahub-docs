@@ -214,7 +214,7 @@ Custom hostvars are merged in this order:
 
 That means device-level custom values override pod-level custom values, pod-level custom values override fabric-level custom values, and generated hostvars override all custom values. Custom hostvars are fill-only relative to modeled data: they can add keys the generator does not produce, but they cannot replace generated values such as `fabric_name`, role-specific `nodes`, generated tenant data, or generated connected endpoints.
 
-Dictionaries merge recursively. Lists and scalar values replace the lower-precedence value as a whole; there is no element-wise list merge. Missing, `null`, or empty custom values are ignored. Non-empty custom values must be mappings; a list or scalar raises `TypeError` before PyAVD validation runs.
+Dictionaries merge recursively. Lists and scalar values replace the lower-precedence value as a whole; lists are not merged element by element. Missing, `null`, or empty custom values are ignored. Non-empty custom values must be mappings; a list or scalar raises `TypeError` before PyAVD validation runs.
 
 Example:
 

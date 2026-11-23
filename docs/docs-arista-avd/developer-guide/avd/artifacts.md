@@ -182,4 +182,4 @@ When an operator opens one of these artifacts in the UI, Infrahub runs the trans
 - `avd_devices` — all `DcimDevice` nodes that should participate in AVD. Populated by upstream generators (for example, `generate-rack` adds newly created leaves to the group).
 - `fabrics` — all `NetworkFabric` nodes.
 
-Group membership is set by the generators at creation time; there is no separate "add to group" step in the AVD pipeline itself.
+Group membership is set by the generators at creation time; the AVD pipeline itself has no separate "add to group" step.

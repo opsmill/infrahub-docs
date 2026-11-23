@@ -76,8 +76,8 @@ topology:
     - endpoints: ["leaf-infrahub-dc1-1:eth49_1", "spine-infrahub-dc1-1:eth1_1"]
 ```
 
-Nodes and links are emitted in a stable sorted order, and endpoints are ordered within each link,
-so two renders of unchanged data are byte-identical.
+Nodes and links are emitted in a stable sorted order, and endpoints are ordered within each link.
+As a result, two renders of unchanged data are byte-identical.
 
 `startup-config` is set only on kinds whose nodes are network devices — the `linux` kind has none,
 because servers boot from their netplan bind. The path is `configs/__clabNodeName__.cfg`, the

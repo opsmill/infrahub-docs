@@ -7,7 +7,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Getting Started',
       collapsed: false,
-      items: ['quick-start', 'provision-first-fabric', 'viewing-artifacts'],
+      items: ['quick-start', 'provision-first-fabric', 'viewing-artifacts', 'public-sandbox'],
     },
     {
       type: 'category',
