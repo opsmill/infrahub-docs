@@ -759,3 +759,29 @@ export function SandboxRepositories({ sandboxes }: { sandboxes: CompareSandbox[]
     </ul>
   );
 }
+
+// One card for each sandbox, for the Explore Infrahub page. A card shows the title and the description of the sandbox, and a button
+// to the overview of all sandboxes. It receives no logins, application addresses or other metadata.
+export type ExploreSandbox = { name: string; title: string; status: Status; description: Run[] | null };
+
+export function SandboxExploreCards({ sandboxes }: { sandboxes: ExploreSandbox[] }) {
+  if (sandboxes.length === 0) return null;
+  return (
+    <div className={styles.grid}>
+      {sandboxes.map((sandbox) => (
+        <div className={styles.card} key={sandbox.name}>
+          {sandbox.status === 'maintenance' ? (
+            <div className={styles.cardTop}>
+              <StatusPill status={sandbox.status} />
+            </div>
+          ) : null}
+          <h3 className={styles.cardTitle}>{sandbox.title}</h3>
+          <p className={styles.cardDescription}>{sandbox.description ? <Runs runs={sandbox.description} /> : null}</p>
+          <div className={styles.actions}>
+            <ButtonLink href={ROUTE_BASE}>Learn more</ButtonLink>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
