@@ -39,7 +39,7 @@ Sign in to Infrahub with the visitor account shown on the sandbox page. Merging 
 
 Open the Service Catalog from the sandbox page, then follow [Add a network segment](./how-to/add-network-segment.md), [Add a server](./how-to/add-server.md), [Create a tenant](./how-to/create-tenant.md), or [Regenerate a fabric](./how-to/regenerate-fabric.md). Each workflow creates a branch. Links from the catalog open that branch in the public Infrahub interface.
 
-The Service Catalog asks you to sign in with the same visitor account you use for Infrahub. It makes every change with that account, so Infrahub applies the same permissions as in its own interface. To switch accounts, select **Sign out** in the sidebar.
+The Service Catalog makes its changes in Infrahub with its own account, not with your visitor account. Infrahub records those changes under that account.
 
 ## Sandbox definition
 
@@ -76,10 +76,14 @@ Run the Service Catalog with the `generic-app` driver, with these environment va
 | `STREAMLIT_SERVER_PORT` | `8080`, the port the `generic-app` driver serves |
 | `INFRAHUB_ADDRESS` | The Infrahub address reachable inside the cluster |
 | `INFRAHUB_UI_URL` | The public Infrahub address, used for links shown to visitors |
+| `INFRAHUB_API_TOKEN` | A token for the catalog's own Infrahub account, stored as a secret (see below) |
 | `DEFAULT_BRANCH` | `main` |
 
-Do not set `INFRAHUB_API_TOKEN` for the sandbox. Without it, the Service Catalog asks each visitor to sign in and sends their requests with their own account. With a token set, every visitor would act with that token's permissions. Leaving it unset also means the sandbox definition holds no secret for the catalog.
+Every Service Catalog visitor acts with the permissions of the account that owns `INFRAHUB_API_TOKEN`. This is how the [service catalog demo](https://github.com/opsmill/infrahub-demo-service-catalog) runs its catalog. Two conditions apply:
 
-The local Docker Compose stack sets `INFRAHUB_API_TOKEN`, so the catalog skips the sign-in form there.
+- Create the token for an account that can do only what the catalog needs: create branches and nodes, open proposed changes, and run generators. Do not use an administrator token, because every visitor could then do anything through the catalog.
+- Store the token where the sandbox keeps secrets. Do not put it in `setup_env`, which is readable configuration.
+
+Without `INFRAHUB_API_TOKEN`, the catalog instead asks each visitor to sign in with their own Infrahub account and makes their changes with that account's permissions.
 
 The nightly reset restores Infrahub. The Service Catalog keeps no state of its own outside Infrahub.
