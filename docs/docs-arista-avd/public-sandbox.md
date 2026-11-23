@@ -39,7 +39,7 @@ Sign in to Infrahub with the visitor account shown on the sandbox page. Merging 
 
 Open the Service Catalog from the sandbox page, then follow [Add a network segment](./how-to/add-network-segment.md), [Add a server](./how-to/add-server.md), [Create a tenant](./how-to/create-tenant.md), or [Regenerate a fabric](./how-to/regenerate-fabric.md). Each workflow creates a branch. Links from the catalog open that branch in the public Infrahub interface.
 
-The Service Catalog sends its requests to Infrahub with the API token it is configured with, not with the visitor's account. Whatever that token is allowed to do, every Service Catalog visitor can do.
+The Service Catalog asks you to sign in with the same visitor account you use for Infrahub. It makes every change with that account, so Infrahub applies the same permissions as in its own interface. To switch accounts, select **Sign out** in the sidebar.
 
 ## Sandbox definition
 
@@ -76,9 +76,10 @@ Run the Service Catalog with the `generic-app` driver, with these environment va
 | `STREAMLIT_SERVER_PORT` | `8080`, the port the `generic-app` driver serves |
 | `INFRAHUB_ADDRESS` | The Infrahub address reachable inside the cluster |
 | `INFRAHUB_UI_URL` | The public Infrahub address, used for links shown to visitors |
-| `INFRAHUB_API_TOKEN` | A token for the account the catalog writes as |
 | `DEFAULT_BRANCH` | `main` |
 
-`setup_env` is readable configuration, not a secret store, so do not put the API token there.
+Do not set `INFRAHUB_API_TOKEN` for the sandbox. Without it, the Service Catalog asks each visitor to sign in and sends their requests with their own account. With a token set, every visitor would act with that token's permissions. Leaving it unset also means the sandbox definition holds no secret for the catalog.
+
+The local Docker Compose stack sets `INFRAHUB_API_TOKEN`, so the catalog skips the sign-in form there.
 
 The nightly reset restores Infrahub. The Service Catalog keeps no state of its own outside Infrahub.
