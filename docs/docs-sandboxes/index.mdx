@@ -10,7 +10,7 @@ hide_table_of_contents: true
 description: "A sandbox is a running Infrahub demo that you open in your browser, with nothing to install."
 ---
 
-import { SandboxCompare, SandboxRepositories } from '@site/src/components/Sandboxes';
+import { SandboxLoginTable, SandboxCompare, SandboxRepositories } from '@site/src/components/Sandboxes';
 
 Try out a fully set up Infrahub instance in your browser. Each sandbox has the data and automation for one type of network already loaded, so you can work through a complete change, from request to merge:
 
@@ -28,6 +28,23 @@ Start with a sandbox to:
 - Try Infrahub from a laptop or phone where you cannot install software
 
 To check how Infrahub models your own data, performs at your scale or connects to your systems, [run Infrahub on your own machine](#run-infrahub-on-your-own-machine).
+
+## Log in to a sandbox
+
+The same logins work in every sandbox.
+
+<SandboxLoginTable accounts={[
+  {
+    "username": "admin-guest",
+    "password": "infrahub",
+    "role": "admin-guest"
+  },
+  {
+    "username": "guest",
+    "password": "infrahub",
+    "role": "guest"
+  }
+]} />
 
 ## Compare the sandboxes
 
