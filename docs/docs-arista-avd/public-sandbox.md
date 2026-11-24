@@ -39,7 +39,7 @@ Sign in to Infrahub with the visitor account shown on the sandbox page. Merging 
 
 Open the Service Catalog from the sandbox page, then follow [Add a network segment](./how-to/add-network-segment.md), [Add a server](./how-to/add-server.md), [Create a tenant](./how-to/create-tenant.md), or [Regenerate a fabric](./how-to/regenerate-fabric.md). Each workflow creates a branch. Links from the catalog open that branch in the public Infrahub interface.
 
-The Service Catalog makes its changes in Infrahub with its own account, not with your visitor account. Infrahub records those changes under that account.
+The Service Catalog asks you to sign in with the same visitor account you use for Infrahub. It makes every change with that account, so Infrahub applies the same permissions as in its own interface. To switch accounts, select **Sign out** in the sidebar.
 
 ## Sandbox definition
 
@@ -62,10 +62,13 @@ To shorten setup, set `INFRAHUB_SEED_FABRICS` in `setup_env` to a comma-separate
 
 ### Images
 
-The `Publish sandbox images` workflow publishes two images to the Harbor registry set by the `HARBOR_HOST` repository variable:
+The `Publish sandbox images` workflow publishes these images to OpsMill's Harbor registry, which serves them at `registry.opsmill.io`:
 
-- `<harbor>/opsmill/infrahub-arista-avd/task-worker`: the Infrahub image with the `solution_arista_avd` package, which the generators, transforms, and checks import. Set it as the `image` of the built-in `task-worker` component. Use the `infrahub-<version>` tag that matches the sandbox's Infrahub version.
-- `<harbor>/opsmill/infrahub-arista-avd/service-catalog`: the Service Catalog.
+- `registry.opsmill.io/opsmill/infrahub-enterprise-solution-arista-avd`: Infrahub Enterprise with the `solution_arista_avd` package, which the generators, transforms, and checks import. The sandbox runs the `infrahub-enterprise` driver, so set this image on its built-in `task-worker` component, with `{{ app.version }}` as the tag: `registry.opsmill.io/opsmill/infrahub-enterprise-solution-arista-avd:{{ app.version }}`. The tag then follows the sandbox's Infrahub version.
+- `registry.opsmill.io/opsmill/infrahub-solution-arista-avd`: the same on Infrahub Community, for deployments that run the `infrahub` driver.
+- `registry.opsmill.io/opsmill/infrahub-arista-avd/service-catalog`: the Service Catalog.
+
+Each Infrahub image has one tag per Infrahub version, `<version>`, taken from the `INFRAHUB_BASE_VERSION` default in the `Dockerfile`. A tag exists only for a version this repository has been updated to, so update the repository to the sandbox's Infrahub version before the sandbox uses it.
 
 ### Service Catalog application
 
@@ -76,14 +79,10 @@ Run the Service Catalog with the `generic-app` driver, with these environment va
 | `STREAMLIT_SERVER_PORT` | `8080`, the port the `generic-app` driver serves |
 | `INFRAHUB_ADDRESS` | The Infrahub address reachable inside the cluster |
 | `INFRAHUB_UI_URL` | The public Infrahub address, used for links shown to visitors |
-| `INFRAHUB_API_TOKEN` | A token for the catalog's own Infrahub account, stored as a secret (see below) |
 | `DEFAULT_BRANCH` | `main` |
 
-Every Service Catalog visitor acts with the permissions of the account that owns `INFRAHUB_API_TOKEN`. This is how the [service catalog demo](https://github.com/opsmill/infrahub-demo-service-catalog) runs its catalog. Two conditions apply:
+Do not set `INFRAHUB_API_TOKEN` for the sandbox. Without it, the Service Catalog asks each visitor to sign in with their visitor account and makes their changes with that account's permissions. The sandbox definition then holds no secret for the catalog.
 
-- Create the token for an account that can do only what the catalog needs: create branches and nodes, open proposed changes, and run generators. Do not use an administrator token, because every visitor could then do anything through the catalog.
-- Store the token where the sandbox keeps secrets. Do not put it in `setup_env`, which is readable configuration.
-
-Without `INFRAHUB_API_TOKEN`, the catalog instead asks each visitor to sign in with their own Infrahub account and makes their changes with that account's permissions.
+The local Docker Compose stack sets `INFRAHUB_API_TOKEN`, so the catalog skips the sign-in form there.
 
 The nightly reset restores Infrahub. The Service Catalog keeps no state of its own outside Infrahub.
