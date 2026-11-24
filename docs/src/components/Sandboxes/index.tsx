@@ -630,6 +630,44 @@ function Row({ label, cells }: { label: string; cells: (React.ReactNode | null)[
   );
 }
 
+// What each login is for, in the table of the overview page.
+const LOGIN_USE: Record<Account['role'], string> = {
+  guest: 'Change data on a branch and open a Proposed Change',
+  'admin-guest': 'Review and merge Proposed Changes',
+};
+
+// The overview page lists the logins that every sandbox has: one column for each login, and a button that copies each value.
+export function SandboxLoginTable({ accounts }: { accounts: Account[] }) {
+  const ordered = [...accounts].sort((a, b) => roleRank(a) - roleRank(b));
+  const value = (account: Account, key: 'username' | 'password') => (
+    <span className={styles.loginValue}>
+      <code style={{ whiteSpace: 'pre-wrap' }}>{account[key]}</code>
+      <CopyButton value={account[key]} label={`${roleLabel(account)} ${key}`} />
+    </span>
+  );
+  return (
+    <div className={styles.loginTable}>
+      <table>
+        <thead>
+          <tr>
+            <th />
+            {ordered.map((account) => (
+              <th scope="col" key={account.username}>
+                {ROLE_LABELS[account.role] ?? account.role}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <Row label="Username" cells={ordered.map((account) => value(account, 'username'))} />
+          <Row label="Password" cells={ordered.map((account) => value(account, 'password'))} />
+          <Row label="Use it to" cells={ordered.map((account) => LOGIN_USE[account.role] ?? null)} />
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // The overview page compares the sandboxes: one column for each, the same rows in every column.
 export function SandboxCompare({ sandboxes }: { sandboxes: CompareSandbox[] }) {
   if (sandboxes.length === 0) return <p>There are no sandboxes listed at present.</p>;

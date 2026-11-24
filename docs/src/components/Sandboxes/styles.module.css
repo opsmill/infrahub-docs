@@ -425,3 +425,52 @@
   font-size: 0.875rem;
   font-weight: 400;
 }
+
+/* Logins that every sandbox has, on the overview page */
+.loginTable {
+  overflow-x: auto;
+  margin: 1rem 0 2rem;
+}
+
+.loginTable table {
+  display: table;
+  border-collapse: collapse;
+  margin: 0;
+}
+
+.loginTable thead,
+.loginTable tr,
+.loginTable tr:nth-child(2n) {
+  background: transparent;
+  border: none;
+}
+
+.loginTable th,
+.loginTable td {
+  border: none;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  padding: 0.6rem 1.5rem 0.6rem 0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.loginTable thead th {
+  border-bottom: 2px solid var(--ifm-color-emphasis-300);
+}
+
+.loginTable tbody th {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.loginTable tbody tr:last-child th,
+.loginTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.loginValue {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
