@@ -668,19 +668,44 @@ export function SandboxLoginTable({ accounts }: { accounts: Account[] }) {
   );
 }
 
-// The overview page compares the sandboxes: one column for each, the same rows in every column.
+// The overview page compares the sandboxes: one row for each, the same columns in every row, so the table grows down, not across, as
+// sandboxes are added. A column that no sandbox fills is left out.
 export function SandboxCompare({ sandboxes }: { sandboxes: CompareSandbox[] }) {
   if (sandboxes.length === 0) return <p>There are no sandboxes listed at present.</p>;
   const text = (runs: Run[] | null) => (runs ? <Runs runs={runs} /> : null);
+  const lines = (
+    [
+      ['For teams that', (sandbox: CompareSandbox) => sandbox.summary],
+      ['What you do', (sandbox: CompareSandbox) => sandbox.activity],
+      ['What you generate', (sandbox: CompareSandbox) => sandbox.output],
+    ] as const
+  ).filter(([, value]) => sandboxes.some((sandbox) => value(sandbox)));
+  // The visible text of a link is short; its name for assistive technology says which sandbox it belongs to.
+  const links = (sandbox: CompareSandbox) =>
+    [
+      { label: 'Sandbox guide', name: `${sandbox.title} sandbox guide`, href: `${ROUTE_BASE}/${sandbox.name}` },
+      { label: 'Documentation', name: `${sandbox.title} documentation`, href: safeUrl(sandbox.docsUrl) },
+      { label: 'GitHub repository', name: `${sandbox.title} repository`, href: safeUrl(sandbox.repositoryUrl) },
+    ].filter((link) => link.href);
   return (
     <div className={styles.compare}>
       <table>
         <thead>
           <tr>
-            <th />
-            {sandboxes.map((sandbox) => (
-              <th scope="col" key={sandbox.name}>
-                <div>{sandbox.title}</div>
+            <th scope="col">Sandbox</th>
+            {lines.map(([label]) => (
+              <th scope="col" key={label}>
+                {label}
+              </th>
+            ))}
+            <th scope="col">Read more</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sandboxes.map((sandbox) => (
+            <tr key={sandbox.name}>
+              <th scope="row">
+                <div className={styles.compareTitle}>{sandbox.title}</div>
                 {sandbox.status === 'maintenance' ? (
                   <div>
                     <StatusPill status={sandbox.status} />
@@ -699,33 +724,22 @@ export function SandboxCompare({ sandboxes }: { sandboxes: CompareSandbox[] }) {
                   </div>
                 ))}
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <Row label="For teams that" cells={sandboxes.map((sandbox) => text(sandbox.summary))} />
-          <Row label="What you do" cells={sandboxes.map((sandbox) => text(sandbox.activity))} />
-          <Row label="What you generate" cells={sandboxes.map((sandbox) => text(sandbox.output))} />
-          <Row
-            label="Sandbox guide"
-            cells={sandboxes.map((sandbox) => (
-              <Link key={sandbox.name} to={`${ROUTE_BASE}/${sandbox.name}`}>
-                {sandbox.title} sandbox guide
-              </Link>
-            ))}
-          />
-          <Row
-            label="Documentation"
-            cells={sandboxes.map((sandbox) =>
-              safeUrl(sandbox.docsUrl) ? <Link href={safeUrl(sandbox.docsUrl)}>{sandbox.title} documentation</Link> : null,
-            )}
-          />
-          <Row
-            label="GitHub repository"
-            cells={sandboxes.map((sandbox) =>
-              safeUrl(sandbox.repositoryUrl) ? <Link href={safeUrl(sandbox.repositoryUrl)}>{sandbox.title} repository</Link> : null,
-            )}
-          />
+              {lines.map(([label, value]) => (
+                <td key={label}>{text(value(sandbox))}</td>
+              ))}
+              <td>
+                <ul className={styles.compareLinks}>
+                  {links(sandbox).map((link) => (
+                    <li key={link.label}>
+                      <Link href={link.href} aria-label={link.name}>
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
