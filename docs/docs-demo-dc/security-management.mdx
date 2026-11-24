@@ -25,7 +25,7 @@ Before starting this tutorial, ensure you have:
 - Access to the Infrahub web interface at `http://localhost:8000`
 
 :::info
-The security data is loaded as part of the bootstrap process. If you haven't loaded it yet, run `uv run infrahubctl object load objects/security/` followed by `uv run python scripts/populate_security_relationships.py` to populate the many-to-many relationships.
+The security data is loaded as part of the bootstrap process. If you haven't loaded it yet, run `uv run infrahubctl object load objects/security/`.
 :::
 
 ## Understanding the demo security schema
@@ -476,8 +476,7 @@ If you don't see security objects in the UI:
 
 1. Verify security schemas are loaded: `uv run infrahubctl schema load schemas`
 2. Load security data: `uv run infrahubctl object load objects/security/`
-3. Populate relationships: `uv run python scripts/populate_security_relationships.py`
-4. Refresh your browser
+3. Refresh your browser
 
 ### Configuration not generating
 
@@ -490,11 +489,12 @@ If firewall configurations aren't being generated:
 
 ### Many-to-many relationships missing
 
-If address groups or service groups appear empty:
+The object files set the members of a few groups only: `web-servers` and `internet` in `objects/security/04_security_address_groups.yml`, and `web-services` in `objects/security/06_security_service_groups.yml`. The other groups have no members.
 
-1. Run the populate_security_relationships script
-2. This script manually creates the many-to-many relationships that can't be loaded via YAML
-3. Verify in the UI that groups now show their members
+If one of these three groups appears empty:
+
+1. Load the security data again: `uv run infrahubctl object load objects/security/`
+2. Verify in the UI that the group shows its members
 
 ## Next steps
 

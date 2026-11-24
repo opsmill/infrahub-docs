@@ -104,9 +104,9 @@ Control which version of Infrahub to run and which features to enable:
 
 ```bash
 # Infrahub version to use
-# Specify the version of Infrahub to run (for example, 1.5.1, stable, latest)
-# Default: 1.5.1
-INFRAHUB_VERSION=1.5.1
+# Specify the version of Infrahub to run (for example, stable, latest or a release number)
+# Default: stable
+INFRAHUB_VERSION=stable
 
 # Enable Infrahub Enterprise features
 # Set to "true" to enable enterprise features, "false" for community edition
@@ -198,13 +198,18 @@ Wait for all containers to be healthy. You can check the status with:
 docker ps
 ```
 
-You should see containers for:
+You should see one container for each of these Docker Compose services, and two for `task-worker`, which runs two replicas by default:
 
-- `infrahub-server` - Main Infrahub API server
-- `infrahub-database` - PostgreSQL database
-- `infrahub-cache` - Redis cache
-- `infrahub-message-queue` - RabbitMQ message broker
-- `infrahub-git` - Git repository server
+- `infrahub-server` - Infrahub API server and web interface
+- `task-worker` - runs Generators, Transformations, checks and repository imports
+- `task-manager` - schedules and tracks the tasks that the task worker runs
+- `task-manager-db` - PostgreSQL database of the task manager
+- `database` - Neo4j graph database
+- `cache` - Redis cache
+- `message-queue` - RabbitMQ message broker
+- `streamlit-service-catalog` - the Service Catalog, a Streamlit application that `docker-compose.override.yml` adds (container `service-catalog`)
+
+With Infrahub Enterprise (`INFRAHUB_ENTERPRISE=true`), the Enterprise Docker Compose file also starts `task-manager-background-svc`.
 
 ## Step 6: access the Infrahub web interface
 
@@ -374,7 +379,7 @@ uv run invoke start
 
 ### Schema loading fails
 
-If schema loading fails with validation errors, ensure you're using a compatible version of Infrahub. This demo is tested with Infrahub 1.5.1 and later.
+If schema loading fails with validation errors, check which Infrahub version is running: an older release may not accept the demo's schema. The demo runs the `stable` release unless `INFRAHUB_VERSION` names another one.
 
 ## Next steps
 
