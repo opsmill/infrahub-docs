@@ -17,7 +17,7 @@ Prerequisites:
 
 ## Open the service portal
 
-Navigate to **`http://localhost:8501`** on a local stack. In the [public sandbox](../public-sandbox.md), open the Service Catalog from the sandbox page instead. From the sidebar, open **Add Network Segment**.
+Navigate to **`http://localhost:8501`** on a local stack. In the [public sandbox](../public-sandbox.md), open the [Service Catalog](https://portal-demo-arista-avd.opsmill.app) instead. From the sidebar, open **Add Network Segment**.
 
 ## Fill the form
 

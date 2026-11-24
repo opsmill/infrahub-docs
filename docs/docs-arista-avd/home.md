@@ -35,6 +35,10 @@ flowchart LR
     class S6 deploy
 ```
 
+## Try it in a sandbox
+
+Try this reference design in the [Arista AVD sandbox](https://docs.infrahub.app/sandboxes/demo-arista-avd), an Infrahub instance that you open in your browser, with its data and automation already loaded. Run the fabric generator on a branch to create a fabric's super-spines, spines and leaves, then create a proposed change to review the EOS configurations and documentation that Infrahub renders for every device. [Public sandbox](./public-sandbox.md) walks through these steps and the Service Catalog workflows. Find the logins on the [sandbox page](https://docs.infrahub.app/sandboxes/demo-arista-avd).
+
 ## What it's for
 
 - **Generate a complete fabric from a design** — define topology parameters and addressing pools; generators create all super-spines, spines, and leaves, allocate loopback, interconnect, and management addresses, BGP ASNs, and node IDs, and cable devices together automatically.
