@@ -496,3 +496,38 @@
   align-items: center;
   gap: 0.75rem;
 }
+
+/* Cards of the Explore Infrahub page: one card for each row, the text on the left and the button on the right */
+.exploreCards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.exploreCard {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 2rem;
+}
+
+.exploreText {
+  flex: 1 1 28rem;
+}
+
+.exploreText .cardDescription {
+  margin-bottom: 0.5rem;
+}
+
+.exploreText .cardDescription:last-child {
+  margin-bottom: 0;
+}
+
+.exploreAction {
+  flex: 0 0 auto;
+}
+
+.exploreLogins {
+  margin: 0.5rem 0 0;
+}
