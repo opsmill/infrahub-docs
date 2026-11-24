@@ -13,7 +13,7 @@ The local guides use `http://localhost` addresses and `uv run invoke` commands. 
 
 ## What the sandbox includes
 
-- **Infrahub**, with the schemas, menus, seed fabrics, repository, check definition, and generator triggers already loaded.
+- **Infrahub**, with the schemas, menus, repository, check definition, and generator triggers already loaded, and one fabric, `Fabric-L3LS`, already generated. Its devices and their EOS configurations are on `main`.
 - **Service Catalog**, the Streamlit portal used by the day-2 guides. On the sandbox page, **Open the portal** opens it.
 
 The sandbox does not include:
@@ -26,12 +26,13 @@ The sandbox does not include:
 
 Sign in to Infrahub with the visitor account shown on the [sandbox page](https://docs.infrahub.app/sandboxes/demo-arista-avd). Merging into `main` can need a different visitor account from the one that creates branches. The sandbox page states which account can merge.
 
-1. Create a branch: open the branch selector in the top bar, select **+ Create branch** and name it, for example `generate-fabric-l3ls-multipod-a`.
-2. Run the fabric generator: open **Actions → Generator definitions**, select **generate-fabric**, select **Run**, choose `Fabric-L3LS-MultiPod-A` and confirm.
-3. Follow the generator chain in **Actions → Tasks**. The pod, rack, hostvar, and structured configuration generators start automatically. The full chain takes a few minutes.
-4. Check the devices in **Devices → All Devices**: super-spines, spines and leaves now exist on the branch.
-5. Create a proposed change from the branch. The pipeline renders the EOS configuration and documentation artifacts for every device. See [Viewing artifacts](./viewing-artifacts.md) for where to find them.
-6. Optionally, merge the proposed change with the account that can merge.
+1. View the devices of `Fabric-L3LS` in **Devices → All Devices**: its spines and leaves already exist on `main`.
+2. View the EOS configuration of a device. See [Viewing artifacts](./viewing-artifacts.md) for where to find it.
+3. Create a branch: open the branch selector in the top bar, select **+ Create branch** and name it, for example `regenerate-fabric-l3ls`.
+4. Run the fabric generator on the branch: open **Actions → Generator definitions**, select **generate-fabric**, select **Run**, choose `Fabric-L3LS` and confirm.
+5. Follow the generator chain in **Actions → Tasks**. The pod, rack, hostvar, and structured configuration generators start automatically. The full chain takes a few minutes. Without a change to the fabric's design, the generators reconcile the existing devices and change nothing.
+6. Create a proposed change from the branch. The pipeline renders the EOS configuration and documentation artifacts for every device and shows what changed.
+7. Optionally, merge the proposed change with the account that can merge.
 
 [Provision your first fabric](./provision-first-fabric.md) explains each step in more detail. Skip the command-line alternative in its first step: the sandbox has no shell.
 
@@ -51,14 +52,19 @@ The pipeline runs `uv run invoke sandbox-setup`. The task:
 
 1. Loads the schemas and waits until every Infrahub worker has the new schema.
 2. Loads the menus.
-3. Loads the `Common` seed data and the fabrics selected by `INFRAHUB_SEED_FABRICS` (all fabrics by default).
+3. Loads the `Common` seed data and the fabrics selected by `INFRAHUB_SEED_FABRICS`. When the variable is not set, it loads only `single-dc-l3ls`, which holds `Fabric-L3LS`.
 4. Registers `test-repository` as a read-only repository from `INFRAHUB_REPO_URL`, tracking the branch or tag in `INFRAHUB_REPO_REF` (`main` when it is not set). The repository is read-only because Infrahub checks that it can push to a read-write repository, and a public repository registered without credentials does not allow that.
 5. Waits up to 600 seconds for the repository to sync and stops with an error if the import fails.
 6. Loads the CloudVision check definition, its queries and webhook, and the generator triggers.
+7. Creates the branch `sandbox-generate-fabrics` and runs `generate-fabric` there for every loaded fabric. The generator triggers fire only on branches other than `main`, so the generator chain needs a branch.
+8. Waits up to 1,200 seconds for the generator chain to finish, then merges the branch into `main` and deletes it. It stops with an error if a task fails.
+9. Generates the `avd_eos_configuration` artifacts on `main` and stops with an error if any of them is not `Ready`.
+
+The task deletes a `sandbox-generate-fabrics` branch left by an earlier run before it creates a new one, so it can run twice.
 
 The task uses only `INFRAHUB_ADDRESS`, `INFRAHUB_API_TOKEN`, `INFRAHUB_REPO_URL`, `INFRAHUB_REPO_REF` and the optional `INFRAHUB_SEED_FABRICS`. It stops if `INFRAHUB_ADDRESS` or `INFRAHUB_API_TOKEN` is missing. It creates no accounts and changes no roles. All Infrahub requests go through the Infrahub Python SDK, which follows `INFRAHUB_RETRY_ON_FAILURE` and `INFRAHUB_RETRY_STATUS_CODES`.
 
-To shorten setup, set `INFRAHUB_SEED_FABRICS` in `setup_env` to a comma-separated list of fabric directories, such as `l3ls-multipod-a`. The walkthrough above uses `Fabric-L3LS-MultiPod-A` only.
+To load other fabrics, set `INFRAHUB_SEED_FABRICS` in `setup_env` to `all` or to a comma-separated list of fabric directories, such as `single-dc-l3ls,l2ls`. The task generates every fabric it loads, so each one adds to the setup time. The pipeline stops the setup task after 1,800 seconds. The walkthrough above uses `Fabric-L3LS` only.
 
 ### Images
 
