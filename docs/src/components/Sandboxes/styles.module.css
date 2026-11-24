@@ -352,7 +352,7 @@
   font-size: 0.9rem;
 }
 
-/* Comparison of the sandboxes on the overview page */
+/* Comparison of the sandboxes on the overview page: one row for each sandbox */
 .compare {
   overflow-x: auto;
   margin: 1rem 0 2rem;
@@ -385,16 +385,38 @@
 
 .compare thead th {
   background: transparent;
-  font-size: 1.15rem;
-  border-bottom: 2px solid var(--ifm-color-emphasis-300);
-  padding-bottom: 1rem;
-}
-
-.compare tbody th {
-  padding-right: 0.5rem;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--ifm-color-emphasis-700);
+  border-bottom: 2px solid var(--ifm-color-emphasis-300);
+}
+
+/* The first column holds the title and the buttons of a sandbox, the last one its three links */
+.compare thead th:first-child {
+  width: 12.5rem;
+}
+
+.compare thead th:last-child {
+  width: 11rem;
+}
+
+.compare tbody th {
+  padding-right: 1rem;
+}
+
+.compareTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.compareLinks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.compareLinks li + li {
+  margin-top: 0.35rem;
 }
 
 .compare tbody tr:last-child th,
