@@ -444,13 +444,21 @@ function safeLink(url: string | null | undefined): string | undefined {
   return url && (/^https?:\/\//i.test(url) || (/^\/(?!\/)/.test(url) && !url.includes('\\'))) ? url : undefined;
 }
 
-function Runs({ runs }: { runs: Run[] }) {
+// With `newTab`, a link to another site opens in a new tab and shows the icon that says so, as the other links of a card do.
+function Runs({ runs, newTab = false }: { runs: Run[]; newTab?: boolean }) {
   return (
     <>
       {runs.map((run, index) => {
         if (run.strong !== undefined) return <strong key={index}>{run.strong}</strong>;
         if (run.em !== undefined) return <em key={index}>{run.em}</em>;
         const href = safeLink(run.href);
+        if (href && newTab && safeUrl(href)) {
+          return (
+            <NewTabLink key={index} href={href}>
+              {run.text}
+            </NewTabLink>
+          );
+        }
         if (href) {
           return (
             <Link key={index} href={href}>
@@ -757,5 +765,102 @@ export function SandboxRepositories({ sandboxes }: { sandboxes: CompareSandbox[]
         </li>
       ))}
     </ul>
+  );
+}
+
+// The Explore Infrahub page shows one card for each sandbox, one under the other, and under the cards the logins that every sandbox has.
+// A card shows the title of the sandbox, its paragraphs (its two card texts, or its description), a link to its documentation and a link
+// that opens it at the end of the last paragraph, and a button to its page in the sandboxes section.
+export type ExploreSandbox = {
+  name: string;
+  title: string;
+  status: Status;
+  paragraphs: Run[][];
+  docsUrl: string | null;
+  sandboxUrl: string | null;
+};
+
+// A link that opens in a new tab, with the icon that says so.
+function NewTabLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {children} <IconExternalLink />
+    </a>
+  );
+}
+
+// "Open sandbox" opens the login page of the sandbox, so the logins come right after the cards.
+function ExploreLogins({ accounts }: { accounts: Account[] }) {
+  const ordered = [...accounts].sort((a, b) => roleRank(a) - roleRank(b));
+  const guest = ordered.find((account) => account.role === 'guest');
+  const admin = ordered.find((account) => account.role === 'admin-guest');
+  if (ordered.length === 0) return null;
+  return (
+    <p className={styles.exploreLogins}>
+      {guest && admin ? (
+        <>
+          Log in as <code>{guest.username}</code> to explore, or as <code>{admin.username}</code> to also review and merge changes.
+        </>
+      ) : (
+        ordered.map((account, index) => (
+          <React.Fragment key={account.username}>
+            {index === 0 ? '' : ' '}Log in as <code>{account.username}</code>.
+          </React.Fragment>
+        ))
+      )}{' '}
+      <Passwords accounts={ordered} />
+    </p>
+  );
+}
+
+export function SandboxExploreCards({ sandboxes, accounts = [] }: { sandboxes: ExploreSandbox[]; accounts?: Account[] }) {
+  if (sandboxes.length === 0) return null;
+  return (
+    <div className={styles.exploreCards}>
+      {sandboxes.map((sandbox) => {
+        const docs = safeUrl(sandbox.docsUrl);
+        const open = safeUrl(sandbox.sandboxUrl);
+        const links = (
+          <>
+            {docs ? (
+              <>
+                {' '}
+                <NewTabLink href={docs}>Documentation »</NewTabLink>
+              </>
+            ) : null}
+            {open ? (
+              <>
+                {' '}
+                <NewTabLink href={open}>Open sandbox</NewTabLink>
+              </>
+            ) : null}
+          </>
+        );
+        // The links go at the end of the last paragraph, or alone when the sandbox has no text
+        const paragraphs = sandbox.paragraphs.length ? sandbox.paragraphs : [[]];
+        return (
+          <div className={`${styles.card} ${styles.exploreCard}`} key={sandbox.name}>
+            <div className={styles.exploreText}>
+              {sandbox.status === 'maintenance' ? (
+                <div className={styles.cardTop}>
+                  <StatusPill status={sandbox.status} />
+                </div>
+              ) : null}
+              <h3 className={styles.cardTitle}>{sandbox.title}</h3>
+              {paragraphs.map((runs, index) => (
+                <p className={styles.cardDescription} key={index}>
+                  <Runs runs={runs} newTab />
+                  {index === paragraphs.length - 1 ? links : null}
+                </p>
+              ))}
+            </div>
+            <div className={styles.exploreAction}>
+              <ButtonLink href={`${ROUTE_BASE}/${sandbox.name}`}>Learn more</ButtonLink>
+            </div>
+          </div>
+        );
+      })}
+      <ExploreLogins accounts={accounts} />
+    </div>
   );
 }
