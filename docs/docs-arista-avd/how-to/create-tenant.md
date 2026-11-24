@@ -16,7 +16,7 @@ Prerequisites:
 
 ## Open the service portal
 
-Navigate to **`http://localhost:8501`**. From the sidebar, open **Create Tenant**.
+Navigate to **`http://localhost:8501`** on a local stack. In the [public sandbox](../public-sandbox.md), open the Service Catalog from the sandbox page instead. From the sidebar, open **Create Tenant**.
 
 ## Fill the form
 

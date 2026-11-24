@@ -11,7 +11,7 @@ The Fabric Design page in the service portal is the interactive view of a fabric
 
 ## Open the fabric design page
 
-Navigate to **`http://localhost:8501`**. From the sidebar, open **Fabric View** (the page title is **Fabric Design View**).
+Navigate to **`http://localhost:8501`** on a local stack. In the [public sandbox](../public-sandbox.md), open the Service Catalog from the sandbox page instead. From the sidebar, open **Fabric View** (the page title is **Fabric Design View**).
 
 ## Pick branch and fabric
 
