@@ -55,6 +55,8 @@ import { SandboxIntro, SandboxBlocks, SandboxLogin, SandboxNextSteps } from '@si
   }
 ]} />
 
+![When you log in, the main branch holds one fabric, Fabric-L3LS, with one pod, sdc-l3ls-pod1. The Generators have already created its six Arista switches: the spines spine-sdc-l3ls-pod1-1 and spine-sdc-l3ls-pod1-2, and four leaf switches in two MLAG pairs. Each leaf switch has one uplink to each spine. Rack SDC_L3LS_BORDER holds leaf-sdc-l3ls-pod1-1-1, leaf-sdc-l3ls-pod1-1-2 and the server sdc-l3ls-server1. Rack SDC_L3LS_ACCESS holds leaf-sdc-l3ls-pod1-2-1, leaf-sdc-l3ls-pod1-2-2 and the servers sdc-l3ls-server2 and sdc-l3ls-gpu1. The EVPN tenant SDC-L3LS-TENANT has the VRF SDC-VRF10 and the VLANs 11, 12 and 21. Each switch has an AVD EOS Configuration artifact.](./img/demo-arista-avd.svg)
+
 ## What to try
 
 <SandboxBlocks blocks={[

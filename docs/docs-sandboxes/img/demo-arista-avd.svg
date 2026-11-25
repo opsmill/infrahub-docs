@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="588" viewBox="0 0 900 588" role="img" aria-labelledby="title desc">
+<title id="title">Fabric-L3LS, the fabric you find in the Arista AVD sandbox</title><desc id="desc">When you log in, the main branch holds one fabric, Fabric-L3LS, with one pod, sdc-l3ls-pod1. The Generators have already created its six Arista switches: the spines spine-sdc-l3ls-pod1-1 and spine-sdc-l3ls-pod1-2, and four leaf switches in two MLAG pairs. Each leaf switch has one uplink to each spine. Rack SDC_L3LS_BORDER holds leaf-sdc-l3ls-pod1-1-1, leaf-sdc-l3ls-pod1-1-2 and the server sdc-l3ls-server1. Rack SDC_L3LS_ACCESS holds leaf-sdc-l3ls-pod1-2-1, leaf-sdc-l3ls-pod1-2-2 and the servers sdc-l3ls-server2 and sdc-l3ls-gpu1. The EVPN tenant SDC-L3LS-TENANT has the VRF SDC-VRF10 and the VLANs 11, 12 and 21. Each switch has an AVD EOS Configuration artifact.</desc>
+<rect width="900" height="588" rx="16" fill="white"/>
+<g font-family="Inter, Arial, sans-serif">
+<text x="26" y="46" text-anchor="start" font-size="19" font-weight="600" fill="#0B1828">Fabric-L3LS</text>
+<text x="26" y="71" text-anchor="start" font-size="15" font-weight="500" fill="#264D59">Pod sdc-l3ls-pod1</text>
+<text x="874" y="46" text-anchor="end" font-size="19" font-weight="600" fill="#0B1828">SDC-L3LS-TENANT</text>
+<text x="874" y="71" text-anchor="end" font-size="15" font-weight="500" fill="#264D59">EVPN tenant, VRF SDC-VRF10</text>
+<text x="874" y="93" text-anchor="end" font-size="15" font-weight="500" fill="#264D59">VLANs 11, 12, 21</text>
+<rect x="38" y="478" width="30" height="11" rx="3" fill="white" stroke="#08738f" stroke-width="2"/>
+<rect x="392" y="478" width="30" height="11" rx="3" fill="white" stroke="#08738f" stroke-width="2"/>
+<rect x="22" y="266" width="416" height="214" rx="8" fill="white" stroke="#08738f" stroke-width="2.5"/>
+<path d="M33 278 V468 M427 278 V468" fill="none" stroke="#b4cbd3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5"/>
+<text x="230.0" y="516" text-anchor="middle" font-size="17" font-weight="600" fill="#0B1828">Rack SDC_L3LS_BORDER</text>
+<rect x="478" y="478" width="30" height="11" rx="3" fill="white" stroke="#08738f" stroke-width="2"/>
+<rect x="832" y="478" width="30" height="11" rx="3" fill="white" stroke="#08738f" stroke-width="2"/>
+<rect x="462" y="266" width="416" height="214" rx="8" fill="white" stroke="#08738f" stroke-width="2.5"/>
+<path d="M473 278 V468 M867 278 V468" fill="none" stroke="#b4cbd3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 5"/>
+<text x="670.0" y="516" text-anchor="middle" font-size="17" font-weight="600" fill="#0B1828">Rack SDC_L3LS_ACCESS</text>
+<path d="M345 164 L125 292" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<path d="M345 164 L335 292" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<path d="M345 164 L565 292" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<path d="M345 164 L775 292" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<path d="M555 164 L125 292" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<path d="M555 164 L335 292" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<path d="M555 164 L565 292" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<path d="M555 164 L775 292" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<text x="206" y="224" text-anchor="end" font-size="15" font-weight="500" fill="#264D59">Uplink</text>
+<path d="M157 297 H305 M157 304 H305" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<text x="230.0" y="289" text-anchor="middle" font-size="15" font-weight="600" fill="#08738f">MLAG</text>
+<path d="M597 297 H745 M597 304 H745" fill="none" stroke="#08738f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.1 6"/>
+<text x="670.0" y="289" text-anchor="middle" font-size="15" font-weight="600" fill="#08738f">MLAG</text>
+<rect x="319.0" y="136.0" width="52" height="28" rx="6" fill="white" stroke="#08738f" stroke-width="2.5"/>
+<path d="M329.5 145 v10 M338.5 145 v10" fill="none" stroke="#08738f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="361.0" cy="150" r="3.2" fill="#0B97BB"/>
+<path d="M364 124 H375 L380 129 V144 H364 Z" fill="white" stroke="#0B97BB" stroke-width="2" stroke-linejoin="round"/>
+<path d="M375 124 V129 H380 M368 134 H376 M368 139 H374" fill="none" stroke="#0B97BB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="301" y="156" text-anchor="end" font-size="16" font-weight="600" fill="#0B1828">spine-sdc-l3ls-pod1-1</text>
+<rect x="529.0" y="136.0" width="52" height="28" rx="6" fill="white" stroke="#08738f" stroke-width="2.5"/>
+<path d="M539.5 145 v10 M548.5 145 v10" fill="none" stroke="#08738f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="571.0" cy="150" r="3.2" fill="#0B97BB"/>
+<path d="M574 124 H585 L590 129 V144 H574 Z" fill="white" stroke="#0B97BB" stroke-width="2" stroke-linejoin="round"/>
+<path d="M585 124 V129 H590 M578 134 H586 M578 139 H584" fill="none" stroke="#0B97BB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="601" y="156" text-anchor="start" font-size="16" font-weight="600" fill="#0B1828">spine-sdc-l3ls-pod1-2</text>
+<rect x="99.0" y="292.0" width="52" height="28" rx="6" fill="white" stroke="#08738f" stroke-width="2.5"/>
+<path d="M109.5 301 v10 M118.5 301 v10" fill="none" stroke="#08738f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="141.0" cy="306" r="3.2" fill="#0B97BB"/>
+<path d="M144 312 H155 L160 317 V332 H144 Z" fill="white" stroke="#0B97BB" stroke-width="2" stroke-linejoin="round"/>
+<path d="M155 312 V317 H160 M148 322 H156 M148 327 H154" fill="none" stroke="#0B97BB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="125" y="354" text-anchor="middle" font-size="16" font-weight="600" fill="#0B1828">leaf-sdc-l3ls-pod1-1-1</text>
+<rect x="309.0" y="292.0" width="52" height="28" rx="6" fill="white" stroke="#08738f" stroke-width="2.5"/>
+<path d="M319.5 301 v10 M328.5 301 v10" fill="none" stroke="#08738f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="351.0" cy="306" r="3.2" fill="#0B97BB"/>
+<path d="M354 312 H365 L370 317 V332 H354 Z" fill="white" stroke="#0B97BB" stroke-width="2" stroke-linejoin="round"/>
+<path d="M365 312 V317 H370 M358 322 H366 M358 327 H364" fill="none" stroke="#0B97BB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="335" y="354" text-anchor="middle" font-size="16" font-weight="600" fill="#0B1828">leaf-sdc-l3ls-pod1-1-2</text>
+<rect x="208.0" y="399.0" width="44" height="30" rx="5" fill="white" stroke="#b4cbd3" stroke-width="2.5"/>
+<path d="M208.0 414 H252.0" fill="none" stroke="#b4cbd3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M216.0 406.5 H228.0 M216.0 421.5 H228.0" fill="none" stroke="#b4cbd3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="243.0" cy="406.5" r="2.4" fill="#b4cbd3"/>
+<circle cx="243.0" cy="421.5" r="2.4" fill="#b4cbd3"/>
+<text x="230" y="452" text-anchor="middle" font-size="15" font-weight="500" fill="#264D59">sdc-l3ls-server1</text>
+<rect x="539.0" y="292.0" width="52" height="28" rx="6" fill="white" stroke="#08738f" stroke-width="2.5"/>
+<path d="M549.5 301 v10 M558.5 301 v10" fill="none" stroke="#08738f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="581.0" cy="306" r="3.2" fill="#0B97BB"/>
+<path d="M584 312 H595 L600 317 V332 H584 Z" fill="white" stroke="#0B97BB" stroke-width="2" stroke-linejoin="round"/>
+<path d="M595 312 V317 H600 M588 322 H596 M588 327 H594" fill="none" stroke="#0B97BB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="565" y="354" text-anchor="middle" font-size="16" font-weight="600" fill="#0B1828">leaf-sdc-l3ls-pod1-2-1</text>
+<rect x="749.0" y="292.0" width="52" height="28" rx="6" fill="white" stroke="#08738f" stroke-width="2.5"/>
+<path d="M759.5 301 v10 M768.5 301 v10" fill="none" stroke="#08738f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="791.0" cy="306" r="3.2" fill="#0B97BB"/>
+<path d="M794 312 H805 L810 317 V332 H794 Z" fill="white" stroke="#0B97BB" stroke-width="2" stroke-linejoin="round"/>
+<path d="M805 312 V317 H810 M798 322 H806 M798 327 H804" fill="none" stroke="#0B97BB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="775" y="354" text-anchor="middle" font-size="16" font-weight="600" fill="#0B1828">leaf-sdc-l3ls-pod1-2-2</text>
+<rect x="543.0" y="399.0" width="44" height="30" rx="5" fill="white" stroke="#b4cbd3" stroke-width="2.5"/>
+<path d="M543.0 414 H587.0" fill="none" stroke="#b4cbd3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M551.0 406.5 H563.0 M551.0 421.5 H563.0" fill="none" stroke="#b4cbd3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="578.0" cy="406.5" r="2.4" fill="#b4cbd3"/>
+<circle cx="578.0" cy="421.5" r="2.4" fill="#b4cbd3"/>
+<text x="565" y="452" text-anchor="middle" font-size="15" font-weight="500" fill="#264D59">sdc-l3ls-server2</text>
+<rect x="753.0" y="399.0" width="44" height="30" rx="5" fill="white" stroke="#b4cbd3" stroke-width="2.5"/>
+<path d="M753.0 414 H797.0" fill="none" stroke="#b4cbd3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M761.0 406.5 H773.0 M761.0 421.5 H773.0" fill="none" stroke="#b4cbd3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="788.0" cy="406.5" r="2.4" fill="#b4cbd3"/>
+<circle cx="788.0" cy="421.5" r="2.4" fill="#b4cbd3"/>
+<text x="775" y="452" text-anchor="middle" font-size="15" font-weight="500" fill="#264D59">sdc-l3ls-gpu1</text>
+<path d="M310 551 H321 L326 556 V571 H310 Z" fill="white" stroke="#0B97BB" stroke-width="2" stroke-linejoin="round"/>
+<path d="M321 551 V556 H326 M314 561 H322 M314 566 H320" fill="none" stroke="#0B97BB" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="336" y="566" text-anchor="start" font-size="15" font-weight="500" fill="#264D59">AVD EOS Configuration of each switch</text>
+</g></svg>
