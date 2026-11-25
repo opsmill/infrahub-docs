@@ -14,18 +14,27 @@ import { SandboxIntro, SandboxBlocks, SandboxLogin, SandboxNextSteps } from '@si
   {
     "text": "The Arista AVD sandbox is a working example of building Arista data center fabrics with AVD, with Infrahub as the source of truth. You describe a fabric with its pods and racks, the number of switches in each and the address pools to use, and Generators create the switches, cabling, IP addresses and BGP settings. PyAVD then generates the structured configuration of each switch, and Infrahub renders its EOS configuration and documentation. It is set up for teams that run AVD from variable files and want a source of truth, a web interface and branch-based review around it."
   }
-]} status={"available"} buttons={[
+]} status={"available"} endpoints={[
   {
-    "label": "Open the Arista AVD sandbox",
-    "compact": "Open sandbox",
+    "name": "Infrahub",
     "url": "https://infrahub-demo-arista-avd.opsmill.app",
-    "primary": true
+    "login": true
   },
   {
-    "label": "Open the portal",
-    "compact": "Open the portal",
+    "name": "service portal",
     "url": "https://portal-demo-arista-avd.opsmill.app",
-    "primary": false
+    "login": false
+  }
+]} accounts={[
+  {
+    "username": "admin-guest",
+    "password": "infrahub",
+    "role": "admin-guest"
+  },
+  {
+    "username": "guest",
+    "password": "infrahub",
+    "role": "guest"
   }
 ]} />
 

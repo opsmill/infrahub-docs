@@ -14,18 +14,27 @@ import { SandboxIntro, SandboxBlocks, SandboxLogin, SandboxNextSteps } from '@si
   {
     "text": "The Data Center sandbox is a working example of design-driven automation for data center fabrics. You describe a new data center by choosing a design template and a location, and Infrahub generates its devices, interfaces, cabling, IP addresses and device configurations. It is set up for teams that build spine-leaf fabrics and want every new data center built from the same standard designs."
   }
-]} status={"available"} buttons={[
+]} status={"available"} endpoints={[
   {
-    "label": "Open the Data Center sandbox",
-    "compact": "Open sandbox",
+    "name": "Infrahub",
     "url": "https://infrahub-demo-dc.opsmill.app",
-    "primary": true
+    "login": true
   },
   {
-    "label": "Open the portal",
-    "compact": "Open the portal",
+    "name": "service portal",
     "url": "https://portal-demo-dc.opsmill.app",
-    "primary": false
+    "login": false
+  }
+]} accounts={[
+  {
+    "username": "admin-guest",
+    "password": "infrahub",
+    "role": "admin-guest"
+  },
+  {
+    "username": "guest",
+    "password": "infrahub",
+    "role": "guest"
   }
 ]} />
 

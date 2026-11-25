@@ -28,18 +28,27 @@ import { SandboxIntro, SandboxBlocks, SandboxLogin, SandboxNextSteps } from '@si
   {
     "text": ", where you view what each request created and review it before it is merged. It is set up for teams that run an MPLS backbone and deliver customer services over it."
   }
-]} status={"available"} buttons={[
+]} status={"available"} endpoints={[
   {
-    "label": "Open the Service Provider sandbox",
-    "compact": "Open sandbox",
+    "name": "Infrahub",
     "url": "https://infrahub-demo-sp.opsmill.app",
-    "primary": true
+    "login": true
   },
   {
-    "label": "Open the portal",
-    "compact": "Open the portal",
+    "name": "service portal",
     "url": "https://portal-demo-sp.opsmill.app",
-    "primary": false
+    "login": false
+  }
+]} accounts={[
+  {
+    "username": "admin-guest",
+    "password": "infrahub",
+    "role": "admin-guest"
+  },
+  {
+    "username": "guest",
+    "password": "infrahub",
+    "role": "guest"
   }
 ]} />
 
