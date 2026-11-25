@@ -391,9 +391,13 @@
   border-bottom: 2px solid var(--ifm-color-emphasis-300);
 }
 
-/* The first column holds the title and the buttons of a sandbox, the last one its three links */
+/* The first column holds the title of a sandbox, the second its endpoints, the last one its three links */
 .compare thead th:first-child {
-  width: 12.5rem;
+  width: 11rem;
+}
+
+.compare thead th:nth-child(2) {
+  width: 10rem;
 }
 
 .compare thead th:last-child {
@@ -422,30 +426,6 @@
 .compare tbody tr:last-child th,
 .compare tbody tr:last-child td {
   border-bottom: none;
-}
-
-.compareButtons {
-  display: flex;
-  margin-top: 0.6rem;
-  font-size: 1rem;
-}
-
-.compareButtons :global(.button) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  flex: 1 1 100%;
-  white-space: nowrap;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-
-.compareExtra {
-  margin-top: 0.5rem;
-  text-align: center;
-  font-size: 0.875rem;
-  font-weight: 400;
 }
 
 /* Logins that every sandbox has, on the overview page */

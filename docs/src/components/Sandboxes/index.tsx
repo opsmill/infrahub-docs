@@ -399,8 +399,8 @@ export type CompareSandbox = {
   status: Status;
   summary: Run[] | null;
   activity: Run[] | null;
-  output: Run[] | null;
-  buttons: Button[];
+  endpoints?: { name: string; url: string }[];
+  buttons?: Button[]; // What the pages generated before `endpoints` pass
   docsUrl: string | null;
   repositoryUrl: string;
 };
@@ -472,15 +472,9 @@ function Runs({ runs, newTab = false }: { runs: Run[]; newTab?: boolean }) {
   );
 }
 
-// A button that opens an application of a sandbox in a new tab.
-function OpenButton({ button, text }: { button: Button; text: string }) {
-  const href = safeUrl(button.url);
-  if (!href) return null;
-  return (
-    <a className={`button ${button.primary ? 'button--primary' : 'button--secondary'}`} href={href} target="_blank" rel="noopener noreferrer">
-      {text} <IconExternalLink />
-    </a>
-  );
+// The name of an endpoint as a table shows it: "service portal" becomes "Service portal".
+function endpointName(name: string): string {
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 function BlockList({ blocks }: { blocks: Block[] }) {
@@ -505,8 +499,32 @@ function BlockList({ blocks }: { blocks: Block[] }) {
   );
 }
 
-// The opening of a sandbox page: what the sandbox is, and one link for each application a visitor can open.
-export function SandboxIntro({ description, status, buttons }: { description: Run[] | null; status: Status; buttons: Button[] }) {
+// An application a visitor opens. `login` is true on Infrahub, whose accounts the visitor logins are, and the row lists them there.
+// The other rows show no login: an application that signs in to Infrahub with them, such as a portal, asks for them itself.
+export type Endpoint = { name: string; url: string; login: boolean };
+
+// The opening of a sandbox page: what the sandbox is, then a table with one row for each application a visitor can open, with its address
+// and the logins it takes, in the style of the login table of the overview page. `buttons` is what the pages generated before `endpoints` pass: one plain link for each application.
+export function SandboxIntro({
+  description,
+  status,
+  buttons = [],
+  endpoints,
+  accounts = [],
+}: {
+  description: Run[] | null;
+  status: Status;
+  buttons?: Button[];
+  endpoints?: Endpoint[];
+  accounts?: Account[];
+}) {
+  const ordered = [...accounts].sort((a, b) => roleRank(a) - roleRank(b));
+  const logins = ordered.map((account) => (
+    // A login and an endpoint name stay on one line: the address column wraps instead
+    <div key={account.username} style={{ whiteSpace: 'nowrap' }}>
+      {ROLE_LABELS[account.role] ?? account.role} <code style={{ whiteSpace: 'pre' }}>{`${account.username}/${account.password}`}</code>
+    </div>
+  ));
   return (
     <div>
       {status === 'maintenance' ? (
@@ -519,8 +537,35 @@ export function SandboxIntro({ description, status, buttons }: { description: Ru
           <Runs runs={description} />
         </p>
       ) : null}
+      {endpoints ? (
+        <div className={styles.loginTable}>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Endpoint</th>
+                <th scope="col">Address</th>
+                <th scope="col">Login</th>
+              </tr>
+            </thead>
+            <tbody>
+              {endpoints.map((endpoint) => {
+                const href = safeUrl(endpoint.url);
+                return (
+                  <tr key={endpoint.url}>
+                    <th scope="row" style={{ whiteSpace: 'nowrap' }}>
+                      {endpointName(endpoint.name)}
+                    </th>
+                    <td>{href ? <Link href={href}>{href.replace(/^https?:\/\//i, '').replace(/\/$/, '')}</Link> : null}</td>
+                    <td>{endpoint.login ? (ordered.length ? logins : 'No visitor login is listed') : null}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
       {/* Plain links, one to a line, as the other links of a page */}
-      {buttons.map((button) => {
+      {(endpoints ? [] : buttons).map((button) => {
         const href = safeUrl(button.url);
         return href ? (
           <p key={button.url}>
@@ -573,10 +618,10 @@ export function SandboxLogin({ accounts }: { accounts: Account[] }) {
         {ordered.map((account, index) => (
           <React.Fragment key={account.username}>
             {index === 0 ? 'Log in as ' : ' Log in as '}
-            <code>{account.username}</code> {account.role === 'admin-guest' && !guest ? ADMIN_ALONE : (LOGIN_DETAILS[account.role]?.summary ?? '')}.
+            {ROLE_LABELS[account.role] ?? account.role} (<code style={{ whiteSpace: 'pre-wrap' }}>{`${account.username}/${account.password}`}</code>){' '}
+            {account.role === 'admin-guest' && !guest ? ADMIN_ALONE : (LOGIN_DETAILS[account.role]?.summary ?? '')}.
           </React.Fragment>
-        ))}{' '}
-        <Passwords accounts={ordered} />
+        ))}
       </p>
       {guest && admin ? (
         <>
@@ -685,7 +730,6 @@ export function SandboxCompare({ sandboxes }: { sandboxes: CompareSandbox[] }) {
     [
       ['For teams that', (sandbox: CompareSandbox) => sandbox.summary],
       ['What you do', (sandbox: CompareSandbox) => sandbox.activity],
-      ['What you generate', (sandbox: CompareSandbox) => sandbox.output],
     ] as const
   ).filter(([, value]) => sandboxes.some((sandbox) => value(sandbox)));
   // The visible text of a link is short; its name for assistive technology says which sandbox it belongs to.
@@ -695,12 +739,17 @@ export function SandboxCompare({ sandboxes }: { sandboxes: CompareSandbox[] }) {
       { label: 'Documentation', name: `${sandbox.title} documentation`, href: safeUrl(sandbox.docsUrl) },
       { label: 'GitHub repository', name: `${sandbox.title} repository`, href: safeUrl(sandbox.repositoryUrl) },
     ].filter((link) => link.href);
+  // The pages generated before `endpoints` pass `buttons`: the button of Infrahub, and "Open the <name>" for the others
+  const endpoints = (sandbox: CompareSandbox) =>
+    sandbox.endpoints ??
+    (sandbox.buttons ?? []).map((button) => ({ name: button.primary ? 'Infrahub' : button.compact.replace(/^Open the /, ''), url: button.url }));
   return (
     <div className={styles.compare}>
       <table>
         <thead>
           <tr>
             <th scope="col">Sandbox</th>
+            <th scope="col">Endpoints</th>
             {lines.map(([label]) => (
               <th scope="col" key={label}>
                 {label}
@@ -713,25 +762,30 @@ export function SandboxCompare({ sandboxes }: { sandboxes: CompareSandbox[] }) {
           {sandboxes.map((sandbox) => (
             <tr key={sandbox.name}>
               <th scope="row">
-                <div className={styles.compareTitle}>{sandbox.title}</div>
+                <div className={styles.compareTitle}>
+                  <Link to={`${ROUTE_BASE}/${sandbox.name}`}>{sandbox.title}</Link>
+                </div>
                 {sandbox.status === 'maintenance' ? (
                   <div>
                     <StatusPill status={sandbox.status} />
                   </div>
                 ) : null}
-                <div className={styles.compareButtons}>
-                  {sandbox.buttons.filter((button) => button.primary).map((button) => (
-                    <OpenButton key={button.url} button={button} text={button.compact} />
-                  ))}
-                </div>
-                {sandbox.buttons.filter((button) => !button.primary).map((button) => (
-                  <div className={styles.compareExtra} key={button.url}>
-                    <a href={safeUrl(button.url)} target="_blank" rel="noopener noreferrer">
-                      {button.compact}
-                    </a>
-                  </div>
-                ))}
               </th>
+              <td>
+                {/* Each link opens its application in a new tab; its name for assistive technology says which sandbox it belongs to */}
+                <ul className={styles.compareLinks}>
+                  {endpoints(sandbox).map((endpoint) => {
+                    const href = safeUrl(endpoint.url);
+                    return href ? (
+                      <li key={endpoint.url}>
+                        <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${sandbox.title} ${endpointName(endpoint.name)}`}>
+                          {endpointName(endpoint.name)} <IconExternalLink />
+                        </a>
+                      </li>
+                    ) : null;
+                  })}
+                </ul>
+              </td>
               {lines.map(([label, value]) => (
                 <td key={label}>{text(value(sandbox))}</td>
               ))}
