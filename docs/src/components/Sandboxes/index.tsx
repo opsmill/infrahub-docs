@@ -10,7 +10,8 @@ import styles from './styles.module.css';
 // MDX pages import this module and pass the public catalogue as plain data, so nothing here reads Infrahub or runs metadata as code.
 
 export type Application = { name: string; driver: string; version: string; url: string };
-export type Account = { username: string; password: string; role: 'guest' | 'admin-guest' };
+// apiToken is the default API token of the login. Only a sandbox that has the tokens turned on gives one, and it is not the same in every sandbox
+export type Account = { username: string; password: string; role: 'guest' | 'admin-guest'; apiToken?: string };
 export type Sandbox = {
   name: string;
   title: string;
@@ -605,7 +606,59 @@ function Passwords({ accounts }: { accounts: Account[] }) {
 
 // The logins are the same kind in every sandbox, so this part of the page has the same words in each. The user names and passwords come
 // from Infrahub, so they stay correct when one changes.
-export function SandboxLogin({ accounts }: { accounts: Account[] }) {
+// The default API token of each login: it works with the API and the Python SDK at once, without a login to generate a token first, and has the permissions of its login.
+// The tokens are public, as the passwords of the logins are. The address of the Infrahub is only used to write the example.
+function ApiTokens({ accounts, infrahubUrl }: { accounts: Account[]; infrahubUrl?: string }) {
+  const address = safeUrl(infrahubUrl) ?? 'https://<the address of this Infrahub>';
+  const example = accounts[0];
+  return (
+    <>
+      <h3>API tokens</h3>
+      <p>
+        Each login has an API token, so you can use the API or the Python SDK at once, without generating a token first. A token has the permissions of its login. The tokens are public,
+        like the passwords. A token stays the same after the nightly reset, and changes when the sandbox is built again: this page shows the current one.
+      </p>
+      <div className={styles.loginTable}>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Login</th>
+              <th scope="col">API token</th>
+            </tr>
+          </thead>
+          <tbody>
+            {accounts.map((account) => (
+              <tr key={account.username}>
+                <td>
+                  {ROLE_LABELS[account.role] ?? account.role} (<code>{account.username}</code>)
+                </td>
+                <td>
+                  <span className={styles.loginValue}>
+                    <code>{account.apiToken}</code>
+                    <CopyButton value={account.apiToken ?? ''} label={`${roleLabel(account)} API token`} />
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p>For example, this request asks which account the {roleLabel(example)} token belongs to:</p>
+      <pre>
+        <code>{`curl -s -X POST ${address}/graphql/main \\
+  -H "X-INFRAHUB-KEY: ${example.apiToken ?? ''}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"query": "{ AccountProfile { name { value } } }"}'`}</code>
+      </pre>
+      <p>
+        The answer shows the name of the account that holds the token. Its name ends with <code>-api</code>, and it has the permissions of the login. The Python SDK reads the address and the token
+        from the variables <code>INFRAHUB_ADDRESS</code> and <code>INFRAHUB_API_TOKEN</code>.
+      </p>
+    </>
+  );
+}
+
+export function SandboxLogin({ accounts, infrahubUrl }: { accounts: Account[]; infrahubUrl?: string }) {
   // A login with a role that is not known goes last
   const rank = (account: Account) => (ROLE_ORDER.indexOf(account.role) === -1 ? ROLE_ORDER.length : ROLE_ORDER.indexOf(account.role));
   const ordered = [...accounts].sort((a, b) => rank(a) - rank(b));
@@ -637,6 +690,7 @@ export function SandboxLogin({ accounts }: { accounts: Account[] }) {
           </ol>
         </>
       ) : null}
+      {ordered.some((account) => account.apiToken) ? <ApiTokens accounts={ordered.filter((account) => account.apiToken)} infrahubUrl={infrahubUrl} /> : null}
       <p>The sandbox is reset every night, so the changes you make are removed.</p>
       {/* The same collapsible block the documentation site gives a <details> written in Markdown */}
       <Details summary={<summary>What each login can and cannot do</summary>}>
