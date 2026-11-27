@@ -219,7 +219,7 @@ export const labs: Lab[] = [
   // --- Infrahub and Arista AVD Workshop -----------------------------------
   // Written from the track descriptions and challenges in the Instruqt manage
   // view (opsmill org, read 2026-11-27). Durations are the Instruqt track time
-  // limits. No invites exist yet, so the public track URLs are used.
+  // limits.
   {
     id: 'avd-workshop-infrahub',
     title: 'Infrahub and AVD Workshop 1: Infrahub',
@@ -229,6 +229,7 @@ export const labs: Lab[] = [
     level: 'Beginner',
     topics: ['getting-started', 'schema-modeling', 'automation'],
     trackUrl: `${INSTRUQT_TRACKS}/avd-workshop-infrahub`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/sqaoe3oywfuk',
     overview:
       'The first part of the Infrahub and Arista AVD workshop. It covers intent: the data that describes what the network should be. You explore a data center design in Infrahub, edit and query its data, work on a branch, allocate prefixes from a resource pool, let a generator build a data center from a design, render its device configurations as artifacts, and merge the result through a proposed change. The third lab applies the same steps to an Arista fabric built with AVD.',
     whatYouWillLearn: [
@@ -252,6 +253,7 @@ export const labs: Lab[] = [
     level: 'Intermediate',
     topics: ['config-rendering', 'automation', 'testing'],
     trackUrl: `${INSTRUQT_TRACKS}/avd-workshop-avd`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/ymhkup0uspvb',
     overview:
       'The second part of the Infrahub and Arista AVD workshop: a hands-on primer on the AVD workflow, with no Infrahub involved. You describe a single-site fabric in YAML, generate EOS configurations, deploy them to a containerlab topology, and validate the result with ANTA. In the third lab you run the same AVD workflow from Infrahub.',
     whatYouWillLearn: [
@@ -272,6 +274,7 @@ export const labs: Lab[] = [
     level: 'Advanced',
     topics: ['automation', 'config-rendering'],
     trackUrl: `${INSTRUQT_TRACKS}/avd-workshop-infrahub-avd`,
+    inviteUrl: 'https://play.instruqt.com/opsmill/invite/adahhgsqxwe5',
     overview:
       'The closing part of the Infrahub and Arista AVD workshop. You work with the Infrahub AVD reference design and the fabric from the AVD lab: two spines and four leaves in two MLAG pairs. You explore the fabric design in Infrahub, run the generators that build its switches on a branch, view the AVD inputs and the EOS configurations rendered from the data, and merge the fabric through a proposed change. You then make day-2 changes, each on a branch and through a proposed change: add a network segment, add a server, add a rack and change a setting of the whole fabric.',
     whatYouWillLearn: [
